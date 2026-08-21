@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vishwas Refoils - Palmolein Rate</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#f4f6f8;
+    color:#222;
+}
+
+.container{
+    max-width:900px;
+    margin:30px auto;
+    background:white;
+    padding:25px;
+    border-radius:12px;
+    box-shadow:0 4px 15px rgba(0,0,0,.10);
+}
+
+.header{
+    text-align:center;
+    border-bottom:2px solid #222;
+    padding-bottom:15px;
+}
+
+.header h2{
+    margin:5px 0;
+}
+
+.header h3{
+    margin:5px 0;
+}
+
+.date{
+    margin-top:12px;
+    font-weight:bold;
+}
+
+h2.product{
+    text-align:center;
+    margin:25px 0 15px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th,td{
+    border:1px solid #bbb;
+    padding:10px;
+}
+
+th{
+    background:#eee;
+}
+
+td:last-child,
+th:last-child{
+    text-align:right;
+}
+
+.terms{
+    margin-top:25px;
+    border-top:2px solid #222;
+    padding-top:15px;
+}
+
+.copy-btn{
+    width:100%;
+    margin-top:20px;
+    padding:14px;
+    background:#222;
+    color:white;
+    border:0;
+    border-radius:8px;
+    font-size:16px;
+    cursor:pointer;
+}
+
+.copy-btn:hover{
+    opacity:.85;
+}
+
+@media(max-width:600px){
+    .container{
+        margin:10px;
+        padding:15px;
+    }
+
+    th,td{
+        padding:8px;
+        font-size:14px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h2>JAY SIYARAM</h2>
+        <h3>VISHWAS REFOILS & CONSUMER LIMITED</h3>
+        <div class="date">21 August 2026</div>
+    </div>
+
+    <h2 class="product">PALMOLEIN</h2>
+
+    <table>
+        <tr>
+            <th>Packing</th>
+            <th>Rate ₹</th>
+        </tr>
+
+        <tr><td>15 KG N TIN</td><td>2324.00</td></tr>
+        <tr><td>15 KG S TIN</td><td>2279.00</td></tr>
+        <tr><td>15 LTR N TIN</td><td>2114.00</td></tr>
+        <tr><td>15 LTR S TIN</td><td>2059.00</td></tr>
+        <tr><td>5 LTR JAR</td><td>713.00</td></tr>
+        <tr><td>4.150 KG JAR</td><td>683.00</td></tr>
+        <tr><td>2 LTR JAR</td><td>292.23</td></tr>
+        <tr><td>1.6 KG JAR</td><td>267.23</td></tr>
+        <tr><td>1 LTR BOTTLE</td><td>142.60</td></tr>
+        <tr><td>1 LTR POUCH</td><td>137.60</td></tr>
+        <tr><td>790 GM BOTTLE</td><td>132.60</td></tr>
+        <tr><td>750 GM POUCH</td><td>121.10</td></tr>
+        <tr><td>500 ML BOTTLE</td><td>72.80</td></tr>
+        <tr><td>500 ML POUCH</td><td>70.30</td></tr>
+        <tr><td>395 GM BOTTLE</td><td>67.80</td></tr>
+
+    </table>
+
+    <div class="terms">
+        <h3>TERMS & CONDITIONS</h3>
+
+        <p>1. NEXT DAY PAYMENT</p>
+        <p>2. GST EXTRA</p>
+        <p>3. EX OUR PLANT</p>
+        <p>4. UP TO 15 DAY DELIVERY CONDITION</p>
+        <p>5. ADVANCE PAYMENT ₹10 DISC TIN</p>
+        <p>6. ADVANCE PAYMENT CP PACK 50 PAISA PER LITRE</p>
+        <p>7. LOADING CHARGES EXTRA</p>
+    </div>
+
+    <button class="copy-btn" onclick="copyRate()">
+        COPY FOR WHATSAPP
+    </button>
+
+</div>
+
+<script>
+function copyRate(){
+
+    let text =
+`JAY SIYARAM
+VISHWAS REFOILS & CONSUMER LIMITED
+
+21 August 2026
+
+PALMOLEIN
+
+15 KG N TIN - ₹2324.00
+15 KG S TIN - ₹2279.00
+15 LTR N TIN - ₹2114.00
+15 LTR S TIN - ₹2059.00
+5 LTR JAR - ₹713.00
+4.150 KG JAR - ₹683.00
+2 LTR JAR - ₹292.23
+1.6 KG JAR - ₹267.23
+1 LTR BOTTLE - ₹142.60
+1 LTR POUCH - ₹137.60
+790 GM BOTTLE - ₹132.60
+750 GM POUCH - ₹121.10
+500 ML BOTTLE - ₹72.80
+500 ML POUCH - ₹70.30
+395 GM BOTTLE - ₹67.80
+
+TERMS & CONDITIONS
+1. NEXT DAY PAYMENT
+2. GST EXTRA
+3. EX OUR PLANT
+4. UP TO 15 DAY DELIVERY CONDITION
+5. ADVANCE PAYMENT ₹10 DISC TIN
+6. ADVANCE PAYMENT CP PACK 50 PAISA PER LITRE
+7. LOADING CHARGES EXTRA`;
+
+    navigator.clipboard.writeText(text);
+
+    alert("Rate copied! Now paste it in WhatsApp.");
+}
+</script>
+
+</body>
+</html>
