@@ -3,99 +3,181 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vishwas Refoils - Palmolein Rate</title>
+
+<title>Vishwas Refoils - Palmolein Rate Admin</title>
 
 <style>
+*{
+    box-sizing:border-box;
+}
+
 body{
     margin:0;
-    font-family:Arial,sans-serif;
-    background:#f4f6f8;
+    font-family:Arial, sans-serif;
+    background:#f3f5f7;
     color:#222;
 }
 
 .container{
-    max-width:900px;
-    margin:30px auto;
-    background:white;
-    padding:25px;
-    border-radius:12px;
-    box-shadow:0 4px 15px rgba(0,0,0,.10);
+    max-width:1100px;
+    margin:25px auto;
+    padding:20px;
 }
 
 .header{
+    background:white;
+    padding:20px;
+    border-radius:12px;
     text-align:center;
-    border-bottom:2px solid #222;
-    padding-bottom:15px;
+    box-shadow:0 3px 12px rgba(0,0,0,.08);
 }
 
 .header h2{
-    margin:5px 0;
+    margin:0 0 8px;
 }
 
 .header h3{
-    margin:5px 0;
+    margin:0;
 }
 
 .date{
-    margin-top:12px;
+    margin-top:10px;
     font-weight:bold;
 }
 
-h2.product{
-    text-align:center;
-    margin:25px 0 15px;
+.admin-box{
+    background:white;
+    margin-top:20px;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 3px 12px rgba(0,0,0,.08);
+}
+
+.admin-title{
+    font-size:22px;
+    font-weight:bold;
+    margin-bottom:15px;
+}
+
+.controls{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:20px;
+}
+
+.controls input{
+    padding:12px;
+    border:1px solid #bbb;
+    border-radius:7px;
+    font-size:16px;
+    width:150px;
+}
+
+button{
+    border:0;
+    border-radius:7px;
+    padding:12px 18px;
+    cursor:pointer;
+    font-size:15px;
+    font-weight:bold;
+}
+
+.apply{
+    background:#1f6feb;
+    color:white;
+}
+
+.save{
+    background:#198754;
+    color:white;
+}
+
+.reset{
+    background:#dc3545;
+    color:white;
+}
+
+.copy{
+    background:#222;
+    color:white;
 }
 
 table{
     width:100%;
     border-collapse:collapse;
-}
-
-th,td{
-    border:1px solid #bbb;
-    padding:10px;
+    background:white;
 }
 
 th{
-    background:#eee;
+    background:#e9ecef;
+    padding:12px;
+    border:1px solid #ccc;
 }
 
-td:last-child,
-th:last-child{
-    text-align:right;
+td{
+    padding:8px;
+    border:1px solid #ccc;
+}
+
+td input{
+    width:100%;
+    padding:10px;
+    border:1px solid #bbb;
+    border-radius:5px;
+    font-size:15px;
+}
+
+.change{
+    background:#fff8d8;
+}
+
+.new-rate{
+    background:#e9f7ef;
+    font-weight:bold;
+}
+
+.status{
+    margin-top:15px;
+    padding:12px;
+    background:#f1f3f5;
+    border-radius:7px;
+}
+
+.preview{
+    margin-top:20px;
 }
 
 .terms{
-    margin-top:25px;
-    border-top:2px solid #222;
-    padding-top:15px;
-}
-
-.copy-btn{
-    width:100%;
+    background:white;
     margin-top:20px;
-    padding:14px;
-    background:#222;
-    color:white;
-    border:0;
-    border-radius:8px;
-    font-size:16px;
-    cursor:pointer;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 3px 12px rgba(0,0,0,.08);
 }
 
-.copy-btn:hover{
-    opacity:.85;
+.terms h3{
+    margin-top:0;
 }
 
-@media(max-width:600px){
+@media(max-width:700px){
+
     .container{
-        margin:10px;
-        padding:15px;
+        padding:10px;
+        margin:10px auto;
     }
 
-    th,td{
-        padding:8px;
-        font-size:14px;
+    .admin-box{
+        padding:12px;
+        overflow-x:auto;
+    }
+
+    table{
+        min-width:700px;
+    }
+
+    .controls input{
+        width:130px;
     }
 }
 </style>
@@ -105,96 +187,592 @@ th:last-child{
 
 <div class="container">
 
+    <!-- HEADER -->
+
     <div class="header">
+
         <h2>JAY SIYARAM</h2>
-        <h3>VISHWAS REFOILS & CONSUMER LIMITED</h3>
-        <div class="date">21 August 2026</div>
+
+        <h3>
+            VISHWAS REFOILS & CONSUMER LIMITED
+        </h3>
+
+        <div class="date">
+            Rate Date:
+            <span id="todayDate"></span>
+        </div>
+
     </div>
 
-    <h2 class="product">PALMOLEIN</h2>
 
-    <table>
-        <tr>
-            <th>Packing</th>
-            <th>Rate ₹</th>
-        </tr>
+    <!-- ADMIN PANEL -->
 
-        <tr><td>15 KG N TIN</td><td>2324.00</td></tr>
-        <tr><td>15 KG S TIN</td><td>2279.00</td></tr>
-        <tr><td>15 LTR N TIN</td><td>2114.00</td></tr>
-        <tr><td>15 LTR S TIN</td><td>2059.00</td></tr>
-        <tr><td>5 LTR JAR</td><td>713.00</td></tr>
-        <tr><td>4.150 KG JAR</td><td>683.00</td></tr>
-        <tr><td>2 LTR JAR</td><td>292.23</td></tr>
-        <tr><td>1.6 KG JAR</td><td>267.23</td></tr>
-        <tr><td>1 LTR BOTTLE</td><td>142.60</td></tr>
-        <tr><td>1 LTR POUCH</td><td>137.60</td></tr>
-        <tr><td>790 GM BOTTLE</td><td>132.60</td></tr>
-        <tr><td>750 GM POUCH</td><td>121.10</td></tr>
-        <tr><td>500 ML BOTTLE</td><td>72.80</td></tr>
-        <tr><td>500 ML POUCH</td><td>70.30</td></tr>
-        <tr><td>395 GM BOTTLE</td><td>67.80</td></tr>
+    <div class="admin-box">
 
-    </table>
+        <div class="admin-title">
+            🛠 PALMOLEIN RATE ADMIN PANEL
+        </div>
+
+
+        <!-- CONTROLS -->
+
+        <div class="controls">
+
+            <input
+                type="number"
+                id="adjustment"
+                placeholder="+5 or -5"
+                step="0.01"
+            >
+
+            <button
+                class="apply"
+                onclick="applyAdjustment()"
+            >
+                APPLY TO ALL
+            </button>
+
+
+            <button
+                class="save"
+                onclick="saveRates()"
+            >
+                SAVE RATES
+            </button>
+
+
+            <button
+                class="reset"
+                onclick="resetRates()"
+            >
+                RESET
+            </button>
+
+
+            <button
+                class="copy"
+                onclick="copyWhatsApp()"
+            >
+                COPY FOR WHATSAPP
+            </button>
+
+        </div>
+
+
+        <!-- RATE TABLE -->
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>Sr.</th>
+
+                    <th>PACKING</th>
+
+                    <th>CURRENT RATE ₹</th>
+
+                    <th>CHANGE ₹</th>
+
+                    <th>NEW RATE ₹</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody id="rateTable">
+
+            </tbody>
+
+        </table>
+
+
+        <div class="status">
+
+            <b>Status:</b>
+
+            <span id="statusText">
+                Ready
+            </span>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- TERMS -->
 
     <div class="terms">
-        <h3>TERMS & CONDITIONS</h3>
+
+        <h3>
+            TERMS & CONDITIONS
+        </h3>
 
         <p>1. NEXT DAY PAYMENT</p>
-        <p>2. GST EXTRA</p>
-        <p>3. EX OUR PLANT</p>
-        <p>4. UP TO 15 DAY DELIVERY CONDITION</p>
-        <p>5. ADVANCE PAYMENT ₹10 DISC TIN</p>
-        <p>6. ADVANCE PAYMENT CP PACK 50 PAISA PER LITRE</p>
-        <p>7. LOADING CHARGES EXTRA</p>
-    </div>
 
-    <button class="copy-btn" onclick="copyRate()">
-        COPY FOR WHATSAPP
-    </button>
+        <p>2. GST EXTRA</p>
+
+        <p>3. EX OUR PLANT</p>
+
+        <p>4. UP TO 15 DAY DELIVERY CONDITION</p>
+
+        <p>5. ADVANCE PAYMENT ₹10 DISC TIN</p>
+
+        <p>
+            6. ADVANCE PAYMENT CP PACK
+            50 PAISA PER LITRE
+        </p>
+
+        <p>7. LOADING CHARGES EXTRA</p>
+
+    </div>
 
 </div>
 
+
 <script>
-function copyRate(){
 
-    let text =
-`JAY SIYARAM
-VISHWAS REFOILS & CONSUMER LIMITED
+/* =========================
+   PALMOLEIN RATE DATA
+========================= */
 
-21 August 2026
+const defaultRates = [
 
-PALMOLEIN
+    {
+        packing:"15 KG N TIN",
+        rate:2324.00
+    },
 
-15 KG N TIN - ₹2324.00
-15 KG S TIN - ₹2279.00
-15 LTR N TIN - ₹2114.00
-15 LTR S TIN - ₹2059.00
-5 LTR JAR - ₹713.00
-4.150 KG JAR - ₹683.00
-2 LTR JAR - ₹292.23
-1.6 KG JAR - ₹267.23
-1 LTR BOTTLE - ₹142.60
-1 LTR POUCH - ₹137.60
-790 GM BOTTLE - ₹132.60
-750 GM POUCH - ₹121.10
-500 ML BOTTLE - ₹72.80
-500 ML POUCH - ₹70.30
-395 GM BOTTLE - ₹67.80
+    {
+        packing:"15 KG S TIN",
+        rate:2279.00
+    },
 
-TERMS & CONDITIONS
-1. NEXT DAY PAYMENT
-2. GST EXTRA
-3. EX OUR PLANT
-4. UP TO 15 DAY DELIVERY CONDITION
-5. ADVANCE PAYMENT ₹10 DISC TIN
-6. ADVANCE PAYMENT CP PACK 50 PAISA PER LITRE
-7. LOADING CHARGES EXTRA`;
+    {
+        packing:"15 LTR N TIN",
+        rate:2114.00
+    },
 
-    navigator.clipboard.writeText(text);
+    {
+        packing:"15 LTR S TIN",
+        rate:2059.00
+    },
 
-    alert("Rate copied! Now paste it in WhatsApp.");
+    {
+        packing:"5 LTR JAR",
+        rate:713.00
+    },
+
+    {
+        packing:"4.150 KG JAR",
+        rate:683.00
+    },
+
+    {
+        packing:"2 LTR JAR",
+        rate:292.23
+    },
+
+    {
+        packing:"1.6 KG JAR",
+        rate:267.23
+    },
+
+    {
+        packing:"1 LTR BOTTLE",
+        rate:142.60
+    },
+
+    {
+        packing:"1 LTR POUCH",
+        rate:137.60
+    },
+
+    {
+        packing:"790 GM BOTTLE",
+        rate:132.60
+    },
+
+    {
+        packing:"750 GM POUCH",
+        rate:121.10
+    },
+
+    {
+        packing:"500 ML BOTTLE",
+        rate:72.80
+    },
+
+    {
+        packing:"500 ML POUCH",
+        rate:70.30
+    },
+
+    {
+        packing:"395 GM BOTTLE",
+        rate:67.80
+    }
+
+];
+
+
+/* =========================
+   LOAD SAVED RATES
+========================= */
+
+let rates =
+    JSON.parse(
+        localStorage.getItem("palmoleinRates")
+    ) || defaultRates;
+
+
+/* =========================
+   DATE
+========================= */
+
+function getToday(){
+
+    const d = new Date();
+
+    const day =
+        String(d.getDate()).padStart(2,"0");
+
+    const month =
+        String(d.getMonth()+1).padStart(2,"0");
+
+    const year =
+        d.getFullYear();
+
+    return `${day} August ${year}`;
 }
+
+document.getElementById("todayDate").innerText =
+    getToday();
+
+
+/* =========================
+   DISPLAY TABLE
+========================= */
+
+function renderTable(){
+
+    const table =
+        document.getElementById("rateTable");
+
+    table.innerHTML = "";
+
+
+    rates.forEach((item,index)=>{
+
+        const row =
+            document.createElement("tr");
+
+
+        row.innerHTML = `
+
+            <td>
+                ${index+1}
+            </td>
+
+
+            <td>
+                <b>
+                    ${item.packing}
+                </b>
+            </td>
+
+
+            <td>
+
+                <input
+                    type="number"
+                    step="0.01"
+                    value="${item.rate.toFixed(2)}"
+                    onchange="changeRate(${index},this.value)"
+                    class="current-rate"
+                >
+
+            </td>
+
+
+            <td>
+
+                <input
+                    type="number"
+                    step="0.01"
+                    placeholder="0"
+                    id="change-${index}"
+                    class="change"
+                >
+
+            </td>
+
+
+            <td>
+
+                <input
+                    type="number"
+                    step="0.01"
+                    value="${item.rate.toFixed(2)}"
+                    id="new-${index}"
+                    class="new-rate"
+                    readonly
+                >
+
+            </td>
+
+        `;
+
+
+        table.appendChild(row);
+
+    });
+
+}
+
+
+/* =========================
+   CHANGE SINGLE RATE
+========================= */
+
+function changeRate(index,value){
+
+    const newValue =
+        parseFloat(value);
+
+    if(
+        !isNaN(newValue) &&
+        newValue >= 0
+    ){
+
+        rates[index].rate =
+            newValue;
+
+        document.getElementById(
+            `new-${index}`
+        ).value =
+            newValue.toFixed(2);
+
+    }
+
+}
+
+
+/* =========================
+   APPLY ADJUSTMENT TO ALL
+========================= */
+
+function applyAdjustment(){
+
+    const adjustment =
+        parseFloat(
+            document.getElementById(
+                "adjustment"
+            ).value
+        );
+
+
+    if(isNaN(adjustment)){
+
+        alert(
+            "Please enter adjustment like +5 or -5"
+        );
+
+        return;
+    }
+
+
+    rates.forEach((item,index)=>{
+
+        const newRate =
+            item.rate + adjustment;
+
+
+        item.rate =
+            Math.max(
+                0,
+                newRate
+            );
+
+
+        document.getElementById(
+            `new-${index}`
+        ).value =
+            item.rate.toFixed(2);
+
+
+        document.getElementById(
+            `change-${index}`
+        ).value =
+            adjustment.toFixed(2);
+
+    });
+
+
+    document.getElementById(
+        "statusText"
+    ).innerText =
+        `Adjustment applied: ${adjustment >= 0 ? "+" : ""}${adjustment}`;
+
+}
+
+
+/* =========================
+   SAVE RATES
+========================= */
+
+function saveRates(){
+
+    localStorage.setItem(
+        "palmoleinRates",
+        JSON.stringify(rates)
+    );
+
+
+    document.getElementById(
+        "statusText"
+    ).innerText =
+        "Rates saved successfully";
+
+
+    alert(
+        "Rates saved successfully!"
+    );
+
+}
+
+
+/* =========================
+   RESET TO ORIGINAL
+========================= */
+
+function resetRates(){
+
+    const confirmReset =
+        confirm(
+            "Are you sure you want to reset all rates?"
+        );
+
+
+    if(!confirmReset){
+
+        return;
+
+    }
+
+
+    rates =
+        JSON.parse(
+            JSON.stringify(
+                defaultRates
+            )
+        );
+
+
+    localStorage.removeItem(
+        "palmoleinRates"
+    );
+
+
+    renderTable();
+
+
+    document.getElementById(
+        "statusText"
+    ).innerText =
+        "Rates reset to original";
+
+
+}
+
+
+/* =========================
+   COPY WHATSAPP
+========================= */
+
+function copyWhatsApp(){
+
+    let text = "";
+
+    text +=
+        "JAY SIYARAM\n";
+
+    text +=
+        "VISHWAS REFOILS & CONSUMER LIMITED\n\n";
+
+    text +=
+        getToday() + "\n\n";
+
+    text +=
+        "PALMOLEIN\n\n";
+
+
+    rates.forEach(item=>{
+
+        text +=
+            item.packing +
+            " - ₹" +
+            item.rate.toFixed(2) +
+            "\n";
+
+    });
+
+
+    text += "\n";
+
+    text +=
+        "TERMS & CONDITIONS\n";
+
+    text +=
+        "1. NEXT DAY PAYMENT\n";
+
+    text +=
+        "2. GST EXTRA\n";
+
+    text +=
+        "3. EX OUR PLANT\n";
+
+    text +=
+        "4. UP TO 15 DAY DELIVERY CONDITION\n";
+
+    text +=
+        "5. ADVANCE PAYMENT ₹10 DISC TIN\n";
+
+    text +=
+        "6. ADVANCE PAYMENT CP PACK 50 PAISA PER LITRE\n";
+
+    text +=
+        "7. LOADING CHARGES EXTRA";
+
+
+    navigator.clipboard.writeText(text)
+        .then(()=>{
+
+            alert(
+                "Rate card copied! Now paste it in WhatsApp."
+            );
+
+        })
+        .catch(()=>{
+
+            alert(
+                "Copy failed. Please try again."
+            );
+
+        });
+
+}
+
+
+/* =========================
+   START
+========================= */
+
+renderTable();
+
 </script>
 
 </body>
