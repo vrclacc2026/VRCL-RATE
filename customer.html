@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Vishwas Refoils - Rate List</title>
+
+<style>
+
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    background:#f5f5f5;
+    font-family:Arial,Helvetica,sans-serif;
+    color:#222;
+}
+
+/* HEADER */
+
+.header{
+    background:#ffffff;
+    text-align:center;
+    padding:12px 10px;
+    box-shadow:0 2px 8px rgba(0,0,0,.12);
+}
+
+.logo{
+    width:170px;
+    max-width:70%;
+}
+
+.company{
+    font-size:18px;
+    font-weight:bold;
+    margin-top:5px;
+}
+
+.date{
+    font-size:13px;
+    color:#666;
+    margin-top:4px;
+}
+
+/* CITY */
+
+.city-bar{
+    background:#a90000;
+    color:white;
+    text-align:center;
+    padding:11px;
+    font-size:18px;
+    font-weight:bold;
+}
+
+/* MAIN */
+
+.container{
+    max-width:900px;
+    margin:auto;
+    padding:12px;
+}
+
+/* PRODUCT TABS */
+
+.product-tabs{
+    display:flex;
+    gap:6px;
+    overflow-x:auto;
+    padding-bottom:10px;
+}
+
+.product-tabs button{
+    white-space:nowrap;
+    border:0;
+    background:#ddd;
+    padding:9px 14px;
+    border-radius:20px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.product-tabs button.active{
+    background:#a90000;
+    color:white;
+}
+
+/* MONTH */
+
+.month-box{
+    background:white;
+    padding:10px;
+    border-radius:10px;
+    margin-bottom:12px;
+    text-align:center;
+}
+
+.month-box button{
+    border:1px solid #aaa;
+    background:white;
+    padding:8px 15px;
+    border-radius:7px;
+    margin:3px;
+    cursor:pointer;
+}
+
+.month-box button.active{
+    background:#a90000;
+    color:white;
+}
+
+/* PRODUCT */
+
+.product-card{
+    background:white;
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:0 2px 10px rgba(0,0,0,.08);
+    margin-bottom:15px;
+}
+
+.product-title{
+    background:#a90000;
+    color:white;
+    padding:12px;
+    font-size:18px;
+    font-weight:bold;
+}
+
+.product-photo{
+    width:100%;
+    height:130px;
+    object-fit:contain;
+    background:#fafafa;
+    padding:10px;
+}
+
+.rate-table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.rate-table th{
+    background:#eeeeee;
+    padding:9px;
+    text-align:left;
+}
+
+.rate-table td{
+    padding:9px;
+    border-top:1px solid #eee;
+}
+
+.rate{
+    text-align:right;
+    font-size:16px;
+    font-weight:bold;
+}
+
+/* TERMS */
+
+.terms{
+    background:white;
+    padding:15px;
+    border-radius:12px;
+    margin-top:15px;
+}
+
+.terms h3{
+    margin-top:0;
+    color:#a90000;
+}
+
+.terms p{
+    margin:7px 0;
+    font-size:14px;
+}
+
+/* WHATSAPP */
+
+.whatsapp{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    background:#198754;
+    color:white;
+    border:0;
+    padding:13px 18px;
+    border-radius:30px;
+    font-weight:bold;
+    box-shadow:0 3px 10px rgba(0,0,0,.25);
+    cursor:pointer;
+}
+
+/* FOOTER */
+
+.footer{
+    text-align:center;
+    color:#777;
+    font-size:12px;
+    padding:20px;
+}
+
+@media(max-width:600px){
+
+    .company{
+        font-size:15px;
+    }
+
+    .rate-table td,
+    .rate-table th{
+        padding:8px 6px;
+        font-size:13px;
+    }
+
+    .rate{
+        font-size:14px;
+    }
+
+}
+
+</style>
+</head>
+
+
+<body>
+
+
+<!-- HEADER -->
+
+<div class="header">
+
+    <img
+        src="assets/images/vishwas-logo.png"
+        class="logo"
+        onerror="this.style.display='none'"
+    >
+
+    <div class="company">
+        VISHWAS REFOILS & CONSUMER LIMITED
+    </div>
+
+    <div class="date" id="date">
+    </div>
+
+</div>
+
+
+<!-- CITY -->
+
+<div class="city-bar" id="cityName">
+    RAJKOT RATE
+</div>
+
+
+<div class="container">
+
+
+<!-- PRODUCT TABS -->
+
+<div class="product-tabs">
+
+    <button
+        class="active"
+        onclick="selectProduct('palm',this)"
+    >
+        PALMOLEIN
+    </button>
+
+    <button
+        onclick="selectProduct('visvita',this)"
+    >
+        VISVITA
+    </button>
+
+    <button
+        onclick="selectProduct('sunflower',this)"
+    >
+        SUNFLOWER
+    </button>
+
+    <button
+        onclick="selectProduct('groundnut',this)"
+    >
+        GROUNDNUT
+    </button>
+
+    <button
+        onclick="selectProduct('cotton',this)"
+    >
+        COTTON
+    </button>
+
+    <button
+        onclick="selectProduct('mustard',this)"
+    >
+        MUSTARD
+    </button>
+
+    <button
+        onclick="selectProduct('soya',this)"
+    >
+        SOYA
+    </button>
+
+</div>
+
+
+<!-- MONTH -->
+
+<div
+    class="month-box"
+    id="monthBox"
+>
+
+    <b>RATE MONTH</b>
+
+    <br>
+
+    <button
+        class="active"
+        onclick="selectMonth('AUG',this)"
+    >
+        AUG
+    </button>
+
+    <button
+        onclick="selectMonth('SEP',this)"
+    >
+        SEP
+    </button>
+
+</div>
+
+
+<!-- PRODUCT -->
+
+<div
+    class="product-card"
+>
+
+    <div
+        class="product-title"
+        id="productTitle"
+    >
+        Palmolein
+    </div>
+
+
+    <img
+        id="productPhoto"
+        class="product-photo"
+        src="assets/images/products/palm.jpg"
+        onerror="this.style.display='none'"
+    >
+
+
+    <table class="rate-table">
+
+        <thead>
+
+            <tr>
+
+                <th>
+                    PACKING
+                </th>
+
+                <th style="text-align:right">
+                    RATE
+                </th>
+
+            </tr>
+
+        </thead>
+
+        <tbody
+            id="rateBody"
+        >
+
+        </tbody>
+
+    </table>
+
+</div>
+
+
+<!-- TERMS -->
+
+<div class="terms">
+
+    <h3>
+        TERMS & CONDITIONS
+    </h3>
+
+    <p>
+        (1) NEXT DAY PAYMENT
+    </p>
+
+    <p>
+        (2) GST EXTRA
+    </p>
+
+    <p>
+        (3) EX OUR PLANT
+    </p>
+
+    <p>
+        (4) UP TO 15 DAY DELIVERY CONDITION
+    </p>
+
+    <p>
+        *(5) ADVANCE PAYMENT ₹10 DISC TIN*
+    </p>
+
+    <p>
+        *(6) ADVANCE PAYMENT CP PACK 50 PAISA PER LITRE*
+    </p>
+
+    <p>
+        (7) LOADING CHARGES EXTRA
+    </p>
+
+</div>
+
+
+</div>
+
+
+<button
+    class="whatsapp"
+    onclick="copyWhatsApp()"
+>
+    COPY FOR WHATSAPP
+</button>
+
+
+<div class="footer">
+
+    Vishwas Refoils & Consumer Limited
+
+</div>
+
+
+
+<script>
+
+
+// =================================================
+// CUSTOMER CITY
+// =================================================
+//
+// IMPORTANT:
+// Later Firebase permission ke according
+// ye city automatically set hogi.
+//
+// Testing ke liye:
+// rajkot
+// ahmedabad
+// udaan
+// =================================================
+
+
+const CUSTOMER_CITY =
+    localStorage.getItem(
+        "customerCity"
+    )
+    ||
+    "rajkot";
+
+
+// =================================================
+// PRODUCT NAMES
+// =================================================
+
+
+const productNames = {
+
+    palm:"Palmolein",
+
+    visvita:"Visvita",
+
+    sunflower:"Sunflower",
+
+    groundnut:"Groundnut",
+
+    cotton:"Cottonseed",
+
+    mustard:"Mustard",
+
+    soya:"Soya"
+
+};
+
+
+// =================================================
+// PRODUCT PHOTOS
+// =================================================
+
+
+const productPhotos = {
+
+    palm:
+    "assets/images/products/palm.jpg",
+
+    visvita:
+    "assets/images/products/visvita.jpg",
+
+    sunflower:
+    "assets/images/products/sunflower.jpg",
+
+    groundnut:
+    "assets/images/products/groundnut.jpg",
+
+    cotton:
+    "assets/images/products/cotton.jpg",
+
+    mustard:
+    "assets/images/products/mustard.jpg",
+
+    soya:
+    "assets/images/products/soya.jpg"
+
+};
+
+
+// =================================================
+// PALMOLEIN DEMO DATA
+// =================================================
+
+
+const palmData = [
+
+    ["15 KG N TIN",2384],
+
+    ["15 KG S TIN",2339],
+
+    ["15 LTR N TIN",2174],
+
+    ["15 LTR S TIN",2129],
+
+    ["5 LTR JAR",731],
+
+    ["4.150 KG JAR",701],
+
+    ["2 LTR JAR",299.46],
+
+    ["1.6 KG JAR",274.46],
+
+    ["1 LTR BOTTLE",146.20],
+
+    ["1 LTR POUCH",141.20],
+
+    ["790 GM BOTTLE",136.20],
+
+    ["750 GM POUCH",124.70],
+
+    ["500 ML BOTTLE",74.60],
+
+    ["500 ML POUCH",72.10],
+
+    ["395 GM BOTTLE",69.60]
+
+];
+
+
+// =================================================
+// VISVITA
+// =================================================
+
+
+const visvitaData = [
+
+    ["15 KG OLD TIN",0],
+
+    ["15 KG NEW TIN",0]
+
+];
+
+
+// =================================================
+// OTHER PRODUCTS
+// =================================================
+
+
+const emptyProduct = [
+
+    ["15 KG",0],
+
+    ["5 LTR",0],
+
+    ["1 LTR",0],
+
+    ["500 ML",0]
+
+];
+
+
+// =================================================
+// GET PRODUCT DATA
+// =================================================
+
+
+function getProductData(
+    product
+){
+
+    if(
+        product === "palm"
+    ){
+
+        return palmData;
+
+    }
+
+
+    if(
+        product === "visvita"
+    ){
+
+        return visvitaData;
+
+    }
+
+
+    return emptyProduct;
+
+}
+
+
+// =================================================
+// CURRENT PRODUCT
+// =================================================
+
+
+let currentProduct =
+    "palm";
+
+
+// =================================================
+// CURRENT MONTH
+// =================================================
+
+
+let currentMonth =
+    "AUG";
+
+
+// =================================================
+// DATE
+// =================================================
+
+
+document
+.getElementById(
+    "date"
+)
+.innerText =
+new Date()
+.toLocaleDateString(
+    "en-IN",
+    {
+        day:"2-digit",
+        month:"long",
+        year:"numeric"
+    }
+);
+
+
+// =================================================
+// CITY NAME
+// =================================================
+
+
+const cityNames = {
+
+    rajkot:
+    "RAJKOT RATE",
+
+    ahmedabad:
+    "AHMEDABAD RATE",
+
+    udaan:
+    "UDAAN RATE"
+
+};
+
+
+document
+.getElementById(
+    "cityName"
+)
+.innerText =
+cityNames[
+    CUSTOMER_CITY
+]
+||
+"RATE";
+
+
+// =================================================
+// LOAD RATES FROM ADMIN
+// =================================================
+
+
+function getSavedRates(){
+
+    const saved =
+        localStorage.getItem(
+            "vishwasRates"
+        );
+
+
+    if(
+        saved
+    ){
+
+        return JSON.parse(
+            saved
+        );
+
+    }
+
+
+    return {};
+
+}
+
+
+// =================================================
+// LOAD PRODUCT
+// =================================================
+
+
+function loadProduct(){
+
+    const body =
+        document.getElementById(
+            "rateBody"
+        );
+
+
+    body.innerHTML = "";
+
+
+    const data =
+        getProductData(
+            currentProduct
+        );
+
+
+    const savedRates =
+        getSavedRates();
+
+
+    let cityData =
+        savedRates
+        ?.
+        [CUSTOMER_CITY]
+        ?.
+        [currentProduct];
+
+
+    data.forEach(
+        (item,index) => {
+
+            let rate =
+                item[1];
+
+
+            if(
+                cityData &&
+                cityData[index]
+            ){
+
+                rate =
+                    cityData[index]
+                    .rate;
+
+            }
+
+
+            const tr =
+                document.createElement(
+                    "tr"
+                );
+
+
+            tr.innerHTML = `
+
+                <td>
+                    ${item[0]}
+                </td>
+
+                <td class="rate">
+                    ₹${Number(rate).toFixed(2)}
+                </td>
+
+            `;
+
+
+            body.appendChild(
+                tr
+            );
+
+        }
+    );
+
+
+    document
+    .getElementById(
+        "productTitle"
+    )
+    .innerText =
+    productNames[
+        currentProduct
+    ];
+
+
+    document
+    .getElementById(
+        "productPhoto"
+    )
+    .src =
+    productPhotos[
+        currentProduct
+    ];
+
+}
+
+
+// =================================================
+// SELECT PRODUCT
+// =================================================
+
+
+function selectProduct(
+    product,
+    button
+){
+
+    currentProduct =
+        product;
+
+
+    document
+    .querySelectorAll(
+        ".product-tabs button"
+    )
+    .forEach(
+        btn =>
+        btn.classList.remove(
+            "active"
+        )
+    );
+
+
+    button.classList.add(
+        "active"
+    );
+
+
+    loadProduct();
+
+}
+
+
+// =================================================
+// SELECT MONTH
+// =================================================
+
+
+function selectMonth(
+    month,
+    button
+){
+
+    currentMonth =
+        month;
+
+
+    document
+    .querySelectorAll(
+        ".month-box button"
+    )
+    .forEach(
+        btn =>
+        btn.classList.remove(
+            "active"
+        )
+    );
+
+
+    button.classList.add(
+        "active"
+    );
+
+
+    loadProduct();
+
+}
+
+
+// =================================================
+// COPY WHATSAPP
+// =================================================
+
+
+function copyWhatsApp(){
+
+    let text =
+        "JAY SIYARAM\n\n";
+
+
+    text +=
+        "VISHWAS REFOILS & CONSUMER LIMITED\n";
+
+
+    text +=
+        document
+        .getElementById(
+            "date"
+        )
+        .innerText
+        + "\n\n";
+
+
+    text +=
+        productNames[
+            currentProduct
+        ]
+        + "\n";
+
+
+    text +=
+        "-------------------------\n";
+
+
+    const data =
+        getProductData(
+            currentProduct
+        );
+
+
+    const savedRates =
+        getSavedRates();
+
+
+    const cityData =
+        savedRates
+        ?.
+        [CUSTOMER_CITY]
+        ?.
+        [currentProduct];
+
+
+    data.forEach(
+        (item,index) => {
+
+            let rate =
+                item[1];
+
+
+            if(
+                cityData &&
+                cityData[index]
+            ){
+
+                rate =
+                    cityData[index]
+                    .rate;
+
+            }
+
+
+            text +=
+                item[0]
+                +
+                " : ₹"
+                +
+                Number(rate)
+                .toFixed(2)
+                +
+                "\n";
+
+        }
+    );
+
+
+    text +=
+        "\nTERMS & CONDITIONS\n";
+
+
+    text +=
+        "(1) NEXT DAY PAYMENT\n";
+
+
+    text +=
+        "(2) GST EXTRA\n";
+
+
+    text +=
+        "(3) EX OUR PLANT\n";
+
+
+    text +=
+        "(4) UP TO 15 DAY DELIVERY CONDITION\n";
+
+
+    text +=
+        "*(5) ADVANCE PAYMENT ₹10 DISC TIN*\n";
+
+
+    text +=
+        "*(6) ADVANCE PAYMENT CP PACK 50 PAISA PER LITRE*\n";
+
+
+    text +=
+        "(7) LOADING CHARGES EXTRA";
+
+
+    navigator
+    .clipboard
+    .writeText(
+        text
+    )
+    .then(
+        () => {
+
+            alert(
+                "Rate list copied. Ab WhatsApp me paste kar sakte ho."
+            );
+
+        }
+    );
+
+}
+
+
+// =================================================
+// START
+// =================================================
+
+
+loadProduct();
+
+
+</script>
+
+</body>
+</html>
