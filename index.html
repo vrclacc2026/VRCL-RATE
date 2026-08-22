@@ -4,11 +4,9 @@
 <head>
 
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
-
-<title>Vishwas Cooking Oil - Rate</title>
+<title>Vishwas Refoils - Daily Rate</title>
 
 <style>
 
@@ -18,228 +16,350 @@ content="width=device-width, initial-scale=1.0">
 
 body{
     margin:0;
-    font-family:Arial, sans-serif;
-    background:#f5f6f8;
+    font-family:Arial,Helvetica,sans-serif;
+    background:#f4f5f7;
     color:#222;
 }
 
-/* HEADER */
+/* ================= HEADER ================= */
 
 .header{
-    background:white;
-    padding:15px;
+    background:#fff;
     text-align:center;
+    padding:18px 15px;
     box-shadow:0 2px 10px rgba(0,0,0,.12);
 }
 
 .logo{
-    width:170px;
-    max-width:80%;
+    width:190px;
+    max-width:75%;
     height:auto;
 }
 
 .company{
-    font-weight:bold;
-    font-size:16px;
     margin-top:8px;
+    font-size:17px;
+    font-weight:bold;
 }
 
 .date{
-    color:#666;
     margin-top:5px;
+    color:#777;
+    font-size:14px;
 }
 
-/* TOP BAR */
 
-.topbar{
-    background:#b30000;
-    color:white;
-    padding:14px;
+/* ================= CITY BAR ================= */
+
+.city-section{
+    background:#a90000;
+    padding:18px;
     text-align:center;
-    font-size:20px;
+}
+
+.city-title{
+    color:#fff;
+    font-size:23px;
     font-weight:bold;
+    margin-bottom:12px;
 }
 
-/* CITY */
-
-.city-box{
-    max-width:1100px;
-    margin:20px auto 10px;
-    padding:0 15px;
-}
-
-.city-box select{
-    width:100%;
-    max-width:350px;
-    padding:12px;
+.city-select{
+    width:300px;
+    max-width:90%;
+    padding:12px 15px;
+    border:0;
     border-radius:8px;
-    border:1px solid #bbb;
     font-size:16px;
+    font-weight:bold;
+    outline:none;
 }
 
-/* PRODUCT GRID */
 
-.products{
-    max-width:1100px;
-    margin:auto;
-    padding:15px;
+/* ================= PRODUCT MENU ================= */
 
-    display:grid;
+.product-menu{
+    max-width:1200px;
+    margin:20px auto 0;
+    padding:0 15px;
 
-    grid-template-columns:
-    repeat(auto-fit,minmax(230px,1fr));
-
-    gap:18px;
+    display:flex;
+    gap:10px;
+    overflow-x:auto;
 }
 
-/* PRODUCT CARD */
+.product-menu button{
 
-.product-card{
-    background:white;
-    border-radius:14px;
-    overflow:hidden;
+    flex-shrink:0;
 
-    box-shadow:
-    0 3px 15px rgba(0,0,0,.10);
+    padding:11px 17px;
 
-    transition:.2s;
-}
-
-.product-card:hover{
-    transform:translateY(-3px);
-}
-
-/* PRODUCT IMAGE */
-
-.product-image{
-    width:100%;
-    height:180px;
-
-    object-fit:contain;
+    border:1px solid #ccc;
 
     background:#fff;
 
-    padding:12px;
-}
+    border-radius:8px;
 
-/* PRODUCT NAME */
-
-.product-name{
-    font-size:20px;
-    font-weight:bold;
-    padding:12px 15px 5px;
-}
-
-/* RATE */
-
-.rate{
-    font-size:25px;
-    font-weight:bold;
-
-    color:#b30000;
-
-    padding:5px 15px;
-}
-
-/* UPDATED */
-
-.updated{
-    color:#777;
-    font-size:12px;
-    padding:0 15px 10px;
-}
-
-/* BUTTON */
-
-.copy-btn{
-    margin:0 15px 15px;
-
-    width:calc(100% - 30px);
-
-    padding:11px;
-
-    background:#198754;
-    color:white;
-
-    border:0;
-    border-radius:7px;
-
-    font-size:15px;
     font-weight:bold;
 
     cursor:pointer;
 }
 
-.copy-btn:hover{
-    opacity:.85;
+.product-menu button.active{
+
+    background:#a90000;
+    color:white;
+    border-color:#a90000;
+
 }
 
-/* PACKING TABLE */
 
-.rate-details{
-    padding:0 15px 15px;
-}
+/* ================= PRODUCT ================= */
 
-.rate-details table{
-    width:100%;
-    border-collapse:collapse;
-}
+.product-area{
 
-.rate-details th,
-.rate-details td{
-    border:1px solid #ddd;
-    padding:7px;
-    font-size:13px;
-}
+    max-width:1200px;
 
-.rate-details th{
-    background:#f1f1f1;
-}
-
-/* TERMS */
-
-.terms{
-    max-width:1100px;
     margin:20px auto;
 
-    background:white;
+    padding:0 15px;
+
+}
+
+.product-card{
+
+    background:#fff;
+
+    border-radius:15px;
+
+    overflow:hidden;
+
+    box-shadow:0 3px 15px rgba(0,0,0,.10);
+
+}
+
+
+/* ================= PRODUCT TOP ================= */
+
+.product-top{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:20px;
 
     padding:20px;
+
+    border-bottom:1px solid #eee;
+
+}
+
+.product-image{
+
+    width:130px;
+    height:130px;
+
+    object-fit:contain;
+
+    border-radius:10px;
+
+    background:#fff;
+
+}
+
+.product-info h1{
+
+    margin:0 0 8px;
+
+    font-size:28px;
+
+}
+
+.product-info p{
+
+    margin:4px 0;
+
+    color:#777;
+
+}
+
+
+/* ================= RATE TABLE ================= */
+
+.table-wrapper{
+
+    overflow-x:auto;
+
+    padding:20px;
+
+}
+
+.rate-table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+    min-width:650px;
+
+}
+
+.rate-table th{
+
+    background:#eeeeee;
+
+    padding:13px;
+
+    border:1px solid #ddd;
+
+    text-align:left;
+
+}
+
+.rate-table td{
+
+    padding:12px;
+
+    border:1px solid #ddd;
+
+}
+
+.rate-table tr:hover{
+
+    background:#fafafa;
+
+}
+
+.rate{
+
+    font-size:17px;
+
+    font-weight:bold;
+
+}
+
+.rate-zero{
+
+    color:#999;
+
+}
+
+
+/* ================= TERMS ================= */
+
+.terms{
+
+    max-width:1200px;
+
+    margin:20px auto;
+
+    padding:20px 15px;
+
+}
+
+.terms-box{
+
+    background:#fff;
 
     border-radius:12px;
 
-    box-shadow:
-    0 3px 12px rgba(0,0,0,.08);
+    padding:20px;
+
+    box-shadow:0 3px 12px rgba(0,0,0,.08);
+
 }
 
-.terms h3{
+.terms-box h2{
+
     margin-top:0;
+
+    font-size:20px;
+
 }
 
-/* FOOTER */
+.terms-box p{
+
+    margin:9px 0;
+
+}
+
+
+/* ================= WHATSAPP ================= */
+
+.whatsapp-btn{
+
+    display:block;
+
+    width:calc(100% - 40px);
+
+    margin:0 20px 20px;
+
+    padding:13px;
+
+    border:0;
+
+    border-radius:8px;
+
+    background:#198754;
+
+    color:white;
+
+    font-size:16px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+}
+
+.whatsapp-btn:hover{
+
+    opacity:.9;
+
+}
+
+
+/* ================= FOOTER ================= */
 
 .footer{
-    margin-top:30px;
+
     background:#222;
-    color:white;
+
+    color:#fff;
+
     text-align:center;
-    padding:20px;
+
+    padding:22px;
+
+    margin-top:30px;
+
 }
 
-/* MOBILE */
 
-@media(max-width:600px){
+/* ================= MOBILE ================= */
 
-    .logo{
-        width:140px;
+@media(max-width:650px){
+
+    .product-top{
+
+        flex-direction:column;
+
+        text-align:center;
+
     }
 
-    .topbar{
-        font-size:18px;
+    .product-info h1{
+
+        font-size:23px;
+
     }
 
-    .products{
-        grid-template-columns:1fr;
+    .product-image{
+
+        width:150px;
+        height:150px;
+
     }
 
 }
@@ -252,7 +372,9 @@ body{
 <body>
 
 
-<!-- ================= HEADER ================= -->
+<!-- =====================================================
+     HEADER
+===================================================== -->
 
 <div class="header">
 
@@ -263,38 +385,49 @@ body{
     >
 
     <div class="company">
+
         VISHWAS REFOILS & CONSUMER LIMITED
+
     </div>
 
     <div class="date">
+
         Rate Date:
-        <span id="today"></span>
+        <span id="rateDate"></span>
+
     </div>
 
 </div>
 
 
-<!-- ================= TITLE ================= -->
+<!-- =====================================================
+     CITY
+===================================================== -->
 
-<div class="topbar">
+<div class="city-section">
 
-    TODAY'S OIL RATE
+    <div class="city-title">
 
-</div>
+        TODAY'S RATE
 
+    </div>
 
-<!-- ================= CITY ================= -->
+    <select
+        id="citySelect"
+        class="city-select"
+        onchange="changeCity()"
+    >
 
-<div class="city-box">
-
-    <select id="city">
-
-        <option value="Rajkot">
-            Rajkot
+        <option value="rajkot">
+            RAJKOT
         </option>
 
-        <option value="Ahmedabad">
-            Ahmedabad
+        <option value="ahmedabad">
+            AHMEDABAD
+        </option>
+
+        <option value="udaan">
+            UDAAN
         </option>
 
     </select>
@@ -302,399 +435,79 @@ body{
 </div>
 
 
-<!-- ================= PRODUCTS ================= -->
+<!-- =====================================================
+     PRODUCT MENU
+===================================================== -->
 
-<div class="products">
-
-
-<!-- PALM -->
-
-<div class="product-card">
-
-    <img
-        src="images/palm.jpg"
-        class="product-image"
-        alt="Palm Oil"
-    >
-
-    <div class="product-name">
-        Palmolein
-    </div>
-
-    <div class="rate">
-        ₹2324.00
-    </div>
-
-    <div class="updated">
-        Updated today
-    </div>
-
-    <div class="rate-details">
-
-        <table>
-
-            <tr>
-                <th>Packing</th>
-                <th>Rate</th>
-            </tr>
-
-            <tr>
-                <td>15 KG N TIN</td>
-                <td>₹2324.00</td>
-            </tr>
-
-            <tr>
-                <td>15 KG S TIN</td>
-                <td>₹2279.00</td>
-            </tr>
-
-            <tr>
-                <td>15 LTR N TIN</td>
-                <td>₹2114.00</td>
-            </tr>
-
-            <tr>
-                <td>15 LTR S TIN</td>
-                <td>₹2059.00</td>
-            </tr>
-
-        </table>
-
-    </div>
-
-    <button
-        class="copy-btn"
-        onclick="copyProduct('Palmolein')"
-    >
-        COPY FOR WHATSAPP
-    </button>
+<div
+    class="product-menu"
+    id="productMenu"
+>
 
 </div>
 
 
-<!-- SUNFLOWER -->
+<!-- =====================================================
+     PRODUCT AREA
+===================================================== -->
 
-<div class="product-card">
-
-    <img
-        src="images/sunflower.jpg"
-        class="product-image"
-        alt="Sunflower Oil"
-    >
-
-    <div class="product-name">
-        Sunflower
-    </div>
-
-    <div class="rate">
-        ₹0.00
-    </div>
-
-    <div class="updated">
-        Updated today
-    </div>
-
-    <div class="rate-details">
-
-        <table>
-
-            <tr>
-                <th>Packing</th>
-                <th>Rate</th>
-            </tr>
-
-            <tr>
-                <td>15 KG</td>
-                <td>₹0.00</td>
-            </tr>
-
-            <tr>
-                <td>1 LTR</td>
-                <td>₹0.00</td>
-            </tr>
-
-        </table>
-
-    </div>
-
-    <button
-        class="copy-btn"
-        onclick="copyProduct('Sunflower')"
-    >
-        COPY FOR WHATSAPP
-    </button>
+<div
+    class="product-area"
+    id="productArea"
+>
 
 </div>
 
 
-<!-- GROUNDNUT -->
-
-<div class="product-card">
-
-    <img
-        src="images/groundnut.jpg"
-        class="product-image"
-        alt="Groundnut Oil"
-    >
-
-    <div class="product-name">
-        Groundnut
-    </div>
-
-    <div class="rate">
-        ₹0.00
-    </div>
-
-    <div class="updated">
-        Updated today
-    </div>
-
-    <button
-        class="copy-btn"
-        onclick="copyProduct('Groundnut')"
-    >
-        COPY FOR WHATSAPP
-    </button>
-
-</div>
-
-
-<!-- COTTON -->
-
-<div class="product-card">
-
-    <img
-        src="images/cotton.jpg"
-        class="product-image"
-        alt="Cottonseed Oil"
-    >
-
-    <div class="product-name">
-        Cottonseed
-    </div>
-
-    <div class="rate">
-        ₹0.00
-    </div>
-
-    <div class="updated">
-        Updated today
-    </div>
-
-    <button
-        class="copy-btn"
-        onclick="copyProduct('Cottonseed')"
-    >
-        COPY FOR WHATSAPP
-    </button>
-
-</div>
-
-
-<!-- MUSTARD -->
-
-<div class="product-card">
-
-    <img
-        src="images/mustard.jpg"
-        class="product-image"
-        alt="Mustard Oil"
-    >
-
-    <div class="product-name">
-        Mustard
-    </div>
-
-    <div class="rate">
-        ₹0.00
-    </div>
-
-    <div class="updated">
-        Updated today
-    </div>
-
-    <button
-        class="copy-btn"
-        onclick="copyProduct('Mustard')"
-    >
-        COPY FOR WHATSAPP
-    </button>
-
-</div>
-
-
-<!-- SOYA -->
-
-<div class="product-card">
-
-    <img
-        src="images/soya.jpg"
-        class="product-image"
-        alt="Soya Oil"
-    >
-
-    <div class="product-name">
-        Soya
-    </div>
-
-    <div class="rate">
-        ₹0.00
-    </div>
-
-    <div class="updated">
-        Updated today
-    </div>
-
-    <button
-        class="copy-btn"
-        onclick="copyProduct('Soya')"
-    >
-        COPY FOR WHATSAPP
-    </button>
-
-</div>
-
-
-<!-- CORN -->
-
-<div class="product-card">
-
-    <img
-        src="images/corn.jpg"
-        class="product-image"
-        alt="Corn Oil"
-    >
-
-    <div class="product-name">
-        Corn
-    </div>
-
-    <div class="rate">
-        ₹0.00
-    </div>
-
-    <div class="updated">
-        Updated today
-    </div>
-
-    <button
-        class="copy-btn"
-        onclick="copyProduct('Corn')"
-    >
-        COPY FOR WHATSAPP
-    </button>
-
-</div>
-
-
-<!-- CASTOR -->
-
-<div class="product-card">
-
-    <img
-        src="images/castor.jpg"
-        class="product-image"
-        alt="Castor Oil"
-    >
-
-    <div class="product-name">
-        Castor
-    </div>
-
-    <div class="rate">
-        ₹0.00
-    </div>
-
-    <div class="updated">
-        Updated today
-    </div>
-
-    <button
-        class="copy-btn"
-        onclick="copyProduct('Castor')"
-    >
-        COPY FOR WHATSAPP
-    </button>
-
-</div>
-
-
-<!-- RICE BRAN -->
-
-<div class="product-card">
-
-    <img
-        src="images/ricebran.jpg"
-        class="product-image"
-        alt="Rice Bran Oil"
-    >
-
-    <div class="product-name">
-        Rice Bran
-    </div>
-
-    <div class="rate">
-        ₹0.00
-    </div>
-
-    <div class="updated">
-        Updated today
-    </div>
-
-    <button
-        class="copy-btn"
-        onclick="copyProduct('Rice Bran')"
-    >
-        COPY FOR WHATSAPP
-    </button>
-
-</div>
-
-
-</div>
-
-
-<!-- ================= TERMS ================= -->
+<!-- =====================================================
+     TERMS
+===================================================== -->
 
 <div class="terms">
 
-    <h3>
-        TERMS & CONDITIONS
-    </h3>
+    <div class="terms-box">
 
-    <p>
-        1. NEXT DAY PAYMENT
-    </p>
+        <h2>
+            TERMS & CONDITIONS
+        </h2>
 
-    <p>
-        2. GST EXTRA
-    </p>
+        <p>
+            (1) NEXT DAY PAYMENT
+        </p>
 
-    <p>
-        3. EX OUR PLANT
-    </p>
+        <p>
+            (2) GST EXTRA
+        </p>
 
-    <p>
-        4. UP TO 15 DAY DELIVERY CONDITION
-    </p>
+        <p>
+            (3) EX OUR PLANT
+        </p>
 
-    <p>
-        5. ADVANCE PAYMENT ₹10 DISC TIN
-    </p>
+        <p>
+            (4) UP TO 15 DAY DELIVERY CONDITION
+        </p>
 
-    <p>
-        6. ADVANCE PAYMENT CP PACK
-        50 PAISA PER LITRE
-    </p>
+        <p>
+            *(5) ADVANCE PAYMENT 10 RS DISC TIN*
+        </p>
 
-    <p>
-        7. LOADING CHARGES EXTRA
-    </p>
+        <p>
+            *(6) ADVANCE PAYMENT CP PACK
+            50 PAISA PER LITRE*
+        </p>
+
+        <p>
+            (7) LOADING CHARGES EXTRA
+        </p>
+
+    </div>
 
 </div>
 
 
-<!-- ================= FOOTER ================= -->
+<!-- =====================================================
+     FOOTER
+===================================================== -->
 
 <div class="footer">
 
@@ -705,12 +518,534 @@ body{
 
 <script>
 
-/* DATE */
 
-const now = new Date();
+/* =====================================================
+   ALL PACKING / WEIGHT OPTIONS
+===================================================== */
 
-document.getElementById("today").innerText =
-    now.toLocaleDateString(
+const packings = [
+
+    "15 KG N TIN",
+
+    "15 KG S TIN",
+
+    "15 LTR N TIN",
+
+    "15 LTR S TIN",
+
+    "5 LTR JAR",
+
+    "4.150 KG JAR",
+
+    "2 LTR JAR",
+
+    "1.6 KG JAR",
+
+    "1 LTR BOTTLE",
+
+    "1 LTR POUCH",
+
+    "790 GM BOTTLE",
+
+    "750 GM POUCH",
+
+    "500 ML BOTTLE",
+
+    "500 ML POUCH",
+
+    "395 GM BOTTLE"
+
+];
+
+
+/* =====================================================
+   PRODUCTS
+===================================================== */
+
+const products = [
+
+    {
+        id:"palm",
+        name:"Palmolein",
+        image:"images/palm.jpg"
+    },
+
+    {
+        id:"sunflower",
+        name:"Sunflower",
+        image:"images/sunflower.jpg"
+    },
+
+    {
+        id:"groundnut",
+        name:"Groundnut",
+        image:"images/groundnut.jpg"
+    },
+
+    {
+        id:"cotton",
+        name:"Cottonseed",
+        image:"images/cotton.jpg"
+    },
+
+    {
+        id:"mustard",
+        name:"Mustard",
+        image:"images/mustard.jpg"
+    },
+
+    {
+        id:"soya",
+        name:"Soya",
+        image:"images/soya.jpg"
+    },
+
+    {
+        id:"corn",
+        name:"Corn",
+        image:"images/corn.jpg"
+    },
+
+    {
+        id:"castor",
+        name:"Castor",
+        image:"images/castor.jpg"
+    },
+
+    {
+        id:"ricebran",
+        name:"Rice Bran",
+        image:"images/ricebran.jpg"
+    }
+
+];
+
+
+/* =====================================================
+   RATE DATA
+
+   अभी Palm / Rajkot में आपके दिए हुए actual rates.
+   बाकी जगह 0 हैं.
+===================================================== */
+
+const rates = {
+
+    rajkot: {
+
+        palm: [
+
+            2384.00,
+            2339.00,
+            2174.00,
+            2129.00,
+            731.00,
+            701.00,
+            299.46,
+            274.46,
+            146.20,
+            141.20,
+            136.20,
+            124.70,
+            74.60,
+            72.10,
+            69.60
+
+        ]
+
+    },
+
+
+    ahmedabad: {},
+
+
+    udaan: {}
+
+};
+
+
+/* =====================================================
+   GET RATE
+===================================================== */
+
+function getRate(city,product,index){
+
+    if(
+
+        rates[city] &&
+        rates[city][product] &&
+        rates[city][product][index] !== undefined
+
+    ){
+
+        return rates[city][product][index];
+
+    }
+
+    return 0;
+
+}
+
+
+/* =====================================================
+   CREATE EMPTY RATES
+===================================================== */
+
+function createEmptyRates(){
+
+    ["rajkot","ahmedabad","udaan"].forEach(city=>{
+
+        if(!rates[city]){
+
+            rates[city]={};
+
+        }
+
+        products.forEach(product=>{
+
+            if(!rates[city][product.id]){
+
+                rates[city][product.id] =
+                    packings.map(()=>0);
+
+            }
+
+        });
+
+    });
+
+}
+
+
+/* =====================================================
+   CITY
+===================================================== */
+
+let currentCity = "rajkot";
+
+let currentProduct = "palm";
+
+
+function changeCity(){
+
+    currentCity =
+        document.getElementById(
+            "citySelect"
+        ).value;
+
+    renderProducts();
+
+    renderProduct();
+
+}
+
+
+/* =====================================================
+   PRODUCT MENU
+===================================================== */
+
+function renderProducts(){
+
+    const menu =
+        document.getElementById(
+            "productMenu"
+        );
+
+    menu.innerHTML="";
+
+
+    products.forEach(product=>{
+
+        const button =
+            document.createElement("button");
+
+
+        button.innerText =
+            product.name;
+
+
+        if(
+            product.id === currentProduct
+        ){
+
+            button.classList.add(
+                "active"
+            );
+
+        }
+
+
+        button.onclick=function(){
+
+            currentProduct =
+                product.id;
+
+            renderProducts();
+
+            renderProduct();
+
+        };
+
+
+        menu.appendChild(button);
+
+    });
+
+}
+
+
+/* =====================================================
+   RENDER PRODUCT
+===================================================== */
+
+function renderProduct(){
+
+    const product =
+        products.find(
+            p=>p.id===currentProduct
+        );
+
+
+    const area =
+        document.getElementById(
+            "productArea"
+        );
+
+
+    let rows="";
+
+
+    packings.forEach(
+        (packing,index)=>{
+
+            const rate =
+                getRate(
+                    currentCity,
+                    currentProduct,
+                    index
+                );
+
+
+            let rateText;
+
+
+            if(rate > 0){
+
+                rateText =
+                    "₹" +
+                    rate.toFixed(2);
+
+            }else{
+
+                rateText =
+                    "Rate will be updated";
+
+            }
+
+
+            rows += `
+
+                <tr>
+
+                    <td>
+                        ${index+1}
+                    </td>
+
+                    <td>
+                        <b>
+                            ${packing}
+                        </b>
+                    </td>
+
+                    <td
+                        class="rate
+                        ${rate === 0 ? 'rate-zero' : ''}"
+                    >
+
+                        ${rateText}
+
+                    </td>
+
+                </tr>
+
+            `;
+
+        }
+    );
+
+
+    area.innerHTML = `
+
+        <div class="product-card">
+
+            <div class="product-top">
+
+                <img
+                    src="${product.image}"
+                    class="product-image"
+                    alt="${product.name}"
+                    onerror="this.src='logo.jpg'"
+                >
+
+                <div class="product-info">
+
+                    <h1>
+                        ${product.name}
+                    </h1>
+
+                    <p>
+                        ${currentCity.toUpperCase()}
+                    </p>
+
+                    <p>
+                        GST EXTRA
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table class="rate-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                No.
+                            </th>
+
+                            <th>
+                                Product / Packing
+                            </th>
+
+                            <th>
+                                Rate ₹
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        ${rows}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <button
+                class="whatsapp-btn"
+                onclick="copyWhatsApp()"
+            >
+
+                📱 COPY RATE FOR WHATSAPP
+
+            </button>
+
+        </div>
+
+    `;
+
+}
+
+
+/* =====================================================
+   WHATSAPP
+===================================================== */
+
+function copyWhatsApp(){
+
+    const product =
+        products.find(
+            p=>p.id===currentProduct
+        );
+
+
+    let text =
+
+        "JAY SIYARAM\n" +
+
+        "VISHWAS REFOILS & CONSUMER LIMITED\n\n" +
+
+        currentCity.toUpperCase() +
+        " - " +
+        product.name +
+        " RATE\n\n";
+
+
+    packings.forEach(
+        (packing,index)=>{
+
+            const rate =
+                getRate(
+                    currentCity,
+                    currentProduct,
+                    index
+                );
+
+
+            if(rate > 0){
+
+                text +=
+                    packing +
+                    " - ₹" +
+                    rate.toFixed(2) +
+                    "\n";
+
+            }
+
+        }
+    );
+
+
+    text +=
+
+        "\nTERMS & CONDITIONS\n" +
+
+        "(1) NEXT DAY PAYMENT\n" +
+
+        "(2) GST EXTRA\n" +
+
+        "(3) EX OUR PLANT\n" +
+
+        "(4) UP TO 15 DAY DELIVERY CONDITION\n" +
+
+        "(5) ADVANCE PAYMENT 10 RS DISC TIN\n" +
+
+        "(6) ADVANCE PAYMENT CP PACK 50 PAISA PER LITRE\n" +
+
+        "(7) LOADING CHARGES EXTRA";
+
+
+    navigator.clipboard
+        .writeText(text)
+        .then(()=>{
+
+            alert(
+                "Rate copied for WhatsApp!"
+            );
+
+        });
+
+}
+
+
+/* =====================================================
+   DATE
+===================================================== */
+
+document.getElementById(
+    "rateDate"
+).innerText =
+
+    new Date().toLocaleDateString(
         "en-IN",
         {
             day:"2-digit",
@@ -720,32 +1055,15 @@ document.getElementById("today").innerText =
     );
 
 
-/* WHATSAPP COPY */
+/* =====================================================
+   START
+===================================================== */
 
-function copyProduct(product){
+createEmptyRates();
 
-    let text =
-        "JAY SIYARAM\n\n" +
+renderProducts();
 
-        "VISHWAS REFOILS & CONSUMER LIMITED\n\n" +
-
-        product +
-        " RATE\n\n" +
-
-        "Please contact us for today's complete rate card.";
-
-
-    navigator.clipboard
-        .writeText(text)
-        .then(function(){
-
-            alert(
-                "Rate copied for WhatsApp!"
-            );
-
-        });
-
-}
+renderProduct();
 
 </script>
 
