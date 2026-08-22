@@ -1,517 +1,511 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Vishwas Refoils - Daily Rate</title>
-
-<style>
-
-*{
-    box-sizing:border-box;
-}
-
-body{
-    margin:0;
-    font-family:Arial,Helvetica,sans-serif;
-    background:#f4f5f7;
-    color:#222;
-}
-
-/* ================= HEADER ================= */
-
-.header{
-    background:#fff;
-    text-align:center;
-    padding:18px 15px;
-    box-shadow:0 2px 10px rgba(0,0,0,.12);
-}
-
-.logo{
-    width:190px;
-    max-width:75%;
-    height:auto;
-}
-
-.company{
-    margin-top:8px;
-    font-size:17px;
-    font-weight:bold;
-}
-
-.date{
-    margin-top:5px;
-    color:#777;
-    font-size:14px;
-}
-
-
-/* ================= CITY BAR ================= */
-
-.city-section{
-    background:#a90000;
-    padding:18px;
-    text-align:center;
-}
-
-.city-title{
-    color:#fff;
-    font-size:23px;
-    font-weight:bold;
-    margin-bottom:12px;
-}
-
-.city-select{
-    width:300px;
-    max-width:90%;
-    padding:12px 15px;
-    border:0;
-    border-radius:8px;
-    font-size:16px;
-    font-weight:bold;
-    outline:none;
-}
-
-
-/* ================= PRODUCT MENU ================= */
-
-.product-menu{
-    max-width:1200px;
-    margin:20px auto 0;
-    padding:0 15px;
-
-    display:flex;
-    gap:10px;
-    overflow-x:auto;
-}
-
-.product-menu button{
-
-    flex-shrink:0;
-
-    padding:11px 17px;
-
-    border:1px solid #ccc;
-
-    background:#fff;
-
-    border-radius:8px;
-
-    font-weight:bold;
-
-    cursor:pointer;
-}
-
-.product-menu button.active{
-
-    background:#a90000;
-    color:white;
-    border-color:#a90000;
-
-}
-
-
-/* ================= PRODUCT ================= */
-
-.product-area{
-
-    max-width:1200px;
-
-    margin:20px auto;
-
-    padding:0 15px;
-
-}
-
-.product-card{
-
-    background:#fff;
-
-    border-radius:15px;
-
-    overflow:hidden;
-
-    box-shadow:0 3px 15px rgba(0,0,0,.10);
-
-}
-
-
-/* ================= PRODUCT TOP ================= */
-
-.product-top{
-
-    display:flex;
-
-    align-items:center;
-
-    gap:20px;
-
-    padding:20px;
-
-    border-bottom:1px solid #eee;
-
-}
-
-.product-image{
-
-    width:130px;
-    height:130px;
-
-    object-fit:contain;
-
-    border-radius:10px;
-
-    background:#fff;
-
-}
-
-.product-info h1{
-
-    margin:0 0 8px;
-
-    font-size:28px;
-
-}
-
-.product-info p{
-
-    margin:4px 0;
-
-    color:#777;
-
-}
-
-
-/* ================= RATE TABLE ================= */
-
-.table-wrapper{
-
-    overflow-x:auto;
-
-    padding:20px;
-
-}
-
-.rate-table{
-
-    width:100%;
-
-    border-collapse:collapse;
-
-    min-width:650px;
-
-}
-
-.rate-table th{
-
-    background:#eeeeee;
-
-    padding:13px;
-
-    border:1px solid #ddd;
-
-    text-align:left;
-
-}
-
-.rate-table td{
-
-    padding:12px;
-
-    border:1px solid #ddd;
-
-}
-
-.rate-table tr:hover{
-
-    background:#fafafa;
-
-}
-
-.rate{
-
-    font-size:17px;
-
-    font-weight:bold;
-
-}
-
-.rate-zero{
-
-    color:#999;
-
-}
-
-
-/* ================= TERMS ================= */
-
-.terms{
-
-    max-width:1200px;
-
-    margin:20px auto;
-
-    padding:20px 15px;
-
-}
-
-.terms-box{
-
-    background:#fff;
-
-    border-radius:12px;
-
-    padding:20px;
-
-    box-shadow:0 3px 12px rgba(0,0,0,.08);
-
-}
-
-.terms-box h2{
-
-    margin-top:0;
-
-    font-size:20px;
-
-}
-
-.terms-box p{
-
-    margin:9px 0;
-
-}
-
-
-/* ================= WHATSAPP ================= */
-
-.whatsapp-btn{
-
-    display:block;
-
-    width:calc(100% - 40px);
-
-    margin:0 20px 20px;
-
-    padding:13px;
-
-    border:0;
-
-    border-radius:8px;
-
-    background:#198754;
-
-    color:white;
-
-    font-size:16px;
-
-    font-weight:bold;
-
-    cursor:pointer;
-
-}
-
-.whatsapp-btn:hover{
-
-    opacity:.9;
-
-}
-
-
-/* ================= FOOTER ================= */
-
-.footer{
-
-    background:#222;
-
-    color:#fff;
-
-    text-align:center;
-
-    padding:22px;
-
-    margin-top:30px;
-
-}
-
-
-/* ================= MOBILE ================= */
-
-@media(max-width:650px){
-
-    .product-top{
-
-        flex-direction:column;
-
-        text-align:center;
-
-    }
-
-    .product-info h1{
-
-        font-size:23px;
-
-    }
-
-    .product-image{
-
-        width:150px;
-        height:150px;
-
-    }
-
-}
-
-</style>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Vishwas Rate Admin</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f3f4f6;
+            color: #222;
+        }
+
+        .header {
+            background: white;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+
+        .logo {
+            width: 180px;
+            max-width: 80%;
+        }
+
+        .company {
+            font-size: 19px;
+            font-weight: bold;
+            margin-top: 7px;
+        }
+
+        .admin-bar {
+            background: #a90000;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .box {
+            background: white;
+            padding: 18px;
+            border-radius: 12px;
+            margin-bottom: 18px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        .row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .field {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        select,
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 7px;
+            font-size: 15px;
+        }
+
+        .master-box {
+            background: #fff4c7;
+            border: 2px solid #e0b000;
+        }
+
+        .master-input {
+            max-width: 250px;
+            font-size: 24px;
+            font-weight: bold;
+            border: 2px solid #a90000;
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 850px;
+        }
+
+        th {
+            background: #eeeeee;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 9px;
+            text-align: center;
+        }
+
+        th:first-child,
+        td:first-child {
+            text-align: left;
+        }
+
+        .new-rate {
+            font-weight: bold;
+            color: #a90000;
+        }
+
+        .button {
+            padding: 11px 18px;
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            margin-top: 12px;
+        }
+
+        .red {
+            background: #a90000;
+            color: white;
+        }
+
+        .green {
+            background: #198754;
+            color: white;
+        }
+
+        .gray {
+            background: #555;
+            color: white;
+        }
+
+        .info {
+            background: #eef6ff;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            line-height: 1.6;
+        }
+
+        .setting-table input {
+            width: 120px;
+        }
+
+        .status {
+            margin-top: 12px;
+            padding: 10px;
+            background: #e8f5e9;
+            border-radius: 7px;
+            font-weight: bold;
+        }
+
+        @media(max-width:700px) {
+            .container {
+                padding: 10px;
+            }
+
+            .company {
+                font-size: 15px;
+            }
+
+            .master-input {
+                max-width: 100%;
+            }
+        }
+    </style>
 </head>
-
 
 <body>
 
-
-<!-- =====================================================
-     HEADER
-===================================================== -->
+<!-- HEADER -->
 
 <div class="header">
 
     <img
-        src="logo.jpg"
+        src="assets/images/vishwas-logo.png"
         class="logo"
-        alt="Vishwas Cooking Oil"
+        onerror="this.style.display='none'"
     >
 
     <div class="company">
-
         VISHWAS REFOILS & CONSUMER LIMITED
-
-    </div>
-
-    <div class="date">
-
-        Rate Date:
-        <span id="rateDate"></span>
-
     </div>
 
 </div>
 
 
-<!-- =====================================================
-     CITY
-===================================================== -->
+<div class="admin-bar">
 
-<div class="city-section">
+    PRIVATE ADMIN PANEL
 
-    <div class="city-title">
+</div>
 
-        TODAY'S RATE
+
+<div class="container">
+
+
+    <!-- PRODUCT SELECT -->
+
+    <div class="box">
+
+        <h2>PRODUCT & MONTH</h2>
+
+        <div class="row">
+
+            <div class="field">
+
+                <label>PRODUCT</label>
+
+                <select id="product">
+
+                    <option value="palm">
+                        Palmolein
+                    </option>
+
+                    <option value="visvita">
+                        Visvita
+                    </option>
+
+                    <option value="sunflower">
+                        Sunflower
+                    </option>
+
+                    <option value="groundnut">
+                        Groundnut
+                    </option>
+
+                    <option value="cotton">
+                        Cottonseed
+                    </option>
+
+                    <option value="mustard">
+                        Mustard
+                    </option>
+
+                    <option value="soya">
+                        Soya
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="field">
+
+                <label>MONTH</label>
+
+                <select id="month">
+
+                    <option value="AUG">
+                        AUGUST RATE
+                    </option>
+
+                    <option value="SEP">
+                        SEPTEMBER RATE
+                    </option>
+
+                </select>
+
+            </div>
+
+        </div>
 
     </div>
 
-    <select
-        id="citySelect"
-        class="city-select"
-        onchange="changeCity()"
-    >
-
-        <option value="rajkot">
-            RAJKOT
-        </option>
-
-        <option value="ahmedabad">
-            AHMEDABAD
-        </option>
-
-        <option value="udaan">
-            UDAAN
-        </option>
-
-    </select>
-
-</div>
 
 
-<!-- =====================================================
-     PRODUCT MENU
-===================================================== -->
+    <!-- MASTER ADJUSTMENT -->
 
-<div
-    class="product-menu"
-    id="productMenu"
->
-
-</div>
-
-
-<!-- =====================================================
-     PRODUCT AREA
-===================================================== -->
-
-<div
-    class="product-area"
-    id="productArea"
->
-
-</div>
-
-
-<!-- =====================================================
-     TERMS
-===================================================== -->
-
-<div class="terms">
-
-    <div class="terms-box">
+    <div class="box master-box">
 
         <h2>
-            TERMS & CONDITIONS
+            ① 15 KG MASTER ADJUSTMENT
         </h2>
 
         <p>
-            (1) NEXT DAY PAYMENT
+            Yaha sirf 15 KG ka adjustment likho.
         </p>
 
         <p>
-            (2) GST EXTRA
+            Example:
+            <b>15</b>
         </p>
 
-        <p>
-            (3) EX OUR PLANT
-        </p>
+        <label>
+            15 KG RATE CHANGE
+        </label>
 
-        <p>
-            (4) UP TO 15 DAY DELIVERY CONDITION
-        </p>
+        <input
+            type="number"
+            id="masterAdjustment"
+            class="master-input"
+            placeholder="+15 / -10"
+            step="0.01"
+        >
 
-        <p>
-            *(5) ADVANCE PAYMENT 10 RS DISC TIN*
-        </p>
+        <div class="info">
 
-        <p>
-            *(6) ADVANCE PAYMENT CP PACK
-            50 PAISA PER LITRE*
-        </p>
+            <b>System automatically:</b>
 
-        <p>
-            (7) LOADING CHARGES EXTRA
-        </p>
+            <br>
+
+            15 KG adjustment ko har packing ke
+            conversion factor se calculate karega.
+
+            <br>
+
+            Uske baad round-off apply karega.
+
+            <br>
+
+            Final adjustment:
+
+            <b>
+                Rajkot + Ahmedabad + Udaan
+            </b>
+
+            tino me apply hoga.
+
+        </div>
 
     </div>
 
-</div>
 
 
-<!-- =====================================================
-     FOOTER
-===================================================== -->
+    <!-- PREVIEW -->
 
-<div class="footer">
+    <div class="box">
 
-    © VISHWAS REFOILS & CONSUMER LIMITED
+        <h2>
+            ② LIVE PREVIEW
+        </h2>
+
+        <div class="table-scroll">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            PACKING
+                        </th>
+
+                        <th>
+                            RAJKOT
+                        </th>
+
+                        <th>
+                            AHMEDABAD
+                        </th>
+
+                        <th>
+                            UDAAN
+                        </th>
+
+                        <th>
+                            CONVERSION
+                        </th>
+
+                        <th>
+                            ROUND OFF
+                        </th>
+
+                        <th>
+                            ADJUSTMENT
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="rateTable">
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <button
+            class="button red"
+            onclick="applyMasterAdjustment()"
+        >
+            APPLY TO ALL 3 CITIES
+        </button>
+
+
+        <button
+            class="button gray"
+            onclick="resetDemo()"
+        >
+            RESET
+        </button>
+
+
+        <div
+            id="status"
+            class="status"
+            style="display:none"
+        ></div>
+
+    </div>
+
+
+
+    <!-- CONVERSION SETTINGS -->
+
+    <div class="box">
+
+        <h2>
+            ③ PACKING CONVERSION SETTINGS
+        </h2>
+
+        <div class="info">
+
+            Example:
+
+            <br>
+
+            Agar 15 KG me <b>+15</b> karte ho
+
+            <br>
+
+            aur 500 ML ka conversion <b>0.05</b> hai
+
+            <br>
+
+            to:
+
+            <br>
+
+            15 × 0.05 = <b>0.75</b>
+
+        </div>
+
+
+        <div class="table-scroll">
+
+            <table class="setting-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            PACKING
+                        </th>
+
+                        <th>
+                            15 KG +1 FACTOR
+                        </th>
+
+                        <th>
+                            ROUND OFF
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="settingsTable">
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <button
+            class="button green"
+            onclick="saveSettings()"
+        >
+            SAVE SETTINGS
+        </button>
+
+    </div>
 
 </div>
 
@@ -519,555 +513,874 @@ body{
 <script>
 
 
-/* =====================================================
-   ALL PACKING / WEIGHT OPTIONS
-===================================================== */
 
-const packings = [
-
-    "15 KG N TIN",
-
-    "15 KG S TIN",
-
-    "15 LTR N TIN",
-
-    "15 LTR S TIN",
-
-    "5 LTR JAR",
-
-    "4.150 KG JAR",
-
-    "2 LTR JAR",
-
-    "1.6 KG JAR",
-
-    "1 LTR BOTTLE",
-
-    "1 LTR POUCH",
-
-    "790 GM BOTTLE",
-
-    "750 GM POUCH",
-
-    "500 ML BOTTLE",
-
-    "500 ML POUCH",
-
-    "395 GM BOTTLE"
-
-];
+// ============================
+// DEFAULT CONVERSION
+// ============================
 
 
-/* =====================================================
-   PRODUCTS
-===================================================== */
+const conversionDefault = {
 
-const products = [
+    "15 KG": 1,
 
-    {
-        id:"palm",
-        name:"Palmolein",
-        image:"images/palm.jpg"
-    },
+    "15 LTR": 1,
 
-    {
-        id:"sunflower",
-        name:"Sunflower",
-        image:"images/sunflower.jpg"
-    },
+    "5 LTR": 0.5,
 
-    {
-        id:"groundnut",
-        name:"Groundnut",
-        image:"images/groundnut.jpg"
-    },
+    "4.150 KG": 0.5,
 
-    {
-        id:"cotton",
-        name:"Cottonseed",
-        image:"images/cotton.jpg"
-    },
+    "2 LTR": 0.2,
 
-    {
-        id:"mustard",
-        name:"Mustard",
-        image:"images/mustard.jpg"
-    },
+    "1.6 KG": 0.16,
 
-    {
-        id:"soya",
-        name:"Soya",
-        image:"images/soya.jpg"
-    },
+    "1 LTR": 0.10,
 
-    {
-        id:"corn",
-        name:"Corn",
-        image:"images/corn.jpg"
-    },
+    "790 GM": 0.079,
 
-    {
-        id:"castor",
-        name:"Castor",
-        image:"images/castor.jpg"
-    },
+    "750 GM": 0.075,
 
-    {
-        id:"ricebran",
-        name:"Rice Bran",
-        image:"images/ricebran.jpg"
-    }
+    "500 ML": 0.05,
 
-];
-
-
-/* =====================================================
-   RATE DATA
-
-   अभी Palm / Rajkot में आपके दिए हुए actual rates.
-   बाकी जगह 0 हैं.
-===================================================== */
-
-const rates = {
-
-    rajkot: {
-
-        palm: [
-
-            2384.00,
-            2339.00,
-            2174.00,
-            2129.00,
-            731.00,
-            701.00,
-            299.46,
-            274.46,
-            146.20,
-            141.20,
-            136.20,
-            124.70,
-            74.60,
-            72.10,
-            69.60
-
-        ]
-
-    },
-
-
-    ahmedabad: {},
-
-
-    udaan: {}
+    "395 GM": 0.0395
 
 };
 
 
-/* =====================================================
-   GET RATE
-===================================================== */
 
-function getRate(city,product,index){
+// ============================
+// DEFAULT ROUND OFF
+// ============================
+
+
+const roundDefault = {
+
+    "15 KG": 1,
+
+    "15 LTR": 1,
+
+    "5 LTR": 0.50,
+
+    "4.150 KG": 0.10,
+
+    "2 LTR": 0.10,
+
+    "1.6 KG": 0.10,
+
+    "1 LTR": 0.10,
+
+    "790 GM": 0.10,
+
+    "750 GM": 0.10,
+
+    "500 ML": 0.10,
+
+    "395 GM": 0.10
+
+};
+
+
+
+let conversion =
+    JSON.parse(
+        localStorage.getItem(
+            "vishwasConversion"
+        )
+    )
+    ||
+    {...conversionDefault};
+
+
+
+let rounding =
+    JSON.parse(
+        localStorage.getItem(
+            "vishwasRounding"
+        )
+    )
+    ||
+    {...roundDefault};
+
+
+
+let rates =
+    JSON.parse(
+        localStorage.getItem(
+            "vishwasRates"
+        )
+    )
+    ||
+    {};
+
+
+
+// ============================
+// PALM DEMO DATA
+// ============================
+
+
+const palmPackings = [
+
+    ["15 KG N TIN",2384],
+
+    ["15 KG S TIN",2339],
+
+    ["15 LTR N TIN",2174],
+
+    ["15 LTR S TIN",2129],
+
+    ["5 LTR JAR",731],
+
+    ["4.150 KG JAR",701],
+
+    ["2 LTR JAR",299.46],
+
+    ["1.6 KG JAR",274.46],
+
+    ["1 LTR BOTTLE",146.20],
+
+    ["1 LTR POUCH",141.20],
+
+    ["790 GM BOTTLE",136.20],
+
+    ["750 GM POUCH",124.70],
+
+    ["500 ML BOTTLE",74.60],
+
+    ["500 ML POUCH",72.10],
+
+    ["395 GM BOTTLE",69.60]
+
+];
+
+
+
+// ============================
+// INITIAL CITY DATA
+// ============================
+
+
+function createInitialData(){
 
     if(
-
-        rates[city] &&
-        rates[city][product] &&
-        rates[city][product][index] !== undefined
-
+        rates.rajkot &&
+        rates.ahmedabad &&
+        rates.udaan
     ){
 
-        return rates[city][product][index];
+        return;
+    }
+
+
+    rates = {
+
+        rajkot: {},
+
+        ahmedabad: {},
+
+        udaan: {}
+
+    };
+
+
+    palmPackings.forEach(
+        item => {
+
+            const name = item[0];
+
+            const rate = item[1];
+
+
+            if(
+                !rates.rajkot.palm
+            ){
+
+                rates.rajkot.palm = [];
+
+                rates.ahmedabad.palm = [];
+
+                rates.udaan.palm = [];
+
+            }
+
+
+            rates.rajkot.palm.push({
+
+                name:name,
+
+                rate:rate
+
+            });
+
+
+            rates.ahmedabad.palm.push({
+
+                name:name,
+
+                rate:rate + 15
+
+            });
+
+
+            rates.udaan.palm.push({
+
+                name:name,
+
+                rate:rate + 8
+
+            });
+
+        }
+    );
+
+
+    localStorage.setItem(
+        "vishwasRates",
+        JSON.stringify(rates)
+    );
+
+}
+
+
+
+createInitialData();
+
+
+
+// ============================
+// FIND CONVERSION
+// ============================
+
+
+function getConversion(
+    packing
+){
+
+    const keys =
+        Object.keys(
+            conversion
+        );
+
+
+    for(
+        let key of keys
+    ){
+
+        if(
+            packing
+            .toUpperCase()
+            .includes(
+                key.toUpperCase()
+            )
+        ){
+
+            return Number(
+                conversion[key]
+            );
+
+        }
 
     }
 
-    return 0;
+
+    return 1;
 
 }
 
 
-/* =====================================================
-   CREATE EMPTY RATES
-===================================================== */
 
-function createEmptyRates(){
-
-    ["rajkot","ahmedabad","udaan"].forEach(city=>{
-
-        if(!rates[city]){
-
-            rates[city]={};
-
-        }
-
-        products.forEach(product=>{
-
-            if(!rates[city][product.id]){
-
-                rates[city][product.id] =
-                    packings.map(()=>0);
-
-            }
-
-        });
-
-    });
-
-}
+// ============================
+// FIND ROUND OFF
+// ============================
 
 
-/* =====================================================
-   CITY
-===================================================== */
+function getRound(
+    packing
+){
 
-let currentCity = "rajkot";
-
-let currentProduct = "palm";
-
-
-function changeCity(){
-
-    currentCity =
-        document.getElementById(
-            "citySelect"
-        ).value;
-
-    renderProducts();
-
-    renderProduct();
-
-}
-
-
-/* =====================================================
-   PRODUCT MENU
-===================================================== */
-
-function renderProducts(){
-
-    const menu =
-        document.getElementById(
-            "productMenu"
+    const keys =
+        Object.keys(
+            rounding
         );
 
-    menu.innerHTML="";
 
-
-    products.forEach(product=>{
-
-        const button =
-            document.createElement("button");
-
-
-        button.innerText =
-            product.name;
-
+    for(
+        let key of keys
+    ){
 
         if(
-            product.id === currentProduct
+            packing
+            .toUpperCase()
+            .includes(
+                key.toUpperCase()
+            )
         ){
 
-            button.classList.add(
-                "active"
+            return Number(
+                rounding[key]
             );
 
         }
 
-
-        button.onclick=function(){
-
-            currentProduct =
-                product.id;
-
-            renderProducts();
-
-            renderProduct();
-
-        };
+    }
 
 
-        menu.appendChild(button);
-
-    });
+    return 0.10;
 
 }
 
 
-/* =====================================================
-   RENDER PRODUCT
-===================================================== */
 
-function renderProduct(){
+// ============================
+// ROUND FUNCTION
+// ============================
+
+
+function roundRate(
+    value,
+    step
+){
+
+    if(
+        !step ||
+        step <= 0
+    ){
+
+        return Number(
+            value.toFixed(2)
+        );
+
+    }
+
+
+    return Number(
+
+        (
+            Math.round(
+                value / step
+            ) * step
+
+        ).toFixed(2)
+
+    );
+
+}
+
+
+
+// ============================
+// GET CURRENT PRODUCT
+// ============================
+
+
+function getProduct(){
+
+    return document
+        .getElementById(
+            "product"
+        )
+        .value;
+
+}
+
+
+
+// ============================
+// LOAD TABLE
+// ============================
+
+
+function loadTable(){
 
     const product =
-        products.find(
-            p=>p.id===currentProduct
-        );
+        getProduct();
 
 
-    const area =
+    const tbody =
         document.getElementById(
-            "productArea"
+            "rateTable"
         );
 
 
-    let rows="";
+    tbody.innerHTML = "";
 
 
-    packings.forEach(
-        (packing,index)=>{
+    let rows =
+        rates.rajkot?.[product]
+        ||
+        palmPackings.map(
+            x => ({
+                name:x[0],
+                rate:0
+            })
+        );
 
-            const rate =
-                getRate(
-                    currentCity,
-                    currentProduct,
-                    index
+
+    const master =
+        Number(
+            document
+            .getElementById(
+                "masterAdjustment"
+            )
+            .value
+        )
+        ||
+        0;
+
+
+    rows.forEach(
+        (row,index) => {
+
+            const name =
+                row.name;
+
+
+            const factor =
+                getConversion(
+                    name
                 );
 
 
-            let rateText;
+            const round =
+                getRound(
+                    name
+                );
 
 
-            if(rate > 0){
-
-                rateText =
-                    "₹" +
-                    rate.toFixed(2);
-
-            }else{
-
-                rateText =
-                    "Rate will be updated";
-
-            }
+            const adjustment =
+                roundRate(
+                    master * factor,
+                    round
+                );
 
 
-            rows += `
+            const rajkot =
+                rates.rajkot?.[product]?.[index]?.rate
+                || 0;
 
-                <tr>
 
-                    <td>
-                        ${index+1}
-                    </td>
+            const ahmedabad =
+                rates.ahmedabad?.[product]?.[index]?.rate
+                || 0;
 
-                    <td>
-                        <b>
-                            ${packing}
-                        </b>
-                    </td>
 
-                    <td
-                        class="rate
-                        ${rate === 0 ? 'rate-zero' : ''}"
-                    >
+            const udaan =
+                rates.udaan?.[product]?.[index]?.rate
+                || 0;
 
-                        ${rateText}
 
-                    </td>
+            const tr =
+                document.createElement(
+                    "tr"
+                );
 
-                </tr>
+
+            tr.innerHTML = `
+
+                <td>
+                    ${name}
+                </td>
+
+                <td>
+                    ₹${rajkot.toFixed(2)}
+                </td>
+
+                <td>
+                    ₹${ahmedabad.toFixed(2)}
+                </td>
+
+                <td>
+                    ₹${udaan.toFixed(2)}
+                </td>
+
+                <td>
+                    × ${factor}
+                </td>
+
+                <td>
+                    ₹${round}
+                </td>
+
+                <td
+                    class="new-rate"
+                >
+                    ${adjustment >= 0 ? "+" : ""}
+                    ₹${adjustment.toFixed(2)}
+                </td>
 
             `;
 
+
+            tbody.appendChild(
+                tr
+            );
+
         }
     );
-
-
-    area.innerHTML = `
-
-        <div class="product-card">
-
-            <div class="product-top">
-
-                <img
-                    src="${product.image}"
-                    class="product-image"
-                    alt="${product.name}"
-                    onerror="this.src='logo.jpg'"
-                >
-
-                <div class="product-info">
-
-                    <h1>
-                        ${product.name}
-                    </h1>
-
-                    <p>
-                        ${currentCity.toUpperCase()}
-                    </p>
-
-                    <p>
-                        GST EXTRA
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            <div class="table-wrapper">
-
-                <table class="rate-table">
-
-                    <thead>
-
-                        <tr>
-
-                            <th>
-                                No.
-                            </th>
-
-                            <th>
-                                Product / Packing
-                            </th>
-
-                            <th>
-                                Rate ₹
-                            </th>
-
-                        </tr>
-
-                    </thead>
-
-                    <tbody>
-
-                        ${rows}
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-
-            <button
-                class="whatsapp-btn"
-                onclick="copyWhatsApp()"
-            >
-
-                📱 COPY RATE FOR WHATSAPP
-
-            </button>
-
-        </div>
-
-    `;
 
 }
 
 
-/* =====================================================
-   WHATSAPP
-===================================================== */
 
-function copyWhatsApp(){
+// ============================
+// APPLY MASTER
+// ============================
 
-    const product =
-        products.find(
-            p=>p.id===currentProduct
+
+function applyMasterAdjustment(){
+
+    const master =
+        Number(
+            document
+            .getElementById(
+                "masterAdjustment"
+            )
+            .value
         );
 
 
-    let text =
+    if(
+        isNaN(master)
+    ){
 
-        "JAY SIYARAM\n" +
+        alert(
+            "Please enter adjustment."
+        );
 
-        "VISHWAS REFOILS & CONSUMER LIMITED\n\n" +
+        return;
 
-        currentCity.toUpperCase() +
-        " - " +
-        product.name +
-        " RATE\n\n";
-
-
-    packings.forEach(
-        (packing,index)=>{
-
-            const rate =
-                getRate(
-                    currentCity,
-                    currentProduct,
-                    index
-                );
+    }
 
 
-            if(rate > 0){
+    const product =
+        getProduct();
 
-                text +=
-                    packing +
-                    " - ₹" +
-                    rate.toFixed(2) +
-                    "\n";
+
+    if(
+        !rates.rajkot?.[product]
+    ){
+
+        alert(
+            "Product data available nahi hai."
+        );
+
+        return;
+
+    }
+
+
+    rates.rajkot[product]
+        .forEach(
+            (row,index) => {
+
+                const factor =
+                    getConversion(
+                        row.name
+                    );
+
+
+                const round =
+                    getRound(
+                        row.name
+                    );
+
+
+                const adjustment =
+                    roundRate(
+                        master * factor,
+                        round
+                    );
+
+
+                if(
+                    rates.rajkot[product][index]
+                ){
+
+                    rates
+                    .rajkot
+                    [product]
+                    [index]
+                    .rate +=
+                    adjustment;
+
+                }
+
+
+                if(
+                    rates.ahmedabad[product]
+                    &&
+                    rates.ahmedabad[product][index]
+                ){
+
+                    rates
+                    .ahmedabad
+                    [product]
+                    [index]
+                    .rate +=
+                    adjustment;
+
+                }
+
+
+                if(
+                    rates.udaan[product]
+                    &&
+                    rates.udaan[product][index]
+                ){
+
+                    rates
+                    .udaan
+                    [product]
+                    [index]
+                    .rate +=
+                    adjustment;
+
+                }
 
             }
+        );
 
-        }
+
+    localStorage.setItem(
+        "vishwasRates",
+        JSON.stringify(
+            rates
+        )
     );
 
 
-    text +=
-
-        "\nTERMS & CONDITIONS\n" +
-
-        "(1) NEXT DAY PAYMENT\n" +
-
-        "(2) GST EXTRA\n" +
-
-        "(3) EX OUR PLANT\n" +
-
-        "(4) UP TO 15 DAY DELIVERY CONDITION\n" +
-
-        "(5) ADVANCE PAYMENT 10 RS DISC TIN\n" +
-
-        "(6) ADVANCE PAYMENT CP PACK 50 PAISA PER LITRE\n" +
-
-        "(7) LOADING CHARGES EXTRA";
+    document
+        .getElementById(
+            "status"
+        )
+        .style.display =
+        "block";
 
 
-    navigator.clipboard
-        .writeText(text)
-        .then(()=>{
+    document
+        .getElementById(
+            "status"
+        )
+        .innerHTML =
+        "✅ Adjustment successfully applied to Rajkot + Ahmedabad + Udaan";
 
-            alert(
-                "Rate copied for WhatsApp!"
-            );
 
-        });
+    loadTable();
 
 }
 
 
-/* =====================================================
-   DATE
-===================================================== */
 
-document.getElementById(
-    "rateDate"
-).innerText =
+// ============================
+// SETTINGS TABLE
+// ============================
 
-    new Date().toLocaleDateString(
-        "en-IN",
-        {
-            day:"2-digit",
-            month:"long",
-            year:"numeric"
+
+function loadSettings(){
+
+    const tbody =
+        document
+        .getElementById(
+            "settingsTable"
+        );
+
+
+    tbody.innerHTML = "";
+
+
+    Object.keys(
+        conversion
+    )
+    .forEach(
+        key => {
+
+            const tr =
+                document.createElement(
+                    "tr"
+                );
+
+
+            tr.innerHTML = `
+
+                <td>
+                    ${key}
+                </td>
+
+                <td>
+                    <input
+                        type="number"
+                        step="0.0001"
+                        class="conversion-input"
+                        data-key="${key}"
+                        value="${conversion[key]}"
+                    >
+                </td>
+
+                <td>
+                    <input
+                        type="number"
+                        step="0.01"
+                        class="round-input"
+                        data-key="${key}"
+                        value="${rounding[key] || 0.10}"
+                    >
+                </td>
+
+            `;
+
+
+            tbody.appendChild(
+                tr
+            );
+
+        }
+    );
+
+}
+
+
+
+// ============================
+// SAVE SETTINGS
+// ============================
+
+
+function saveSettings(){
+
+    document
+    .querySelectorAll(
+        ".conversion-input"
+    )
+    .forEach(
+        input => {
+
+            conversion[
+                input.dataset.key
+            ] =
+            Number(
+                input.value
+            );
+
         }
     );
 
 
-/* =====================================================
-   START
-===================================================== */
+    document
+    .querySelectorAll(
+        ".round-input"
+    )
+    .forEach(
+        input => {
 
-createEmptyRates();
+            rounding[
+                input.dataset.key
+            ] =
+            Number(
+                input.value
+            );
 
-renderProducts();
+        }
+    );
 
-renderProduct();
+
+    localStorage.setItem(
+        "vishwasConversion",
+        JSON.stringify(
+            conversion
+        )
+    );
+
+
+    localStorage.setItem(
+        "vishwasRounding",
+        JSON.stringify(
+            rounding
+        )
+    );
+
+
+    loadTable();
+
+
+    alert(
+        "Conversion & Round-Off settings saved."
+    );
+
+}
+
+
+
+// ============================
+// EVENTS
+// ============================
+
+
+document
+.getElementById(
+    "product"
+)
+.addEventListener(
+    "change",
+    loadTable
+);
+
+
+document
+.getElementById(
+    "masterAdjustment"
+)
+.addEventListener(
+    "input",
+    loadTable
+);
+
+
+
+// ============================
+// RESET
+// ============================
+
+
+function resetDemo(){
+
+    if(
+        !confirm(
+            "Reset all demo rates?"
+        )
+    ){
+
+        return;
+
+    }
+
+
+    localStorage.removeItem(
+        "vishwasRates"
+    );
+
+
+    localStorage.removeItem(
+        "vishwasConversion"
+    );
+
+
+    localStorage.removeItem(
+        "vishwasRounding"
+    );
+
+
+    location.reload();
+
+}
+
+
+
+// START
+
+loadSettings();
+
+loadTable();
 
 </script>
 
-
 </body>
-
 </html>
