@@ -7,7 +7,6 @@
 <title>Vishwas Rate - Admin Panel</title>
 
 <style>
-
 *{
     box-sizing:border-box;
 }
@@ -21,7 +20,7 @@ body{
 
 .header{
     background:#8b0000;
-    color:white;
+    color:#fff;
     padding:14px 20px;
 }
 
@@ -29,18 +28,17 @@ body{
     max-width:1500px;
     margin:auto;
     display:flex;
-    align-items:center;
     justify-content:space-between;
+    align-items:center;
 }
 
 .logo{
-    font-size:23px;
+    font-size:24px;
     font-weight:800;
 }
 
 .admin{
     font-size:13px;
-    opacity:.9;
 }
 
 .container{
@@ -49,14 +47,12 @@ body{
     padding:16px;
 }
 
-/* TOP */
-
-.top-card{
-    background:white;
+.card{
+    background:#fff;
     border-radius:10px;
     padding:15px;
     margin-bottom:15px;
-    box-shadow:0 2px 8px #0001;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
 }
 
 .section-title{
@@ -72,7 +68,7 @@ body{
 
 .btn{
     border:1px solid #ccc;
-    background:white;
+    background:#fff;
     padding:9px 17px;
     border-radius:7px;
     cursor:pointer;
@@ -80,31 +76,26 @@ body{
 }
 
 .btn:hover{
-    background:#f3f3f3;
+    background:#f2f2f2;
 }
 
-.city.active{
+.btn.active{
     background:#8b0000;
-    color:white;
+    color:#fff;
+    border-color:#8b0000;
 }
-
-.month.active{
-    background:#8b0000;
-    color:white;
-}
-
-/* CONTROL */
 
 .control-bar{
     display:flex;
     justify-content:space-between;
     align-items:center;
-    gap:10px;
     flex-wrap:wrap;
+    gap:10px;
     margin-bottom:15px;
 }
 
-.lock-btn{
+.lock-btn,
+.save-btn{
     border:0;
     padding:11px 22px;
     border-radius:7px;
@@ -114,22 +105,17 @@ body{
 
 .locked{
     background:#333;
-    color:white;
+    color:#fff;
 }
 
 .unlocked{
-    background:#d89b00;
-    color:white;
+    background:#d99b00;
+    color:#fff;
 }
 
 .save-btn{
     background:#148650;
-    color:white;
-    border:0;
-    padding:11px 22px;
-    border-radius:7px;
-    font-weight:bold;
-    cursor:pointer;
+    color:#fff;
 }
 
 .save-btn:disabled{
@@ -147,10 +133,10 @@ body{
 }
 
 .master-card{
-    background:white;
+    background:#fff;
     border-radius:10px;
     padding:15px;
-    box-shadow:0 2px 8px #0001;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
 }
 
 .master-title{
@@ -160,7 +146,7 @@ body{
     margin-bottom:12px;
 }
 
-.master-grid-inner{
+.master-fields{
     display:grid;
     grid-template-columns:1fr 1fr 1fr;
     gap:10px;
@@ -173,7 +159,8 @@ label{
     margin-bottom:5px;
 }
 
-input,select{
+input,
+select{
     width:100%;
     padding:9px;
     border:1px solid #bbb;
@@ -183,29 +170,28 @@ input,select{
 
 input:disabled,
 select:disabled{
-    background:#f0f0f0;
+    background:#eee;
     color:#777;
-    cursor:not-allowed;
 }
 
 .new-master{
-    background:#e8f8ee !important;
+    background:#e7f7ed !important;
     font-weight:bold;
 }
 
-/* RATE TABLE */
+/* TABLE */
 
 .table-card{
-    background:white;
+    background:#fff;
     border-radius:10px;
-    box-shadow:0 2px 8px #0001;
     overflow:hidden;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
 }
 
 .table-title{
     padding:14px 15px;
     background:#222;
-    color:white;
+    color:#fff;
     font-weight:bold;
 }
 
@@ -220,7 +206,7 @@ table{
 }
 
 th{
-    background:#e8e8e8;
+    background:#e7e7e7;
     padding:10px 8px;
     border-bottom:1px solid #ccc;
     font-size:12px;
@@ -232,17 +218,13 @@ td{
     border-bottom:1px solid #eee;
 }
 
-tr:hover{
-    background:#fafafa;
-}
-
-.rate-new{
-    background:#e9f8ef;
+td:first-child{
     font-weight:bold;
 }
 
-.rate-change{
-    background:#fffde2;
+.rate-new{
+    background:#e7f7ed;
+    font-weight:bold;
 }
 
 .rate-link{
@@ -253,42 +235,39 @@ tr:hover{
     background:#f5f5f5;
 }
 
-.manual{
-    background:#ffe6e6;
-}
-
 /* HISTORY */
 
 .history-card{
-    background:white;
+    background:#fff;
     margin-top:15px;
     border-radius:10px;
-    box-shadow:0 2px 8px #0001;
     overflow:hidden;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
 }
 
 .history-title{
     padding:14px;
     background:#1267a8;
-    color:white;
+    color:#fff;
     font-weight:bold;
 }
 
 .history-item{
-    padding:11px 14px;
+    padding:12px 14px;
     border-bottom:1px solid #eee;
 }
 
-.history-item:last-child{
-    border-bottom:0;
+.history-product{
+    font-weight:bold;
 }
 
 .history-date{
     font-size:12px;
     color:#777;
+    margin-top:4px;
 }
 
-.old-rate{
+.old-history{
     color:#b00000;
     font-weight:bold;
 }
@@ -312,12 +291,12 @@ tr:hover{
     right:20px;
     bottom:20px;
     background:#148650;
-    color:white;
+    color:#fff;
     padding:14px 20px;
     border-radius:8px;
-    box-shadow:0 4px 15px #0003;
+    box-shadow:0 4px 15px rgba(0,0,0,.25);
     font-weight:bold;
-    z-index:1000;
+    z-index:9999;
 }
 
 @media(max-width:850px){
@@ -326,46 +305,31 @@ tr:hover{
         grid-template-columns:1fr;
     }
 
-    .master-grid-inner{
+    .master-fields{
         grid-template-columns:1fr;
     }
 
     .container{
         padding:9px;
     }
-
 }
-
 </style>
 </head>
 
-
 <body>
 
-
 <header class="header">
-
-<div class="header-inner">
-
-<div class="logo">
-VISHWAS RATE
-</div>
-
-<div class="admin">
-ADMIN PANEL
-</div>
-
-</div>
-
+    <div class="header-inner">
+        <div class="logo">VISHWAS RATE</div>
+        <div class="admin">ADMIN PANEL</div>
+    </div>
 </header>
-
 
 <div class="container">
 
-
 <!-- CITY -->
 
-<div class="top-card">
+<div class="card">
 
 <div class="section-title">
 CITY / PARTY
@@ -373,23 +337,17 @@ CITY / PARTY
 
 <div class="buttons">
 
-<button
-class="btn city active"
-id="city-rajkot"
+<button class="btn active city-btn" id="city-rajkot"
 onclick="setCity('rajkot')">
 RAJKOT
 </button>
 
-<button
-class="btn city"
-id="city-ahmedabad"
+<button class="btn city-btn" id="city-ahmedabad"
 onclick="setCity('ahmedabad')">
 AHMEDABAD
 </button>
 
-<button
-class="btn city"
-id="city-udaan"
+<button class="btn city-btn" id="city-udaan"
 onclick="setCity('udaan')">
 UDAAN
 </button>
@@ -399,38 +357,9 @@ UDAAN
 </div>
 
 
-<!-- MONTH -->
-
-<div class="top-card">
-
-<div class="section-title">
-RATE MONTH
-</div>
-
-<div class="buttons">
-
-<button
-class="btn month active"
-id="month-current"
-onclick="setMonth('CURRENT')">
-CURRENT MONTH
-</button>
-
-<button
-class="btn month"
-id="month-next"
-onclick="setMonth('NEXT')">
-NEXT MONTH
-</button>
-
-</div>
-
-</div>
-
-
 <!-- PRODUCT -->
 
-<div class="top-card">
+<div class="card">
 
 <div class="section-title">
 PRODUCT
@@ -438,50 +367,43 @@ PRODUCT
 
 <div class="buttons">
 
-<button
-class="btn product active"
+<button class="btn active product-btn"
 data-product="palm"
 onclick="setProduct('palm')">
 PALM
 </button>
 
-<button
-class="btn product"
+<button class="btn product-btn"
 data-product="visvita"
 onclick="setProduct('visvita')">
 VISVITA
 </button>
 
-<button
-class="btn product"
+<button class="btn product-btn"
 data-product="soya"
 onclick="setProduct('soya')">
 SOYA
 </button>
 
-<button
-class="btn product"
+<button class="btn product-btn"
 data-product="sunflower"
 onclick="setProduct('sunflower')">
 SUNFLOWER
 </button>
 
-<button
-class="btn product"
+<button class="btn product-btn"
 data-product="groundnut"
 onclick="setProduct('groundnut')">
 GROUNDNUT
 </button>
 
-<button
-class="btn product"
+<button class="btn product-btn"
 data-product="cotton"
 onclick="setProduct('cotton')">
 COTTONSEED
 </button>
 
-<button
-class="btn product"
+<button class="btn product-btn"
 data-product="mustard"
 onclick="setProduct('mustard')">
 MUSTARD
@@ -492,11 +414,9 @@ MUSTARD
 </div>
 
 
-<!-- CONTROL -->
+<!-- LOCK SAVE -->
 
 <div class="control-bar">
-
-<div>
 
 <button
 id="lockButton"
@@ -504,10 +424,6 @@ class="lock-btn locked"
 onclick="toggleLock()">
 🔒 LOCKED
 </button>
-
-</div>
-
-<div>
 
 <button
 id="saveButton"
@@ -519,13 +435,10 @@ SAVE RATE UPDATE
 
 </div>
 
-</div>
-
 
 <!-- MASTER -->
 
 <div class="master-grid">
-
 
 <!-- 15 KG MASTER -->
 
@@ -535,52 +448,42 @@ SAVE RATE UPDATE
 15 KG MASTER
 </div>
 
-<div class="master-grid-inner">
+<div class="master-fields">
 
 <div>
-
-<label>
-OLD RATE
-</label>
+<label>OLD RATE</label>
 
 <input
 type="number"
 step="0.01"
 id="master15Old"
-disabled>
-
+disabled
+>
 </div>
 
-
 <div>
-
-<label>
-CHANGE (+ / -)
-</label>
+<label>CHANGE (+ / -)</label>
 
 <input
 type="number"
 step="0.01"
 id="master15Change"
 value="0"
-disabled>
-
+disabled
+oninput="calculateRows()"
+>
 </div>
 
-
 <div>
-
-<label>
-NEW RATE
-</label>
+<label>NEW RATE</label>
 
 <input
 type="number"
 step="0.01"
 id="master15New"
 class="new-master"
-disabled>
-
+disabled
+>
 </div>
 
 </div>
@@ -596,52 +499,42 @@ disabled>
 1 LTR MASTER
 </div>
 
-<div class="master-grid-inner">
+<div class="master-fields">
 
 <div>
-
-<label>
-OLD RATE
-</label>
+<label>OLD RATE</label>
 
 <input
 type="number"
 step="0.01"
 id="master1Old"
-disabled>
-
+disabled
+>
 </div>
 
-
 <div>
-
-<label>
-CHANGE (+ / -)
-</label>
+<label>CHANGE (+ / -)</label>
 
 <input
 type="number"
 step="0.01"
 id="master1Change"
 value="0"
-disabled>
-
+disabled
+oninput="calculateRows()"
+>
 </div>
 
-
 <div>
-
-<label>
-NEW RATE
-</label>
+<label>NEW RATE</label>
 
 <input
 type="number"
 step="0.01"
 id="master1New"
 class="new-master"
-disabled>
-
+disabled
+>
 </div>
 
 </div>
@@ -655,16 +548,11 @@ disabled>
 
 <div class="table-card">
 
-<div class="table-title">
-
-<span id="productTitle">
-PALM
-</span>
-
-&nbsp; — PACKING RATE FORMULA
-
+<div
+class="table-title"
+id="productTitle">
+PALM — RAJKOT — PACKING RATE FORMULA
 </div>
-
 
 <div class="table-wrap">
 
@@ -674,29 +562,12 @@ PALM
 
 <tr>
 
-<th>
-PACKING
-</th>
-
-<th>
-OLD RATE
-</th>
-
-<th>
-MASTER LINK
-</th>
-
-<th>
-RATE CHANGE
-</th>
-
-<th>
-ROUND OFF
-</th>
-
-<th>
-NEW RATE
-</th>
+<th>PACKING</th>
+<th>OLD RATE</th>
+<th>MASTER LINK</th>
+<th>RATE CHANGE</th>
+<th>ROUND OFF</th>
+<th>NEW RATE</th>
 
 </tr>
 
@@ -716,41 +587,35 @@ NEW RATE
 <div class="history-card">
 
 <div class="history-title">
-📋 LAST 3 DAYS RATE CHANGE HISTORY
+📋 RATE CHANGE HISTORY — LAST 3 DAYS
 </div>
 
 <div id="historyList"></div>
 
 </div>
 
-
 </div>
 
 
-<div
-class="message"
-id="message">
+<div id="message" class="message">
 RATE UPDATED SUCCESSFULLY
 </div>
 
 
 <script>
 
-/* =====================================================
-   PRODUCT DATA
-===================================================== */
+/* =========================================================
+   DEFAULT PRODUCT PACKINGS
+========================================================= */
 
-const PRODUCTS={
+const PALM_PACKINGS = [
 
-palm:{
-name:"PALM",
-rates:[
-["15 KG N TIN",2384],
-["15 KG S TIN",2339],
-["15 LTR N TIN",2174],
-["15 LTR S TIN",2129],
-["5 LTR JAR",731],
-["4.150 KG JAR",701],
+["15 KG N TIN",2384.00],
+["15 KG S T TIN",2339.00],
+["15 LTR N TIN",2174.00],
+["15 LTR S TIN",2129.00],
+["5 LTR JAR",731.00],
+["4.150 KG JAR",701.00],
 ["2 LTR JAR",299.46],
 ["1.6 KG JAR",274.46],
 ["1 LTR BOTTLE",146.20],
@@ -760,497 +625,541 @@ rates:[
 ["500 ML BOTTLE",74.60],
 ["500 ML POUCH",72.10],
 ["395 GM BOTTLE",69.60]
-]
+
+];
+
+
+const VISVITA_PACKINGS = [
+
+["15 KG OLD TIN",0],
+["15 KG NEW TIN",0]
+
+];
+
+
+const PRODUCTS = {
+
+palm:{
+name:"PALM",
+rates:PALM_PACKINGS
 },
 
 visvita:{
 name:"VISVITA",
-rates:[
-["15 KG OLD TIN",0],
-["15 KG NEW TIN",0]
-]
+rates:VISVITA_PACKINGS
 },
 
 soya:{
 name:"SOYA",
-rates:[
-["15 KG",0],
-["1 LTR",0]
-]
+rates:PALM_PACKINGS
 },
 
 sunflower:{
 name:"SUNFLOWER",
-rates:[
-["15 KG",0],
-["1 LTR",0]
-]
+rates:PALM_PACKINGS
 },
 
 groundnut:{
 name:"GROUNDNUT",
-rates:[
-["15 KG",0],
-["1 LTR",0]
-]
+rates:PALM_PACKINGS
 },
 
 cotton:{
 name:"COTTONSEED",
-rates:[
-["15 KG",0],
-["1 LTR",0]
-]
+rates:PALM_PACKINGS
 },
 
 mustard:{
 name:"MUSTARD",
-rates:[
-["15 KG",0],
-["1 LTR",0]
-]
+rates:PALM_PACKINGS
 }
 
 };
 
 
-/* =====================================================
+/* =========================================================
    STATE
-===================================================== */
+========================================================= */
 
-let city="rajkot";
-
-let month="CURRENT";
-
-let product="palm";
-
-let isLocked=true;
+let city = "rajkot";
+let product = "palm";
+let isLocked = true;
 
 
-/* =====================================================
+/* =========================================================
    DATABASE
-===================================================== */
+========================================================= */
 
-let db=
+let db =
 JSON.parse(
 localStorage.getItem(
-"VISHWAS_RATE_DATABASE_V2"
+"VISHWAS_RATE_DATABASE_V4"
 )
-)||{};
+) || {};
 
 
-/* =====================================================
-   GET PRODUCT
-===================================================== */
+/* =========================================================
+   HISTORY
+========================================================= */
+
+let history =
+JSON.parse(
+localStorage.getItem(
+"VISHWAS_RATE_HISTORY_V4"
+)
+) || [];
+
+
+/* =========================================================
+   GET PRODUCT DATA
+========================================================= */
 
 function getProduct(){
 
-if(!db[city])
-db[city]={};
+    if(!db[city]){
+        db[city] = {};
+    }
 
-if(!db[city][month])
-db[city][month]={};
+    if(!db[city][product]){
 
-if(!db[city][month][product]){
+        db[city][product] = {
 
-db[city][month][product]=
-JSON.parse(
-JSON.stringify(
-PRODUCTS[product]
-)
-);
+            rates:
+            JSON.parse(
+                JSON.stringify(
+                    PRODUCTS[product].rates
+                )
+            ),
 
-}
+            master15Change:0,
+            master1Change:0
 
-return db[city][month][product];
+        };
 
-}
+    }
 
-
-/* =====================================================
-   MASTER DETECTION
-===================================================== */
-
-function getMaster(name){
-
-let n=name.toLowerCase();
-
-if(
-n.includes("15 kg")||
-n.includes("15kg")||
-n.includes("15 ltr")
-)
-return "15KG";
-
-return "1LTR";
-
+    return db[city][product];
 }
 
 
-/* =====================================================
-   EXCEL RATE LINK
-===================================================== */
+/* =========================================================
+   MASTER TYPE
+========================================================= */
 
-function getDefaultChange(name){
+function getDefaultMaster(name){
 
-let n=name.toLowerCase();
+    const n =
+    name.toLowerCase();
 
-/*
-15 KG LINK
-*/
+    if(
+        n.includes("15 kg") ||
+        n.includes("15kg") ||
+        n.includes("15 ltr")
+    ){
 
-if(
-n.includes("15 kg")||
-n.includes("15kg")||
-n.includes("15 ltr")
-)
-return 1;
+        return "15KG";
 
+    }
 
-/*
-1 LTR LINK
-*/
-
-if(n.includes("5 ltr"))
-return 5;
-
-if(n.includes("4.150"))
-return 5;
-
-if(n.includes("2 ltr"))
-return 2;
-
-if(n.includes("1.6"))
-return 2;
-
-if(n.includes("1 ltr"))
-return 1;
-
-if(n.includes("790"))
-return 1;
-
-if(n.includes("750"))
-return 1;
-
-if(n.includes("500"))
-return .5;
-
-if(n.includes("395"))
-return .5;
-
-return 1;
-
+    return "1LTR";
 }
 
 
-/* =====================================================
-   ROUND OFF
-===================================================== */
+/* =========================================================
+   DEFAULT LINK
+========================================================= */
+
+function getDefaultLink(name){
+
+    const n =
+    name.toLowerCase();
+
+
+    /* BIG PACK */
+
+    if(
+        n.includes("15 kg") ||
+        n.includes("15kg") ||
+        n.includes("15 ltr")
+    ){
+
+        return 1;
+    }
+
+
+    /* 5 LTR */
+
+    if(
+        n.includes("5 ltr") ||
+        n.includes("4.150")
+    ){
+
+        return 5;
+    }
+
+
+    /* 2 LTR */
+
+    if(
+        n.includes("2 ltr") ||
+        n.includes("1.6")
+    ){
+
+        return 2;
+    }
+
+
+    /* 1 LTR */
+
+    if(
+        n.includes("1 ltr") ||
+        n.includes("790") ||
+        n.includes("750")
+    ){
+
+        return 1;
+    }
+
+
+    /* SMALL */
+
+    if(
+        n.includes("500") ||
+        n.includes("395")
+    ){
+
+        return 0.5;
+    }
+
+
+    return 1;
+}
+
+
+/* =========================================================
+   DEFAULT ROUND OFF
+========================================================= */
 
 function getDefaultRound(name){
 
-let n=name.toLowerCase();
+    const n =
+    name.toLowerCase();
 
-if(
-n.includes("15 kg")||
-n.includes("15kg")||
-n.includes("15 ltr")
-)
-return 1;
 
-if(
-n.includes("5 ltr")||
-n.includes("4.150")
-)
-return .5;
+    /* 15 KG */
 
-return .1;
+    if(
+        n.includes("15 kg") ||
+        n.includes("15kg") ||
+        n.includes("15 ltr")
+    ){
 
+        return 1;
+    }
+
+
+    /* 5 LTR */
+
+    if(
+        n.includes("5 ltr") ||
+        n.includes("4.150")
+    ){
+
+        return 0.5;
+    }
+
+
+    /* SMALL */
+
+    return 0.10;
 }
 
 
-/* =====================================================
-   ROUND FUNCTION
-===================================================== */
+/* =========================================================
+   ROUND RATE
+========================================================= */
 
 function roundRate(value,round){
 
-if(!round || round<=0)
-return Number(value.toFixed(2));
+    if(!round || round <= 0){
 
-return Number(
-(
-Math.round(value/round)*round
-).toFixed(2)
-);
+        return Number(
+            value.toFixed(2)
+        );
 
+    }
+
+    return Number(
+        (
+            Math.round(
+                value / round
+            ) * round
+        ).toFixed(2)
+    );
 }
 
 
-/* =====================================================
-   SET CITY
-===================================================== */
+/* =========================================================
+   CITY
+========================================================= */
 
 function setCity(value){
 
-city=value;
+    city = value;
 
-document
-.querySelectorAll(".city")
-.forEach(x=>{
-x.classList.remove("active");
-});
+    document
+    .querySelectorAll(".city-btn")
+    .forEach(btn=>{
+        btn.classList.remove("active");
+    });
 
-document
-.getElementById(
-"city-"+city
-)
-.classList.add("active");
+    document
+    .getElementById("city-"+city)
+    .classList.add("active");
 
-load();
-
+    load();
 }
 
 
-/* =====================================================
-   SET MONTH
-===================================================== */
-
-function setMonth(value){
-
-month=value;
-
-document
-.querySelectorAll(".month")
-.forEach(x=>{
-x.classList.remove("active");
-});
-
-document
-.getElementById(
-"month-"+month.toLowerCase()
-)
-.classList.add("active");
-
-load();
-
-}
-
-
-/* =====================================================
-   SET PRODUCT
-===================================================== */
+/* =========================================================
+   PRODUCT
+========================================================= */
 
 function setProduct(value){
 
-product=value;
+    product = value;
 
-document
-.querySelectorAll(".product")
-.forEach(x=>{
-x.classList.remove("active");
-});
+    document
+    .querySelectorAll(".product-btn")
+    .forEach(btn=>{
+        btn.classList.remove("active");
+    });
 
-document
-.querySelector(
-'[data-product="'+product+'"]'
-)
-.classList.add("active");
+    document
+    .querySelector(
+        '[data-product="'+product+'"]'
+    )
+    .classList.add("active");
 
-load();
-
+    load();
 }
 
 
-/* =====================================================
-   MASTER CALC
-===================================================== */
+/* =========================================================
+   MASTER CALCULATION
+========================================================= */
 
 function calculateMasters(){
 
-let old15=
-Number(
-document.getElementById(
-"master15Old"
-).value
-)||0;
-
-let change15=
-Number(
-document.getElementById(
-"master15Change"
-).value
-)||0;
-
-document.getElementById(
-"master15New"
-).value=
-(old15+change15).toFixed(2);
+    const old15 =
+    Number(
+        document.getElementById(
+            "master15Old"
+        ).value
+    ) || 0;
 
 
-let old1=
-Number(
-document.getElementById(
-"master1Old"
-).value
-)||0;
+    const change15 =
+    Number(
+        document.getElementById(
+            "master15Change"
+        ).value
+    ) || 0;
 
-let change1=
-Number(
-document.getElementById(
-"master1Change"
-).value
-)||0;
 
-document.getElementById(
-"master1New"
-).value=
-(old1+change1).toFixed(2);
+    document.getElementById(
+        "master15New"
+    ).value =
+    (
+        old15 + change15
+    ).toFixed(2);
 
+
+    const old1 =
+    Number(
+        document.getElementById(
+            "master1Old"
+        ).value
+    ) || 0;
+
+
+    const change1 =
+    Number(
+        document.getElementById(
+            "master1Change"
+        ).value
+    ) || 0;
+
+
+    document.getElementById(
+        "master1New"
+    ).value =
+    (
+        old1 + change1
+    ).toFixed(2);
 }
 
 
-/* =====================================================
-   CALCULATE TABLE
-===================================================== */
+/* =========================================================
+   CALCULATE ALL ROWS
+========================================================= */
 
 function calculateRows(){
 
-calculateMasters();
+    calculateMasters();
 
-let data=getProduct();
+    const data = getProduct();
 
-data.rates.forEach(
-(row,index)=>{
 
-let old=
-Number(
-document.getElementById(
-"old-"+index
-).value
-)||0;
+    data.rates.forEach(
+        (row,index)=>{
 
-let master=
-document.getElementById(
-"master-"+index
-).value;
+            const old =
+            Number(
+                document.getElementById(
+                    "old-"+index
+                ).value
+            ) || 0;
 
-let link=
-Number(
-document.getElementById(
-"link-"+index
-).value
-)||0;
 
-let round=
-Number(
-document.getElementById(
-"round-"+index
-).value
-)||0;
+            const master =
+            document.getElementById(
+                "master-"+index
+            ).value;
 
-let masterChange=0;
 
-if(master==="15KG"){
+            const link =
+            Number(
+                document.getElementById(
+                    "link-"+index
+                ).value
+            ) || 0;
 
-masterChange=
-Number(
-document.getElementById(
-"master15Change"
-).value
-)||0;
 
+            const round =
+            Number(
+                document.getElementById(
+                    "round-"+index
+                ).value
+            ) || 0;
+
+
+            let change = 0;
+
+
+            if(master === "15KG"){
+
+                change =
+                Number(
+                    document.getElementById(
+                        "master15Change"
+                    ).value
+                ) || 0;
+
+            }
+
+
+            if(master === "1LTR"){
+
+                change =
+                Number(
+                    document.getElementById(
+                        "master1Change"
+                    ).value
+                ) || 0;
+
+            }
+
+
+            let newRate = old;
+
+
+            if(master !== "MANUAL"){
+
+                newRate =
+                old +
+                (change * link);
+
+                newRate =
+                roundRate(
+                    newRate,
+                    round
+                );
+
+            }
+
+
+            document.getElementById(
+                "new-"+index
+            ).value =
+            newRate.toFixed(2);
+
+        }
+    );
 }
 
-if(master==="1LTR"){
 
-masterChange=
-Number(
-document.getElementById(
-"master1Change"
-).value
-)||0;
-
-}
-
-let newRate=old;
-
-if(master!=="MANUAL"){
-
-newRate=
-old+
-(
-masterChange*
-link
-);
-
-newRate=
-roundRate(
-newRate,
-round
-);
-
-}
-
-document.getElementById(
-"new-"+index
-).value=
-newRate.toFixed(2);
-
-}
-);
-
-}
-
-
-/* =====================================================
+/* =========================================================
    RENDER TABLE
-===================================================== */
+========================================================= */
 
 function renderTable(){
 
-let data=getProduct();
-
-let tbody=
-document.getElementById(
-"rateRows"
-);
-
-tbody.innerHTML="";
+    const data =
+    getProduct();
 
 
-data.rates.forEach(
-(row,index)=>{
-
-let name=row[0];
-
-let old=row[1];
-
-let saved=row[2]||{};
-
-let master=
-saved.master||
-getMaster(name);
-
-let link=
-saved.link!==undefined
-?saved.link
-:getDefaultChange(name);
-
-let round=
-saved.round!==undefined
-?saved.round
-:getDefaultRound(name);
+    const tbody =
+    document.getElementById(
+        "rateRows"
+    );
 
 
-let tr=
-document.createElement("tr");
+    tbody.innerHTML = "";
 
-tr.innerHTML=`
+
+    data.rates.forEach(
+        (row,index)=>{
+
+            const name = row[0];
+            const old = row[1];
+
+
+            const saved =
+            row[2] || {};
+
+
+            const master =
+            saved.master ||
+            getDefaultMaster(name);
+
+
+            const link =
+            saved.link !== undefined
+            ?
+            saved.link
+            :
+            getDefaultLink(name);
+
+
+            const round =
+            saved.round !== undefined
+            ?
+            saved.round
+            :
+            getDefaultRound(name);
+
+
+            const tr =
+            document.createElement("tr");
+
+
+            tr.innerHTML = `
 
 <td>
-<b>${name}</b>
+${name}
 </td>
+
 
 <td>
 
@@ -1259,7 +1168,7 @@ type="number"
 step="0.01"
 id="old-${index}"
 value="${old}"
-${isLocked?"disabled":""}
+${isLocked ? "disabled" : ""}
 >
 
 </td>
@@ -1269,24 +1178,27 @@ ${isLocked?"disabled":""}
 
 <select
 id="master-${index}"
-${isLocked?"disabled":""}
+${isLocked ? "disabled" : ""}
 >
 
 <option
 value="15KG"
-${master==="15KG"?"selected":""}>
+${master === "15KG" ? "selected" : ""}
+>
 15 KG MASTER
 </option>
 
 <option
 value="1LTR"
-${master==="1LTR"?"selected":""}>
+${master === "1LTR" ? "selected" : ""}
+>
 1 LTR MASTER
 </option>
 
 <option
 value="MANUAL"
-${master==="MANUAL"?"selected":""}>
+${master === "MANUAL" ? "selected" : ""}
+>
 MANUAL
 </option>
 
@@ -1303,7 +1215,7 @@ type="number"
 step="0.01"
 id="link-${index}"
 value="${link}"
-${isLocked?"disabled":""}
+${isLocked ? "disabled" : ""}
 >
 
 </td>
@@ -1317,7 +1229,7 @@ type="number"
 step="0.01"
 id="round-${index}"
 value="${round}"
-${isLocked?"disabled":""}
+${isLocked ? "disabled" : ""}
 >
 
 </td>
@@ -1331,7 +1243,7 @@ type="number"
 step="0.01"
 id="new-${index}"
 value="${old}"
-${isLocked?"disabled":""}
+disabled
 >
 
 </td>
@@ -1339,606 +1251,582 @@ ${isLocked?"disabled":""}
 `;
 
 
-tbody.appendChild(tr);
+            tbody.appendChild(tr);
 
 
-/*
-EVENTS
-*/
+            [
+                "old-",
+                "master-",
+                "link-",
+                "round-"
+            ].forEach(prefix=>{
 
-[
-"old-",
-"master-",
-"link-",
-"round-"
-].forEach(prefix=>{
+                const el =
+                document.getElementById(
+                    prefix+index
+                );
 
-document
-.getElementById(
-prefix+index
-)
-.addEventListener(
-"input",
-calculateRows
-);
+                el.addEventListener(
+                    "input",
+                    calculateRows
+                );
 
-document
-.getElementById(
-prefix+index
-)
-.addEventListener(
-"change",
-calculateRows
-);
+                el.addEventListener(
+                    "change",
+                    calculateRows
+                );
 
-});
+            });
 
-}
-);
+        }
+    );
 
 
-document.getElementById(
-"productTitle"
-).innerText=
-data.name+
-" — "+
-city.toUpperCase()+
-" — "+
-month;
+    document.getElementById(
+        "productTitle"
+    ).innerText =
+    data.name +
+    " — " +
+    city.toUpperCase() +
+    " — PACKING RATE FORMULA";
 
 
-calculateRows();
-
+    calculateRows();
 }
 
 
-/* =====================================================
-   LOAD MASTER
-===================================================== */
+/* =========================================================
+   LOAD
+========================================================= */
 
 function load(){
 
-let data=getProduct();
-
-let master15=
-data.master15||
-null;
-
-let master1=
-data.master1||
-null;
+    const data =
+    getProduct();
 
 
-document.getElementById(
-"master15Old"
-).value=
-master15
-?master15.old
-:findFirst15(data);
+    /* FIND 15 KG MASTER */
+
+    let master15 =
+    data.rates.find(row=>{
+
+        const n =
+        row[0].toLowerCase();
+
+        return(
+            n.includes("15 kg") ||
+            n.includes("15kg") ||
+            n.includes("15 ltr")
+        );
+
+    });
 
 
-document.getElementById(
-"master15Change"
-).value=
-master15
-?master15.change
-:0;
+    /* FIND 1 LTR MASTER */
+
+    let master1 =
+    data.rates.find(row=>{
+
+        const n =
+        row[0].toLowerCase();
+
+        return(
+            n.includes("1 ltr")
+        );
+
+    });
 
 
-document.getElementById(
-"master1Old"
-).value=
-master1
-?master1.old
-:findFirst1(data);
+    document.getElementById(
+        "master15Old"
+    ).value =
+    master15
+    ?
+    master15[1]
+    :
+    0;
 
 
-document.getElementById(
-"master1Change"
-).value=
-master1
-?master1.change
-:0;
+    document.getElementById(
+        "master1Old"
+    ).value =
+    master1
+    ?
+    master1[1]
+    :
+    0;
 
 
-renderTable();
+    document.getElementById(
+        "master15Change"
+    ).value =
+    data.master15Change || 0;
 
-renderHistory();
 
+    document.getElementById(
+        "master1Change"
+    ).value =
+    data.master1Change || 0;
+
+
+    document.getElementById(
+        "master15Change"
+    ).disabled =
+    isLocked;
+
+
+    document.getElementById(
+        "master1Change"
+    ).disabled =
+    isLocked;
+
+
+    renderTable();
+
+    renderHistory();
 }
 
 
-/* =====================================================
-   FIND MASTER RATE
-===================================================== */
-
-function findFirst15(data){
-
-let r=
-data.rates.find(
-x=>{
-let n=x[0].toLowerCase();
-
-return(
-n.includes("15 kg")||
-n.includes("15kg")
-);
-}
-);
-
-return r?r[1]:0;
-
-}
-
-
-function findFirst1(data){
-
-let r=
-data.rates.find(
-x=>
-x[0]
-.toLowerCase()
-.includes("1 ltr")
-);
-
-return r?r[1]:0;
-
-}
-
-
-/* =====================================================
-   LOCK
-===================================================== */
+/* =========================================================
+   LOCK / UNLOCK
+========================================================= */
 
 function toggleLock(){
 
-isLocked=!isLocked;
-
-let btn=
-document.getElementById(
-"lockButton"
-);
-
-let save=
-document.getElementById(
-"saveButton"
-);
+    isLocked = !isLocked;
 
 
-if(isLocked){
+    const button =
+    document.getElementById(
+        "lockButton"
+    );
 
-btn.innerText=
-"🔒 LOCKED";
 
-btn.className=
-"lock-btn locked";
+    const save =
+    document.getElementById(
+        "saveButton"
+    );
 
-save.disabled=true;
 
-}else{
+    if(isLocked){
 
-btn.innerText=
-"🔓 UNLOCKED";
+        button.innerHTML =
+        "🔒 LOCKED";
 
-btn.className=
-"lock-btn unlocked";
+        button.className =
+        "lock-btn locked";
 
-save.disabled=false;
+        save.disabled = true;
 
+    }
+    else{
+
+        button.innerHTML =
+        "🔓 UNLOCKED";
+
+        button.className =
+        "lock-btn unlocked";
+
+        save.disabled = false;
+
+    }
+
+
+    document.getElementById(
+        "master15Change"
+    ).disabled =
+    isLocked;
+
+
+    document.getElementById(
+        "master1Change"
+    ).disabled =
+    isLocked;
+
+
+    renderTable();
+
+    calculateRows();
 }
 
-load();
 
-}
-
-
-/* =====================================================
+/* =========================================================
    SAVE
-===================================================== */
+========================================================= */
 
 function saveRates(){
 
-if(isLocked){
+    if(isLocked){
 
-alert(
-"Panel LOCKED hai. Pehle UNLOCK kare."
-);
+        alert(
+            "🔒 Panel LOCKED hai. Pehle UNLOCK kare."
+        );
 
-return;
+        return;
+    }
+
+
+    const data =
+    getProduct();
+
+
+    const master15Change =
+    Number(
+        document.getElementById(
+            "master15Change"
+        ).value
+    ) || 0;
+
+
+    const master1Change =
+    Number(
+        document.getElementById(
+            "master1Change"
+        ).value
+    ) || 0;
+
+
+    let changesMade = 0;
+
+
+    /* SAVE EACH ROW */
+
+    data.rates.forEach(
+        (row,index)=>{
+
+            const oldRate =
+            Number(
+                document.getElementById(
+                    "old-"+index
+                ).value
+            ) || 0;
+
+
+            const newRate =
+            Number(
+                document.getElementById(
+                    "new-"+index
+                ).value
+            ) || 0;
+
+
+            const master =
+            document.getElementById(
+                "master-"+index
+            ).value;
+
+
+            const link =
+            Number(
+                document.getElementById(
+                    "link-"+index
+                ).value
+            ) || 0;
+
+
+            const round =
+            Number(
+                document.getElementById(
+                    "round-"+index
+                ).value
+            ) || 0;
+
+
+            /* HISTORY */
+
+            if(
+                Number(oldRate) !==
+                Number(newRate)
+            ){
+
+                changesMade++;
+
+
+                history.push({
+
+                    timestamp:
+                    new Date().toISOString(),
+
+                    city:city,
+
+                    product:
+                    PRODUCTS[product].name,
+
+                    packing:
+                    row[0],
+
+                    oldRate:
+                    oldRate,
+
+                    newRate:
+                    newRate
+
+                });
+
+            }
+
+
+            /* SAVE */
+
+            data.rates[index] = [
+
+                row[0],
+
+                newRate,
+
+                {
+
+                    master:master,
+
+                    link:link,
+
+                    round:round
+
+                }
+
+            ];
+
+        }
+    );
+
+
+    /* MASTER CHANGE SAVE */
+
+    data.master15Change =
+    master15Change;
+
+
+    data.master1Change =
+    master1Change;
+
+
+    /* SAVE DATABASE */
+
+    localStorage.setItem(
+        "VISHWAS_RATE_DATABASE_V4",
+        JSON.stringify(db)
+    );
+
+
+    /* SAVE HISTORY */
+
+    cleanHistory();
+
+
+    localStorage.setItem(
+        "VISHWAS_RATE_HISTORY_V4",
+        JSON.stringify(history)
+    );
+
+
+    /* RESET CHANGE TO ZERO */
+
+    data.master15Change = 0;
+    data.master1Change = 0;
+
+
+    document.getElementById(
+        "master15Change"
+    ).value = 0;
+
+
+    document.getElementById(
+        "master1Change"
+    ).value = 0;
+
+
+    /* SAVE RESET VALUES */
+
+    localStorage.setItem(
+        "VISHWAS_RATE_DATABASE_V4",
+        JSON.stringify(db)
+    );
+
+
+    /* RELOAD */
+
+    load();
+
+
+    showMessage(
+        changesMade > 0
+        ?
+        "✅ RATE UPDATED SUCCESSFULLY"
+        :
+        "ℹ️ KOI RATE CHANGE NAHI HUA"
+    );
 
 }
 
 
-let data=getProduct();
+/* =========================================================
+   CLEAN HISTORY - ONLY LAST 3 DAYS
+========================================================= */
 
-let history=[];
+function cleanHistory(){
 
-
-/*
-SAVE MASTER CHANGES
-*/
-
-let oldMaster15=
-Number(
-document.getElementById(
-"master15Old"
-).value
-)||0;
-
-let change15=
-Number(
-document.getElementById(
-"master15Change"
-).value
-)||0;
-
-let newMaster15=
-oldMaster15+change15;
+    const now =
+    Date.now();
 
 
-let oldMaster1=
-Number(
-document.getElementById(
-"master1Old"
-).value
-)||0;
-
-let change1=
-Number(
-document.getElementById(
-"master1Change"
-).value
-)||0;
-
-let newMaster1=
-oldMaster1+change1;
+    const threeDays =
+    3 * 24 * 60 * 60 * 1000;
 
 
-/*
-SAVE PACKINGS
-*/
+    history =
+    history.filter(item=>{
 
-data.rates.forEach(
-(row,index)=>{
-
-let oldRate=
-Number(
-document.getElementById(
-"old-"+index
-).value
-)||0;
-
-let newRate=
-Number(
-document.getElementById(
-"new-"+index
-).value
-)||0;
-
-let master=
-document.getElementById(
-"master-"+index
-).value;
-
-let link=
-Number(
-document.getElementById(
-"link-"+index
-).value
-)||0;
-
-let round=
-Number(
-document.getElementById(
-"round-"+index
-).value
-)||0;
+        const time =
+        new Date(
+            item.timestamp
+        ).getTime();
 
 
-/*
-HISTORY ONLY IF CHANGED
-*/
+        return(
+            now - time
+        ) <= threeDays;
 
-if(
-oldRate!==newRate
-){
+    });
 
-history.push({
 
-date:new Date().toISOString(),
-
-city:city,
-
-month:month,
-
-product:product,
-
-packing:row[0],
-
-oldRate:oldRate,
-
-newRate:newRate
-
-});
+    history.sort(
+        (a,b)=>
+        new Date(b.timestamp) -
+        new Date(a.timestamp)
+    );
 
 }
 
 
-/*
-NEW RATE BECOMES OLD RATE
-AFTER SAVE
-*/
-
-data.rates[index]=[
-
-row[0],
-
-newRate,
-
-{
-master:master,
-link:link,
-round:round
-}
-
-];
-
-});
-
-
-/*
-MASTER AFTER UPDATE
-*/
-
-data.master15={
-
-old:newMaster15,
-
-change:0,
-
-newRate:newMaster15
-
-};
-
-data.master1={
-
-old:newMaster1,
-
-change:0,
-
-newRate:newMaster1
-
-};
-
-
-/*
-SAVE HISTORY
-*/
-
-let oldHistory=
-JSON.parse(
-localStorage.getItem(
-"VISHWAS_RATE_HISTORY"
-)
-)||[];
-
-oldHistory=
-oldHistory.concat(history);
-
-
-/*
-KEEP ONLY LAST 3 DAYS
-*/
-
-let now=
-Date.now();
-
-oldHistory=
-oldHistory.filter(
-x=>{
-
-let t=
-new Date(x.date)
-.getTime();
-
-return(
-now-t
-)<=
-3*24*60*60*1000;
-
-}
-);
-
-
-localStorage.setItem(
-"VISHWAS_RATE_HISTORY",
-JSON.stringify(
-oldHistory
-)
-);
-
-
-localStorage.setItem(
-"VISHWAS_RATE_DATABASE_V2",
-JSON.stringify(db)
-);
-
-
-/*
-RESET CHANGE BOXES
-*/
-
-document.getElementById(
-"master15Change"
-).value=0;
-
-document.getElementById(
-"master1Change"
-).value=0;
-
-
-/*
-RELOAD
-*/
-
-load();
-
-showMessage(
-history.length
-?
-"✅ RATE UPDATE SUCCESSFUL"
-:
-"ℹ️ KOI RATE CHANGE NAHI HUA"
-);
-
-}
-
-
-/* =====================================================
-   HISTORY
-===================================================== */
+/* =========================================================
+   HISTORY DISPLAY
+========================================================= */
 
 function renderHistory(){
 
-let list=
-document.getElementById(
-"historyList"
-);
-
-let history=
-JSON.parse(
-localStorage.getItem(
-"VISHWAS_RATE_HISTORY"
-)
-)||[];
+    cleanHistory();
 
 
-let now=Date.now();
-
-history=
-history.filter(
-x=>
-now-
-new Date(x.date).getTime()
-<=
-3*24*60*60*1000
-);
+    const list =
+    document.getElementById(
+        "historyList"
+    );
 
 
-history.sort(
-(a,b)=>
-new Date(b.date)-
-new Date(a.date)
-);
+    if(!history.length){
+
+        list.innerHTML = `
+
+        <div class="empty-history">
+        Last 3 days me koi rate change nahi hua.
+        </div>
+
+        `;
+
+        return;
+    }
 
 
-if(!history.length){
-
-list.innerHTML=
-`
-<div class="empty-history">
-Last 3 days me koi rate change nahi hua.
-</div>
-`;
-
-return;
-
-}
+    list.innerHTML = "";
 
 
-list.innerHTML="";
+    history.forEach(item=>{
+
+        const date =
+        new Date(
+            item.timestamp
+        );
 
 
-history.forEach(
-x=>{
+        const div =
+        document.createElement(
+            "div"
+        );
 
-let d=
-new Date(x.date);
 
-let div=
-document.createElement("div");
+        div.className =
+        "history-item";
 
-div.className=
-"history-item";
 
-div.innerHTML=`
+        div.innerHTML = `
 
-<div>
+        <div class="history-product">
 
-<b>
-${x.product.toUpperCase()}
-</b>
-&nbsp; —
-${x.packing}
+        ${item.product}
+        —
+        ${item.packing}
 
-</div>
+        </div>
 
-<div>
 
-${x.city.toUpperCase()}
-&nbsp; | &nbsp;
-${x.month}
+        <div>
 
-</div>
+        ${item.city.toUpperCase()}
 
-<div>
+        &nbsp; | &nbsp;
 
-<span class="old-rate">
-₹${Number(x.oldRate).toFixed(2)}
-</span>
+        <span class="old-history">
+        ₹${Number(item.oldRate).toFixed(2)}
+        </span>
 
-&nbsp; →
-&nbsp;
+        →
 
-<span class="new-history">
-₹${Number(x.newRate).toFixed(2)}
-</span>
+        <span class="new-history">
+        ₹${Number(item.newRate).toFixed(2)}
+        </span>
 
-</div>
+        </div>
 
-<div class="history-date">
 
-${d.toLocaleString()}
+        <div class="history-date">
 
-</div>
+        ${date.toLocaleString()}
 
-`;
+        </div>
 
-list.appendChild(div);
+        `;
 
-});
+
+        list.appendChild(div);
+
+    });
 
 }
 
 
-/* =====================================================
+/* =========================================================
    MESSAGE
-===================================================== */
+========================================================= */
 
 function showMessage(text){
 
-let box=
-document.getElementById(
-"message"
-);
+    const box =
+    document.getElementById(
+        "message"
+    );
 
-box.innerText=text;
 
-box.style.display="block";
+    box.innerText =
+    text;
 
-setTimeout(
-()=>{
-box.style.display="none";
-},
-3000
-);
+
+    box.style.display =
+    "block";
+
+
+    setTimeout(()=>{
+
+        box.style.display =
+        "none";
+
+    },3500);
 
 }
 
 
-/* =====================================================
+/* =========================================================
    START
-===================================================== */
+========================================================= */
 
 load();
 
