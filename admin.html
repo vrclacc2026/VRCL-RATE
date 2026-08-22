@@ -1,0 +1,2458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Vishwas Rate Admin Panel</title>
+
+<style>
+
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    font-family:Arial,Helvetica,sans-serif;
+    background:#f2f3f5;
+    color:#222;
+}
+
+.header{
+    background:#fff;
+    text-align:center;
+    padding:12px;
+    box-shadow:0 2px 8px rgba(0,0,0,.15);
+}
+
+.logo{
+    width:170px;
+    max-width:70%;
+}
+
+.company{
+    font-size:18px;
+    font-weight:bold;
+    margin-top:5px;
+}
+
+.admin-bar{
+    background:#a90000;
+    color:#fff;
+    text-align:center;
+    padding:12px;
+    font-weight:bold;
+}
+
+.container{
+    max-width:1400px;
+    margin:auto;
+    padding:15px;
+}
+
+.box{
+    background:#fff;
+    border-radius:12px;
+    padding:18px;
+    margin-bottom:15px;
+    box-shadow:0 2px 10px rgba(0,0,0,.08);
+}
+
+h2{
+    margin-top:0;
+}
+
+.row{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+}
+
+.field{
+    flex:1;
+    min-width:200px;
+}
+
+label{
+    display:block;
+    font-weight:bold;
+    font-size:13px;
+    margin-bottom:5px;
+}
+
+input,
+select{
+    width:100%;
+    padding:10px;
+    border:1px solid #bbb;
+    border-radius:7px;
+    font-size:15px;
+}
+
+.master{
+    background:#fff4c7;
+    border:2px solid #dfb000;
+}
+
+.master-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+}
+
+.master-card{
+    background:#fff;
+    border:1px solid #ddd;
+    padding:12px;
+    border-radius:10px;
+}
+
+.master-card h3{
+    margin-top:0;
+}
+
+.old-rate{
+    background:#f3f3f3;
+}
+
+.change-rate{
+    border:2px solid #d89b00;
+    font-weight:bold;
+}
+
+.new-rate{
+    background:#e8f7ec;
+    border:2px solid #198754;
+    font-weight:bold;
+    color:#08752f;
+}
+
+.table-scroll{
+    overflow-x:auto;
+}
+
+table{
+    width:100%;
+    min-width:1100px;
+    border-collapse:collapse;
+}
+
+th{
+    background:#eeeeee;
+    font-size:13px;
+}
+
+th,
+td{
+    border:1px solid #d5d5d5;
+    padding:7px;
+    text-align:center;
+}
+
+td:first-child,
+th:first-child{
+    text-align:left;
+}
+
+.formula{
+    min-width:250px;
+    font-family:Consolas,monospace;
+}
+
+.round{
+    width:100px;
+}
+
+.preview{
+    font-weight:bold;
+    color:#a90000;
+}
+
+.green{
+    color:#08752f;
+    font-weight:bold;
+}
+
+.button{
+    border:0;
+    border-radius:7px;
+    padding:12px 18px;
+    cursor:pointer;
+    font-weight:bold;
+    margin:5px;
+}
+
+.save{
+    background:#198754;
+    color:white;
+}
+
+.reset{
+    background:#555;
+    color:white;
+}
+
+.copy{
+    background:#0d6efd;
+    color:white;
+}
+
+.help{
+    background:#eef6ff;
+    border-left:5px solid #0d6efd;
+    padding:12px;
+    line-height:1.7;
+    border-radius:7px;
+}
+
+.status{
+    display:none;
+    background:#e8f5e9;
+    padding:12px;
+    border-radius:7px;
+    margin-top:10px;
+    font-weight:bold;
+}
+
+@media(max-width:800px){
+
+    .master-grid{
+        grid-template-columns:1fr;
+    }
+
+}
+
+</style>
+</head>
+
+<body>
+
+
+<!-- HEADER -->
+
+<div class="header">
+
+    <img
+        src="assets/images/vishwas-logo.png"
+        class="logo"
+        onerror="this.style.display='none'"
+    >
+
+    <div class="company">
+        VISHWAS REFOILS & CONSUMER LIMITED
+    </div>
+
+</div>
+
+
+<div class="admin-bar">
+
+    PRIVATE RATE ADMIN PANEL
+
+</div>
+
+
+<div class="container">
+
+
+<!-- ========================= -->
+<!-- SELECT CITY PRODUCT -->
+<!-- ========================= -->
+
+<div class="box">
+
+    <h2>
+        ① RATE CONTROL
+    </h2>
+
+    <div class="row">
+
+        <div class="field">
+
+            <label>
+                CITY / PARTY
+            </label>
+
+            <select id="city">
+
+                <option value="rajkot">
+                    RAJKOT
+                </option>
+
+                <option value="ahmedabad">
+                    AHMEDABAD
+                </option>
+
+                <option value="udaan">
+                    UDAAN
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="field">
+
+            <label>
+                PRODUCT
+            </label>
+
+            <select id="product">
+
+                <option value="palm">
+                    PALMOLEIN
+                </option>
+
+                <option value="visvita">
+                    VISVITA
+                </option>
+
+                <option value="sunflower">
+                    SUNFLOWER
+                </option>
+
+                <option value="groundnut">
+                    GROUNDNUT
+                </option>
+
+                <option value="cotton">
+                    COTTONSEED
+                </option>
+
+                <option value="mustard">
+                    MUSTARD
+                </option>
+
+                <option value="soya">
+                    SOYA
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div
+            class="field"
+            id="monthField"
+        >
+
+            <label>
+                RATE MONTH
+            </label>
+
+            <select id="month">
+
+                <option value="CURRENT">
+                    CURRENT MONTH
+                </option>
+
+                <option value="NEXT">
+                    NEXT MONTH
+                </option>
+
+            </select>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- ========================= -->
+<!-- MASTER RATES -->
+<!-- ========================= -->
+
+<div class="box master">
+
+    <h2>
+        ② MASTER RATE CHANGE
+    </h2>
+
+    <div class="master-grid">
+
+
+        <!-- 15 KG -->
+
+        <div class="master-card">
+
+            <h3>
+                15 KG MASTER
+            </h3>
+
+            <label>
+                OLD RATE
+            </label>
+
+            <input
+                id="old15"
+                class="old-rate"
+                type="number"
+                step="0.01"
+            >
+
+            <br><br>
+
+            <label>
+                CHANGE
+            </label>
+
+            <input
+                id="change15"
+                class="change-rate"
+                type="number"
+                step="0.01"
+                placeholder="+15 / -10"
+            >
+
+            <br><br>
+
+            <label>
+                NEW RATE
+            </label>
+
+            <input
+                id="new15"
+                class="new-rate"
+                type="number"
+                step="0.01"
+                readonly
+            >
+
+        </div>
+
+
+        <!-- 1 LTR -->
+
+        <div class="master-card">
+
+            <h3>
+                1 LTR MASTER
+            </h3>
+
+            <label>
+                OLD RATE
+            </label>
+
+            <input
+                id="old1ltr"
+                class="old-rate"
+                type="number"
+                step="0.01"
+            >
+
+            <br><br>
+
+            <label>
+                CHANGE
+            </label>
+
+            <input
+                id="change1ltr"
+                class="change-rate"
+                type="number"
+                step="0.01"
+                placeholder="+1 / -0.50"
+            >
+
+            <br><br>
+
+            <label>
+                NEW RATE
+            </label>
+
+            <input
+                id="new1ltr"
+                class="new-rate"
+                type="number"
+                step="0.01"
+                readonly
+            >
+
+        </div>
+
+
+        <!-- INFORMATION -->
+
+        <div class="master-card">
+
+            <h3>
+                AUTOMATIC SYSTEM
+            </h3>
+
+            <p>
+                <b>15 KG CHANGE</b>
+                → Big packing formulas
+            </p>
+
+            <p>
+                <b>1 LTR CHANGE</b>
+                → 5 LTR se niche ke formulas
+            </p>
+
+            <p>
+                Baaki packing ka formula
+                aap neeche khud set karoge.
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- ========================= -->
+<!-- FORMULA HELP -->
+<!-- ========================= -->
+
+<div class="box">
+
+    <h2>
+        ③ FORMULA SYSTEM
+    </h2>
+
+    <div class="help">
+
+        <b>Formula me ye variables use kar sakte ho:</b>
+
+        <br><br>
+
+        <b>OLD</b>
+        = us packing ka old rate
+
+        <br>
+
+        <b>CHANGE</b>
+        = us packing ka manually defined change
+
+        <br>
+
+        <b>OLD15</b>
+        = 15 KG old rate
+
+        <br>
+
+        <b>CHANGE15KG</b>
+        = 15 KG me diya gaya change
+
+        <br>
+
+        <b>NEW15</b>
+        = 15 KG new rate
+
+        <br>
+
+        <b>OLD1LTR</b>
+        = 1 LTR old rate
+
+        <br>
+
+        <b>CHANGE1LTR</b>
+        = 1 LTR me diya gaya change
+
+        <br>
+
+        <b>NEW1LTR</b>
+        = 1 LTR new rate
+
+        <br><br>
+
+        <b>Examples:</b>
+
+        <br>
+
+        15 KG se ₹15 change aur formula:
+
+        <br>
+
+        <code>CHANGE15KG * 0.5</code>
+
+        <br><br>
+
+        1 LTR ke change ka half:
+
+        <br>
+
+        <code>CHANGE1LTR * 0.5</code>
+
+        <br><br>
+
+        1 LTR ke change ka 25%:
+
+        <br>
+
+        <code>CHANGE1LTR * 0.25</code>
+
+        <br><br>
+
+        Old rate + 1 LTR change:
+
+        <br>
+
+        <code>OLD + CHANGE1LTR</code>
+
+    </div>
+
+</div>
+
+
+
+<!-- ========================= -->
+<!-- PACKING TABLE -->
+<!-- ========================= -->
+
+<div class="box">
+
+    <h2>
+        ④ PACKING FORMULA CONTROL
+    </h2>
+
+    <div class="table-scroll">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        PACKING
+                    </th>
+
+                    <th>
+                        OLD RATE
+                    </th>
+
+                    <th>
+                        CHANGE
+                    </th>
+
+                    <th>
+                        NEW RATE
+                    </th>
+
+                    <th>
+                        FORMULA
+                    </th>
+
+                    <th>
+                        ROUND OFF
+                    </th>
+
+                    <th>
+                        SOURCE
+                    </th>
+
+                </tr>
+
+            </thead>
+
+            <tbody
+                id="packingTable"
+            >
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+
+<!-- ========================= -->
+<!-- BUTTONS -->
+<!-- ========================= -->
+
+<div class="box">
+
+    <button
+        class="button save"
+        onclick="saveRates()"
+    >
+        SAVE RATE
+    </button>
+
+    <button
+        class="button copy"
+        onclick="copyRateList()"
+    >
+        COPY RATE LIST
+    </button>
+
+    <button
+        class="button reset"
+        onclick="resetData()"
+    >
+        RESET
+    </button>
+
+    <div
+        id="status"
+        class="status"
+    ></div>
+
+</div>
+
+
+</div>
+
+
+
+<script>
+
+
+/* =====================================================
+   PACKING DATA
+===================================================== */
+
+
+const packingList = [
+
+    {
+        name:"15 KG N TIN",
+        rate:2384,
+        formula:"CHANGE15KG",
+        round:1,
+        source:"15 KG"
+    },
+
+    {
+        name:"15 KG S TIN",
+        rate:2339,
+        formula:"CHANGE15KG",
+        round:1,
+        source:"15 KG"
+    },
+
+    {
+        name:"15 LTR N TIN",
+        rate:2174,
+        formula:"CHANGE15KG",
+        round:1,
+        source:"15 KG"
+    },
+
+    {
+        name:"15 LTR S TIN",
+        rate:2129,
+        formula:"CHANGE15KG",
+        round:1,
+        source:"15 KG"
+    },
+
+    {
+        name:"5 LTR JAR",
+        rate:731,
+        formula:"CHANGE15KG * 0.50",
+        round:0.50,
+        source:"15 KG"
+    },
+
+    {
+        name:"4.150 KG JAR",
+        rate:701,
+        formula:"CHANGE15KG * 0.50",
+        round:0.10,
+        source:"15 KG"
+    },
+
+    {
+        name:"2 LTR JAR",
+        rate:299.46,
+        formula:"CHANGE1LTR * 2",
+        round:0.10,
+        source:"1 LTR"
+    },
+
+    {
+        name:"1.6 KG JAR",
+        rate:274.46,
+        formula:"CHANGE1LTR * 1.60",
+        round:0.10,
+        source:"1 LTR"
+    },
+
+    {
+        name:"1 LTR BOTTLE",
+        rate:146.20,
+        formula:"CHANGE1LTR",
+        round:0.10,
+        source:"1 LTR"
+    },
+
+    {
+        name:"1 LTR POUCH",
+        rate:141.20,
+        formula:"CHANGE1LTR",
+        round:0.10,
+        source:"1 LTR"
+    },
+
+    {
+        name:"790 GM BOTTLE",
+        rate:136.20,
+        formula:"CHANGE1LTR * 0.79",
+        round:0.10,
+        source:"1 LTR"
+    },
+
+    {
+        name:"750 GM POUCH",
+        rate:124.70,
+        formula:"CHANGE1LTR * 0.75",
+        round:0.10,
+        source:"1 LTR"
+    },
+
+    {
+        name:"500 ML BOTTLE",
+        rate:74.60,
+        formula:"CHANGE1LTR * 0.50",
+        round:0.10,
+        source:"1 LTR"
+    },
+
+    {
+        name:"500 ML POUCH",
+        rate:72.10,
+        formula:"CHANGE1LTR * 0.50",
+        round:0.10,
+        source:"1 LTR"
+    },
+
+    {
+        name:"395 GM BOTTLE",
+        rate:69.60,
+        formula:"CHANGE1LTR * 0.395",
+        round:0.10,
+        source:"1 LTR"
+    }
+
+];
+
+
+
+/* =====================================================
+   STORAGE
+===================================================== */
+
+
+let database =
+    JSON.parse(
+        localStorage.getItem(
+            "vishwasRateDatabase"
+        )
+    ) || {};
+
+
+
+/* =====================================================
+   CREATE DEFAULT
+===================================================== */
+
+
+function createDefault(){
+
+    const cities =
+    [
+        "rajkot",
+        "ahmedabad",
+        "udaan"
+    ];
+
+
+    const products =
+    [
+        "palm",
+        "visvita",
+        "sunflower",
+        "groundnut",
+        "cotton",
+        "mustard",
+        "soya"
+    ];
+
+
+    cities.forEach(
+        city => {
+
+            if(
+                !database[city]
+            ){
+
+                database[city] = {};
+
+            }
+
+
+            products.forEach(
+                product => {
+
+                    if(
+                        !database[city][product]
+                    ){
+
+                        database[city][product] =
+                        JSON.parse(
+                            JSON.stringify(
+                                packingList
+                            )
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+    );
+
+
+    localStorage.setItem(
+        "vishwasRateDatabase",
+        JSON.stringify(
+            database
+        )
+    );
+
+}
+
+
+createDefault();
+
+
+
+/* =====================================================
+   GET CURRENT
+===================================================== */
+
+
+function getCity(){
+
+    return document
+        .getElementById(
+            "city"
+        )
+        .value;
+
+}
+
+
+function getProduct(){
+
+    return document
+        .getElementById(
+            "product"
+        )
+        .value;
+
+}
+
+
+
+function getRows(){
+
+    return database
+        [getCity()]
+        [getProduct()];
+
+}
+
+
+
+/* =====================================================
+   FIND 15 KG OLD
+===================================================== */
+
+
+function find15KG(){
+
+    const rows =
+        getRows();
+
+
+    return rows.find(
+        row =>
+        row.name
+        .toUpperCase()
+        .includes(
+            "15 KG"
+        )
+    );
+
+}
+
+
+
+/* =====================================================
+   FIND 1 LTR OLD
+===================================================== */
+
+
+function find1LTR(){
+
+    const rows =
+        getRows();
+
+
+    return rows.find(
+        row =>
+        row.name
+        .toUpperCase()
+        .includes(
+            "1 LTR"
+        )
+    );
+
+}
+
+
+
+/* =====================================================
+   ROUND
+===================================================== */
+
+
+function roundValue(
+    value,
+    step
+){
+
+    step =
+        Number(step);
+
+
+    if(
+        !step ||
+        step <= 0
+    ){
+
+        return Number(
+            value.toFixed(2)
+        );
+
+    }
+
+
+    return Number(
+        (
+            Math.round(
+                value / step
+            ) * step
+        ).toFixed(2)
+    );
+
+}
+
+
+
+/* =====================================================
+   SAFE FORMULA CALCULATOR
+===================================================== */
+
+
+function calculateFormula(
+    formula,
+    oldRate,
+    change,
+    old15,
+    change15,
+    new15,
+    old1ltr,
+    change1ltr,
+    new1ltr
+){
+
+    try{
+
+        let expression =
+            String(
+                formula || "0"
+            )
+            .toUpperCase();
+
+
+        expression =
+            expression
+            .replaceAll(
+                "NEW15",
+                `(${new15})`
+            );
+
+
+        expression =
+            expression
+            .replaceAll(
+                "CHANGE15KG",
+                `(${change15})`
+            );
+
+
+        expression =
+            expression
+            .replaceAll(
+                "OLD15",
+                `(${old15})`
+            );
+
+
+        expression =
+            expression
+            .replaceAll(
+                "NEW1LTR",
+                `(${new1ltr})`
+            );
+
+
+        expression =
+            expression
+            .replaceAll(
+                "CHANGE1LTR",
+                `(${change1ltr})`
+            );
+
+
+        expression =
+            expression
+            .replaceAll(
+                "OLD1LTR",
+                `(${old1ltr})`
+            );
+
+
+        expression =
+            expression
+            .replaceAll(
+                "CHANGE",
+                `(${change})`
+            );
+
+
+        expression =
+            expression
+            .replaceAll(
+                "OLD",
+                `(${oldRate})`
+            );
+
+
+        /*
+          Only arithmetic characters allowed.
+        */
+
+        if(
+            !/^[0-9+\-*/().\s]+$/
+            .test(
+                expression
+            )
+        ){
+
+            return NaN;
+
+        }
+
+
+        return Function(
+            `"use strict";return (${expression})`
+        )();
+
+    }
+    catch(
+        error
+    ){
+
+        return NaN;
+
+    }
+
+}
+
+
+
+/* =====================================================
+   LOAD MASTER BOX
+===================================================== */
+
+
+function loadMaster(){
+
+    const rows =
+        getRows();
+
+
+    const row15 =
+        find15KG();
+
+
+    const row1 =
+        find1LTR();
+
+
+    const old15 =
+        row15
+        ? row15.rate
+        : 0;
+
+
+    const old1 =
+        row1
+        ? row1.rate
+        : 0;
+
+
+    document
+        .getElementById(
+            "old15"
+        )
+        .value =
+        Number(
+            old15
+        ).toFixed(2);
+
+
+    document
+        .getElementById(
+            "old1ltr"
+        )
+        .value =
+        Number(
+            old1
+        ).toFixed(2);
+
+
+    calculateMaster();
+
+}
+
+
+
+/* =====================================================
+   MASTER CALCULATION
+===================================================== */
+
+
+function calculateMaster(){
+
+    const old15 =
+        Number(
+            document
+            .getElementById(
+                "old15"
+            )
+            .value
+        )
+        || 0;
+
+
+    const change15 =
+        Number(
+            document
+            .getElementById(
+                "change15"
+            )
+            .value
+        )
+        || 0;
+
+
+    const old1 =
+        Number(
+            document
+            .getElementById(
+                "old1ltr"
+            )
+            .value
+        )
+        || 0;
+
+
+    const change1 =
+        Number(
+            document
+            .getElementById(
+                "change1ltr"
+            )
+            .value
+        )
+        || 0;
+
+
+    document
+        .getElementById(
+            "new15"
+        )
+        .value =
+        (
+            old15
+            +
+            change15
+        ).toFixed(2);
+
+
+    document
+        .getElementById(
+            "new1ltr"
+        )
+        .value =
+        (
+            old1
+            +
+            change1
+        ).toFixed(2);
+
+
+    loadTable();
+
+}
+
+
+
+/* =====================================================
+   LOAD TABLE
+===================================================== */
+
+
+function loadTable(){
+
+    const tbody =
+        document
+        .getElementById(
+            "packingTable"
+        );
+
+
+    tbody.innerHTML = "";
+
+
+    const rows =
+        getRows();
+
+
+    const old15 =
+        Number(
+            document
+            .getElementById(
+                "old15"
+            )
+            .value
+        )
+        || 0;
+
+
+    const change15 =
+        Number(
+            document
+            .getElementById(
+                "change15"
+            )
+            .value
+        )
+        || 0;
+
+
+    const new15 =
+        old15
+        +
+        change15;
+
+
+    const old1 =
+        Number(
+            document
+            .getElementById(
+                "old1ltr"
+            )
+            .value
+        )
+        || 0;
+
+
+    const change1 =
+        Number(
+            document
+            .getElementById(
+                "change1ltr"
+            )
+            .value
+        )
+        || 0;
+
+
+    const new1 =
+        old1
+        +
+        change1;
+
+
+    rows.forEach(
+        (row,index) => {
+
+
+            const tr =
+                document
+                .createElement(
+                    "tr"
+                );
+
+
+            const formula =
+                row.formula
+                ||
+                "0";
+
+
+            const calculatedChange =
+                calculateFormula(
+                    formula,
+                    row.rate,
+                    0,
+                    old15,
+                    change15,
+                    new15,
+                    old1,
+                    change1,
+                    new1
+                );
+
+
+            let finalChange =
+                calculatedChange;
+
+
+            if(
+                !isNaN(
+                    calculatedChange
+                )
+            ){
+
+                finalChange =
+                    roundValue(
+                        calculatedChange,
+                        row.round
+                    );
+
+            }
+
+
+            const newRate =
+                row.rate
+                +
+                (
+                    isNaN(
+                        finalChange
+                    )
+                    ? 0
+                    : finalChange
+                );
+
+
+            tr.innerHTML = `
+
+                <td>
+                    <b>
+                        ${row.name}
+                    </b>
+                </td>
+
+                <td>
+
+                    <input
+                        class="row-old"
+                        data-index="${index}"
+                        type="number"
+                        step="0.01"
+                        value="${Number(row.rate).toFixed(2)}"
+                    >
+
+                </td>
+
+                <td>
+
+                    <span
+                        class="preview"
+                    >
+
+                        ${
+                            isNaN(
+                                finalChange
+                            )
+                            ?
+                            "FORMULA ERROR"
+                            :
+                            (
+                                finalChange >= 0
+                                ? "+"
+                                : ""
+                            )
+                            +
+                            finalChange.toFixed(2)
+                        }
+
+                    </span>
+
+                </td>
+
+                <td>
+
+                    <b
+                        class="green"
+                    >
+
+                        ₹${newRate.toFixed(2)}
+
+                    </b>
+
+                </td>
+
+                <td>
+
+                    <input
+                        class="formula"
+                        data-index="${index}"
+                        value="${formula}"
+                    >
+
+                </td>
+
+                <td>
+
+                    <input
+                        class="round"
+                        data-index="${index}"
+                        type="number"
+                        step="0.01"
+                        value="${row.round}"
+                    >
+
+                </td>
+
+                <td>
+
+                    <select
+                        class="source"
+                        data-index="${index}"
+                    >
+
+                        <option
+                            value="15 KG"
+                            ${
+                                row.source === "15 KG"
+                                ? "selected"
+                                : ""
+                            }
+                        >
+                            15 KG
+                        </option>
+
+                        <option
+                            value="1 LTR"
+                            ${
+                                row.source === "1 LTR"
+                                ? "selected"
+                                : ""
+                            }
+                        >
+                            1 LTR
+                        </option>
+
+                        <option
+                            value="MANUAL"
+                            ${
+                                row.source === "MANUAL"
+                                ? "selected"
+                                : ""
+                            }
+                        >
+                            MANUAL
+                        </option>
+
+                    </select>
+
+                </td>
+
+            `;
+
+
+            tbody.appendChild(
+                tr
+            );
+
+        }
+    );
+
+
+    /*
+      Inputs change karne par live preview
+    */
+
+    document
+    .querySelectorAll(
+        ".row-old"
+    )
+    .forEach(
+        input => {
+
+            input.addEventListener(
+                "input",
+                livePreview
+            );
+
+        }
+    );
+
+
+    document
+    .querySelectorAll(
+        ".formula"
+    )
+    .forEach(
+        input => {
+
+            input.addEventListener(
+                "input",
+                livePreview
+            );
+
+        }
+    );
+
+
+    document
+    .querySelectorAll(
+        ".round"
+    )
+    .forEach(
+        input => {
+
+            input.addEventListener(
+                "input",
+                livePreview
+            );
+
+        }
+    );
+
+}
+
+
+
+/* =====================================================
+   LIVE PREVIEW
+===================================================== */
+
+
+function livePreview(){
+
+    const old15 =
+        Number(
+            document
+            .getElementById(
+                "old15"
+            )
+            .value
+        )
+        || 0;
+
+
+    const change15 =
+        Number(
+            document
+            .getElementById(
+                "change15"
+            )
+            .value
+        )
+        || 0;
+
+
+    const new15 =
+        old15
+        +
+        change15;
+
+
+    const old1 =
+        Number(
+            document
+            .getElementById(
+                "old1ltr"
+            )
+            .value
+        )
+        || 0;
+
+
+    const change1 =
+        Number(
+            document
+            .getElementById(
+                "change1ltr"
+            )
+            .value
+        )
+        || 0;
+
+
+    const new1 =
+        old1
+        +
+        change1;
+
+
+    document
+    .querySelectorAll(
+        "#packingTable tr"
+    )
+    .forEach(
+        (tr,index) => {
+
+            const oldInput =
+                tr.querySelector(
+                    ".row-old"
+                );
+
+
+            const formulaInput =
+                tr.querySelector(
+                    ".formula"
+                );
+
+
+            const roundInput =
+                tr.querySelector(
+                    ".round"
+                );
+
+
+            const preview =
+                tr.querySelector(
+                    ".preview"
+                );
+
+
+            const newRate =
+                tr.querySelector(
+                    ".green"
+                );
+
+
+            if(
+                !oldInput ||
+                !formulaInput
+            ){
+
+                return;
+
+            }
+
+
+            const old =
+                Number(
+                    oldInput.value
+                )
+                || 0;
+
+
+            const formula =
+                formulaInput.value;
+
+
+            const round =
+                Number(
+                    roundInput.value
+                )
+                || 0.10;
+
+
+            const change =
+                calculateFormula(
+                    formula,
+                    old,
+                    0,
+                    old15,
+                    change15,
+                    new15,
+                    old1,
+                    change1,
+                    new1
+                );
+
+
+            if(
+                isNaN(
+                    change
+                )
+            ){
+
+                preview.innerText =
+                    "FORMULA ERROR";
+
+                newRate.innerText =
+                    "₹---";
+
+                return;
+
+            }
+
+
+            const finalChange =
+                roundValue(
+                    change,
+                    round
+                );
+
+
+            const finalRate =
+                old
+                +
+                finalChange;
+
+
+            preview.innerText =
+                (
+                    finalChange >= 0
+                    ? "+"
+                    : ""
+                )
+                +
+                finalChange.toFixed(2);
+
+
+            newRate.innerText =
+                "₹"
+                +
+                finalRate.toFixed(2);
+
+        }
+    );
+
+}
+
+
+
+/* =====================================================
+   SAVE
+===================================================== */
+
+
+function saveRates(){
+
+    const city =
+        getCity();
+
+
+    const product =
+        getProduct();
+
+
+    const rows =
+        getRows();
+
+
+    /*
+      First save row rates,
+      formulas and round-off.
+    */
+
+
+    document
+    .querySelectorAll(
+        "#packingTable tr"
+    )
+    .forEach(
+        (tr,index) => {
+
+            const oldInput =
+                tr.querySelector(
+                    ".row-old"
+                );
+
+
+            const formulaInput =
+                tr.querySelector(
+                    ".formula"
+                );
+
+
+            const roundInput =
+                tr.querySelector(
+                    ".round"
+                );
+
+
+            const sourceInput =
+                tr.querySelector(
+                    ".source"
+                );
+
+
+            if(
+                rows[index]
+            ){
+
+                rows[index].rate =
+                    Number(
+                        oldInput.value
+                    )
+                    || 0;
+
+
+                rows[index].formula =
+                    formulaInput.value;
+
+
+                rows[index].round =
+                    Number(
+                        roundInput.value
+                    )
+                    || 0.10;
+
+
+                rows[index].source =
+                    sourceInput.value;
+
+            }
+
+        }
+    );
+
+
+    /*
+      MASTER 15 KG RATE
+    */
+
+
+    const row15 =
+        find15KG();
+
+
+    if(
+        row15
+    ){
+
+        row15.rate =
+            Number(
+                document
+                .getElementById(
+                    "new15"
+                )
+                .value
+            );
+
+    }
+
+
+    /*
+      MASTER 1 LTR RATE
+    */
+
+
+    const row1 =
+        find1LTR();
+
+
+    if(
+        row1
+    ){
+
+        row1.rate =
+            Number(
+                document
+                .getElementById(
+                    "new1ltr"
+                )
+                .value
+            );
+
+    }
+
+
+    /*
+      Apply calculated new rates
+      to every packing.
+    */
+
+
+    const old15 =
+        Number(
+            document
+            .getElementById(
+                "old15"
+            )
+            .value
+        )
+        || 0;
+
+
+    const change15 =
+        Number(
+            document
+            .getElementById(
+                "change15"
+            )
+            .value
+        )
+        || 0;
+
+
+    const new15 =
+        old15
+        +
+        change15;
+
+
+    const old1 =
+        Number(
+            document
+            .getElementById(
+                "old1ltr"
+            )
+            .value
+        )
+        || 0;
+
+
+    const change1 =
+        Number(
+            document
+            .getElementById(
+                "change1ltr"
+            )
+            .value
+        )
+        || 0;
+
+
+    const new1 =
+        old1
+        +
+        change1;
+
+
+    rows.forEach(
+        row => {
+
+            /*
+              Master rows:
+              directly use new rate.
+            */
+
+            if(
+                row.name
+                .toUpperCase()
+                .includes(
+                    "15 KG"
+                )
+            ){
+
+                /*
+                  15 KG TIN / 15 KG NEW etc.
+                  formula determines change.
+                */
+
+            }
+
+
+            const calculated =
+                calculateFormula(
+                    row.formula,
+                    row.rate,
+                    0,
+                    old15,
+                    change15,
+                    new15,
+                    old1,
+                    change1,
+                    new1
+                );
+
+
+            if(
+                !isNaN(
+                    calculated
+                )
+            ){
+
+                const finalChange =
+                    roundValue(
+                        calculated,
+                        row.round
+                    );
+
+
+                row.rate =
+                    Number(
+                        (
+                            row.rate
+                            +
+                            finalChange
+                        ).toFixed(2)
+                    );
+
+            }
+
+        }
+    );
+
+
+    /*
+      Make sure master rates
+      exactly equal NEW.
+    */
+
+
+    const master15 =
+        find15KG();
+
+
+    if(
+        master15
+    ){
+
+        master15.rate =
+            Number(
+                new15.toFixed(2)
+            );
+
+    }
+
+
+    const master1 =
+        find1LTR();
+
+
+    if(
+        master1
+    ){
+
+        master1.rate =
+            Number(
+                new1.toFixed(2)
+            );
+
+    }
+
+
+    localStorage.setItem(
+        "vishwasRateDatabase",
+        JSON.stringify(
+            database
+        )
+    );
+
+
+    showStatus(
+        "✅ Rate saved successfully."
+    );
+
+
+    loadMaster();
+
+}
+
+
+
+/* =====================================================
+   SHOW STATUS
+===================================================== */
+
+
+function showStatus(
+    message
+){
+
+    const status =
+        document
+        .getElementById(
+            "status"
+        );
+
+
+    status.innerText =
+        message;
+
+
+    status.style.display =
+        "block";
+
+
+    setTimeout(
+        () => {
+
+            status.style.display =
+                "none";
+
+        },
+        3000
+    );
+
+}
+
+
+
+/* =====================================================
+   COPY RATE
+===================================================== */
+
+
+function copyRateList(){
+
+    const rows =
+        getRows();
+
+
+    let text =
+        "JAY SIYARAM\n\n";
+
+
+    text +=
+        "VISHWAS REFOILS & CONSUMER LIMITED\n\n";
+
+
+    text +=
+        document
+        .getElementById(
+            "city"
+        )
+        .selectedOptions[0]
+        .text
+        +
+        "\n\n";
+
+
+    rows.forEach(
+        row => {
+
+            text +=
+                row.name
+                +
+                " : ₹"
+                +
+                Number(
+                    row.rate
+                ).toFixed(2)
+                +
+                "\n";
+
+        }
+    );
+
+
+    navigator
+    .clipboard
+    .writeText(
+        text
+    );
+
+
+    showStatus(
+        "✅ Rate list copied for WhatsApp."
+    );
+
+}
+
+
+
+/* =====================================================
+   RESET
+===================================================== */
+
+
+function resetData(){
+
+    if(
+        !confirm(
+            "Demo data reset karna hai?"
+        )
+    ){
+
+        return;
+
+    }
+
+
+    localStorage.removeItem(
+        "vishwasRateDatabase"
+    );
+
+
+    location.reload();
+
+}
+
+
+
+/* =====================================================
+   EVENTS
+===================================================== */
+
+
+document
+.getElementById(
+    "city"
+)
+.addEventListener(
+    "change",
+    () => {
+
+        loadMaster();
+
+    }
+);
+
+
+document
+.getElementById(
+    "product"
+)
+.addEventListener(
+    "change",
+    () => {
+
+        loadMaster();
+
+    }
+);
+
+
+document
+.getElementById(
+    "month"
+)
+.addEventListener(
+    "change",
+    () => {
+
+        loadMaster();
+
+    }
+);
+
+
+document
+.getElementById(
+    "old15"
+)
+.addEventListener(
+    "input",
+    calculateMaster
+);
+
+
+document
+.getElementById(
+    "change15"
+)
+.addEventListener(
+    "input",
+    calculateMaster
+);
+
+
+document
+.getElementById(
+    "old1ltr"
+)
+.addEventListener(
+    "input",
+    calculateMaster
+);
+
+
+document
+.getElementById(
+    "change1ltr"
+)
+.addEventListener(
+    "input",
+    calculateMaster
+);
+
+
+
+/* =====================================================
+   MONTH VISIBILITY
+===================================================== */
+
+
+function updateMonth(){
+
+    const product =
+        getProduct();
+
+
+    const monthField =
+        document
+        .getElementById(
+            "monthField"
+        );
+
+
+    /*
+      Month only for:
+      Palm
+      Soya
+      Visvita
+    */
+
+
+    if(
+        product === "palm"
+        ||
+        product === "soya"
+        ||
+        product === "visvita"
+    ){
+
+        monthField.style.display =
+            "block";
+
+    }
+    else{
+
+        monthField.style.display =
+            "none";
+
+    }
+
+}
+
+
+
+/* =====================================================
+   PRODUCT CHANGE
+===================================================== */
+
+
+document
+.getElementById(
+    "product"
+)
+.addEventListener(
+    "change",
+    updateMonth
+);
+
+
+
+/* =====================================================
+   START
+===================================================== */
+
+
+updateMonth();
+
+loadMaster();
+
+</script>
+
+</body>
+</html>
