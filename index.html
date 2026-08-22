@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Vishwas Rate | Daily Rate</title>
+
+<meta name="description" content="Vishwas Refoils Daily Oil Rate">
+
+<style>
+
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    font-family:Arial,Helvetica,sans-serif;
+    background:#f4f5f7;
+    color:#222;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.header{
+    background:#ffffff;
+    border-bottom:1px solid #ddd;
+    position:sticky;
+    top:0;
+    z-index:100;
+}
+
+.header-inner{
+    max-width:1250px;
+    margin:auto;
+    padding:12px 18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:15px;
+}
+
+.logo{
+    width:170px;
+    max-height:80px;
+    object-fit:contain;
+}
+
+.company{
+    text-align:right;
+}
+
+.company-name{
+    font-size:18px;
+    font-weight:800;
+}
+
+.company-sub{
+    font-size:12px;
+    color:#777;
+    margin-top:3px;
+}
+
+/* =========================
+   TOP BAR
+========================= */
+
+.topbar{
+    background:#a90000;
+    color:#fff;
+    padding:10px 15px;
+}
+
+.topbar-inner{
+    max-width:1250px;
+    margin:auto;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:15px;
+    flex-wrap:wrap;
+}
+
+.title{
+    font-size:20px;
+    font-weight:800;
+}
+
+.date{
+    font-size:13px;
+}
+
+/* =========================
+   CONTAINER
+========================= */
+
+.container{
+    max-width:1250px;
+    margin:auto;
+    padding:18px;
+}
+
+/* =========================
+   CITY BAR
+========================= */
+
+.city-box{
+    background:#fff;
+    border-radius:12px;
+    padding:15px;
+    box-shadow:0 2px 10px rgba(0,0,0,.07);
+    margin-bottom:18px;
+}
+
+.city-title{
+    font-size:14px;
+    font-weight:bold;
+    margin-bottom:10px;
+}
+
+.city-buttons{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+}
+
+.city-btn{
+    border:1px solid #ccc;
+    background:#fff;
+    color:#222;
+    padding:9px 18px;
+    border-radius:7px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.city-btn.active{
+    background:#a90000;
+    color:#fff;
+    border-color:#a90000;
+}
+
+/* =========================
+   MONTH
+========================= */
+
+.month-box{
+    display:none;
+    background:#fff4d6;
+    border:1px solid #e6c66a;
+    padding:10px 13px;
+    border-radius:9px;
+    margin-bottom:18px;
+}
+
+.month-buttons{
+    display:flex;
+    gap:8px;
+    margin-top:8px;
+}
+
+.month-btn{
+    border:1px solid #c9a947;
+    background:#fff;
+    padding:7px 14px;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.month-btn.active{
+    background:#a90000;
+    color:#fff;
+}
+
+/* =========================
+   SECTION
+========================= */
+
+.section-title{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin:20px 0 10px;
+}
+
+.section-title h2{
+    margin:0;
+    font-size:20px;
+}
+
+.updated{
+    font-size:12px;
+    color:#777;
+}
+
+/* =========================
+   PRODUCT GRID
+========================= */
+
+.product-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:15px;
+}
+
+/* =========================
+   PRODUCT CARD
+========================= */
+
+.product-card{
+    background:#fff;
+    border-radius:13px;
+    overflow:hidden;
+    box-shadow:0 2px 10px rgba(0,0,0,.09);
+    transition:.2s;
+}
+
+.product-card:hover{
+    transform:translateY(-2px);
+    box-shadow:0 5px 16px rgba(0,0,0,.12);
+}
+
+.product-photo{
+    height:115px;
+    background:#eef1f3;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+}
+
+.product-photo img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.photo-placeholder{
+    font-size:42px;
+    font-weight:900;
+    color:#aaa;
+}
+
+.product-body{
+    padding:12px;
+}
+
+.product-name{
+    font-size:17px;
+    font-weight:800;
+    margin-bottom:3px;
+}
+
+.product-city{
+    font-size:11px;
+    color:#777;
+    margin-bottom:6px;
+}
+
+.main-rate{
+    color:#b40000;
+    font-size:22px;
+    font-weight:900;
+    margin:4px 0;
+}
+
+.rate-label{
+    color:#777;
+    font-size:11px;
+    margin-bottom:8px;
+}
+
+/* =========================
+   RATE TABLE
+========================= */
+
+.rate-table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:12px;
+}
+
+.rate-table th{
+    background:#f0f0f0;
+    padding:6px 4px;
+    border:1px solid #ddd;
+}
+
+.rate-table td{
+    padding:6px 4px;
+    border:1px solid #ddd;
+}
+
+.rate-table td:last-child,
+.rate-table th:last-child{
+    text-align:right;
+}
+
+.rate-table tr:nth-child(even){
+    background:#fafafa;
+}
+
+/* =========================
+   WHATSAPP
+========================= */
+
+.whatsapp{
+    width:100%;
+    margin-top:10px;
+    padding:10px;
+    border:0;
+    border-radius:7px;
+    background:#168b55;
+    color:#fff;
+    font-size:13px;
+    font-weight:800;
+    cursor:pointer;
+}
+
+.whatsapp:hover{
+    background:#117545;
+}
+
+/* =========================
+   TERMS
+========================= */
+
+.terms{
+    background:#fff;
+    margin-top:20px;
+    padding:17px;
+    border-radius:12px;
+    box-shadow:0 2px 10px rgba(0,0,0,.07);
+}
+
+.terms h3{
+    margin-top:0;
+    font-size:17px;
+}
+
+.terms ol{
+    margin:0;
+    padding-left:22px;
+    line-height:1.8;
+    font-size:13px;
+}
+
+/* =========================
+   FOOTER
+========================= */
+
+.footer{
+    margin-top:25px;
+    background:#222;
+    color:#fff;
+    text-align:center;
+    padding:18px;
+    font-size:12px;
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media(max-width:1050px){
+
+    .product-grid{
+        grid-template-columns:repeat(3,1fr);
+    }
+
+}
+
+@media(max-width:750px){
+
+    .header-inner{
+        flex-direction:column;
+        text-align:center;
+    }
+
+    .company{
+        text-align:center;
+    }
+
+    .product-grid{
+        grid-template-columns:repeat(2,1fr);
+        gap:10px;
+    }
+
+    .product-photo{
+        height:95px;
+    }
+
+}
+
+@media(max-width:480px){
+
+    .container{
+        padding:10px;
+    }
+
+    .product-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .product-body{
+        padding:9px;
+    }
+
+    .product-name{
+        font-size:14px;
+    }
+
+    .main-rate{
+        font-size:18px;
+    }
+
+    .rate-table{
+        font-size:10px;
+    }
+
+    .rate-table td,
+    .rate-table th{
+        padding:5px 2px;
+    }
+
+    .title{
+        font-size:17px;
+    }
+
+}
+
+</style>
+</head>
+
+
+<body>
+
+
+<!-- ==================================================
+     HEADER
+================================================== -->
+
+<header class="header">
+
+    <div class="header-inner">
+
+        <img
+            src="assets/images/vishwas-logo.png"
+            class="logo"
+            alt="Vishwas Cooking Oil Logo"
+            onerror="this.style.display='none'"
+        >
+
+        <div class="company">
+
+            <div class="company-name">
+                VISHWAS REFOILS & CONSUMER LIMITED
+            </div>
+
+            <div class="company-sub">
+                Daily Oil Rate
+            </div>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+<!-- ==================================================
+     TOP BAR
+================================================== -->
+
+<div class="topbar">
+
+    <div class="topbar-inner">
+
+        <div class="title">
+            JAY SIYARAM
+        </div>
+
+        <div
+            class="date"
+            id="todayDate"
+        ></div>
+
+    </div>
+
+</div>
+
+
+<!-- ==================================================
+     MAIN
+================================================== -->
+
+<div class="container">
+
+
+    <!-- CITY -->
+
+    <div class="city-box">
+
+        <div class="city-title">
+            RATE LOCATION
+        </div>
+
+        <div class="city-buttons">
+
+            <button
+                class="city-btn active"
+                data-city="rajkot"
+                onclick="selectCity('rajkot')"
+            >
+                RAJKOT
+            </button>
+
+            <button
+                class="city-btn"
+                data-city="ahmedabad"
+                onclick="selectCity('ahmedabad')"
+            >
+                AHMEDABAD
+            </button>
+
+            <button
+                class="city-btn"
+                data-city="udaan"
+                onclick="selectCity('udaan')"
+            >
+                UDAAN
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- MONTH -->
+
+    <div
+        class="month-box"
+        id="monthBox"
+    >
+
+        <b>
+            MONTH RATE
+        </b>
+
+        <div class="month-buttons">
+
+            <button
+                class="month-btn active"
+                id="currentMonthBtn"
+                onclick="selectMonth('CURRENT')"
+            >
+                CURRENT
+            </button>
+
+            <button
+                class="month-btn"
+                id="nextMonthBtn"
+                onclick="selectMonth('NEXT')"
+            >
+                NEXT
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- PRODUCT SECTION -->
+
+    <div class="section-title">
+
+        <h2>
+            DAILY RATES
+        </h2>
+
+        <div
+            class="updated"
+            id="updatedText"
+        >
+            Updated today
+        </div>
+
+    </div>
+
+
+    <!-- PRODUCTS -->
+
+    <div
+        class="product-grid"
+        id="productGrid"
+    ></div>
+
+
+    <!-- TERMS -->
+
+    <div class="terms">
+
+        <h3>
+            TERMS & CONDITIONS
+        </h3>
+
+        <ol>
+
+            <li>
+                NEXT DAY PAYMENT
+            </li>
+
+            <li>
+                GST EXTRA
+            </li>
+
+            <li>
+                EX OUR PLANT
+            </li>
+
+            <li>
+                UP TO 15 DAY DELIVERY CONDITION
+            </li>
+
+            <li>
+                ADVANCE PAYMENT 10 RS DISC TIN
+            </li>
+
+            <li>
+                ADVANCE PAYMENT CP PACK 50 PAISA PER LITRE
+            </li>
+
+            <li>
+                LOADING CHARGES EXTRA
+            </li>
+
+        </ol>
+
+    </div>
+
+
+</div>
+
+
+<!-- ==================================================
+     FOOTER
+================================================== -->
+
+<footer class="footer">
+
+    VISHWAS REFOILS & CONSUMER LIMITED
+
+    <br><br>
+
+    Daily Rate Information
+
+</footer>
+
+
+
+<script>
+
+
+/* ==================================================
+   CURRENT STATE
+================================================== */
+
+let selectedCity = "rajkot";
+
+let selectedMonth = "CURRENT";
+
+
+/* ==================================================
+   PRODUCT DATA
+================================================== */
+
+const defaultProducts = {
+
+    palm: {
+
+        name:"Palmolein",
+
+        photo:"assets/images/palm.jpg",
+
+        rates:[
+
+            ["15 KG N TIN",2384],
+            ["15 KG S T TIN",2339],
+            ["15 LTR N TIN",2174],
+            ["15 LTR S TIN",2129],
+            ["5 LTR JAR",731],
+            ["4.150 KG JAR",701],
+            ["2 LTR JAR",299.46],
+            ["1.6 KG JAR",274.46],
+            ["1 LTR BOTTLE",146.20],
+            ["1 LTR POUCH",141.20],
+            ["790 GM BOTTLE",136.20],
+            ["750 GM POUCH",124.70],
+            ["500 ML BOTTLE",74.60],
+            ["500 ML POUCH",72.10],
+            ["395 GM BOTTLE",69.60]
+
+        ]
+
+    },
+
+
+    visvita: {
+
+        name:"Visvita",
+
+        photo:"assets/images/visvita.jpg",
+
+        rates:[
+
+            ["15 KG OLD TIN",0],
+            ["15 KG NEW TIN",0]
+
+        ]
+
+    },
+
+
+    sunflower: {
+
+        name:"Sunflower",
+
+        photo:"assets/images/sunflower.jpg",
+
+        rates:[
+
+            ["15 KG",0],
+            ["1 LTR",0]
+
+        ]
+
+    },
+
+
+    groundnut: {
+
+        name:"Groundnut",
+
+        photo:"assets/images/groundnut.jpg",
+
+        rates:[
+
+            ["15 KG",0],
+            ["1 LTR",0]
+
+        ]
+
+    },
+
+
+    cotton: {
+
+        name:"Cottonseed",
+
+        photo:"assets/images/cotton.jpg",
+
+        rates:[
+
+            ["15 KG",0],
+            ["1 LTR",0]
+
+        ]
+
+    },
+
+
+    mustard: {
+
+        name:"Mustard",
+
+        photo:"assets/images/mustard.jpg",
+
+        rates:[
+
+            ["15 KG",0],
+            ["1 LTR",0]
+
+        ]
+
+    },
+
+
+    soya: {
+
+        name:"Soya",
+
+        photo:"assets/images/soya.jpg",
+
+        rates:[
+
+            ["15 KG",0],
+            ["1 LTR",0]
+
+        ]
+
+    }
+
+};
+
+
+/* ==================================================
+   COPY DEFAULT DATA
+================================================== */
+
+function cloneData(data){
+
+    return JSON.parse(
+        JSON.stringify(data)
+    );
+
+}
+
+
+/* ==================================================
+   DATABASE
+================================================== */
+
+let rateDatabase =
+    JSON.parse(
+        localStorage.getItem(
+            "vishwasRateDatabase"
+        )
+    );
+
+
+/*
+   If Admin panel has already created
+   local data, use it.
+
+   Otherwise use default customer data.
+*/
+
+if(!rateDatabase){
+
+    rateDatabase = {
+
+        rajkot:cloneData(defaultProducts),
+
+        ahmedabad:cloneData(defaultProducts),
+
+        udaan:cloneData(defaultProducts)
+
+    };
+
+}
+
+
+/* ==================================================
+   DATE
+================================================== */
+
+function updateDate(){
+
+    const now = new Date();
+
+    const options = {
+
+        day:"2-digit",
+        month:"long",
+        year:"numeric"
+
+    };
+
+    document
+        .getElementById("todayDate")
+        .innerText =
+        now.toLocaleDateString(
+            "en-IN",
+            options
+        );
+
+}
+
+updateDate();
+
+
+/* ==================================================
+   MONTH NAME
+================================================== */
+
+function getMonthNames(){
+
+    const now =
+        new Date();
+
+    const current =
+        now.toLocaleString(
+            "en-IN",
+            {
+                month:"short"
+            }
+        ).toUpperCase();
+
+    const nextDate =
+        new Date(
+            now.getFullYear(),
+            now.getMonth()+1,
+            1
+        );
+
+    const next =
+        nextDate.toLocaleString(
+            "en-IN",
+            {
+                month:"short"
+            }
+        ).toUpperCase();
+
+    return {
+
+        current,
+
+        next
+
+    };
+
+}
+
+
+/* ==================================================
+   MONTH PRODUCT CHECK
+================================================== */
+
+function isMonthProduct(
+    product
+){
+
+    return [
+
+        "palm",
+        "soya",
+        "visvita"
+
+    ].includes(
+        product
+    );
+
+}
+
+
+/* ==================================================
+   SELECT CITY
+================================================== */
+
+function selectCity(
+    city
+){
+
+    selectedCity =
+        city;
+
+
+    document
+    .querySelectorAll(
+        ".city-btn"
+    )
+    .forEach(
+        button => {
+
+            button.classList.toggle(
+                "active",
+                button.dataset.city === city
+            );
+
+        }
+    );
+
+
+    renderProducts();
+
+}
+
+
+/* ==================================================
+   SELECT MONTH
+================================================== */
+
+function selectMonth(
+    month
+){
+
+    selectedMonth =
+        month;
+
+
+    document
+    .getElementById(
+        "currentMonthBtn"
+    )
+    .classList.toggle(
+        "active",
+        month === "CURRENT"
+    );
+
+
+    document
+    .getElementById(
+        "nextMonthBtn"
+    )
+    .classList.toggle(
+        "active",
+        month === "NEXT"
+    );
+
+
+    renderProducts();
+
+}
+
+
+/* ==================================================
+   SHOW MONTH ONLY WHEN NEEDED
+================================================== */
+
+function updateMonthBox(){
+
+    /*
+       Palm/Soya/Visvita:
+       CURRENT + NEXT
+
+       Others:
+       No month selection
+    */
+
+    const box =
+        document
+        .getElementById(
+            "monthBox"
+        );
+
+
+    /*
+       Since cards are rendered together,
+       month box remains visible because
+       Palm is always first.
+    */
+
+    box.style.display =
+        "block";
+
+}
+
+
+/* ==================================================
+   GET RATE DATA
+================================================== */
+
+function getProductData(
+    key
+){
+
+    const cityData =
+        rateDatabase[
+            selectedCity
+        ];
+
+
+    if(
+        cityData &&
+        cityData[key]
+    ){
+
+        return cityData[key];
+
+    }
+
+
+    return defaultProducts[key];
+
+}
+
+
+/* ==================================================
+   FORMAT RATE
+================================================== */
+
+function formatRate(
+    rate
+){
+
+    const value =
+        Number(rate);
+
+
+    if(
+        isNaN(value)
+    ){
+
+        return "0.00";
+
+    }
+
+
+    return value.toFixed(2);
+
+}
+
+
+/* ==================================================
+   CREATE PRODUCT CARD
+================================================== */
+
+function createProductCard(
+    key,
+    product
+){
+
+    const card =
+        document
+        .createElement(
+            "div"
+        );
+
+
+    card.className =
+        "product-card";
+
+
+    let rows =
+        product.rates || [];
+
+
+    /*
+       For safety:
+       If admin data is in different structure,
+       use it where possible.
+    */
+
+
+    let tableRows = "";
+
+
+    rows.forEach(
+        row => {
+
+            const name =
+                row[0];
+
+
+            const rate =
+                Number(
+                    row[1]
+                )
+                || 0;
+
+
+            tableRows += `
+
+                <tr>
+
+                    <td>
+                        ${name}
+                    </td>
+
+                    <td>
+                        ₹${formatRate(rate)}
+                    </td>
+
+                </tr>
+
+            `;
+
+        }
+    );
+
+
+    const mainRate =
+        rows.length
+        ?
+        Number(
+            rows[0][1]
+        ) || 0
+        :
+        0;
+
+
+    card.innerHTML = `
+
+        <div class="product-photo">
+
+            <img
+                src="${product.photo}"
+                alt="${product.name}"
+                onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=&quot;photo-placeholder&quot;>${product.name.substring(0,2).toUpperCase()}</div>'"
+            >
+
+        </div>
+
+
+        <div class="product-body">
+
+            <div class="product-name">
+                ${product.name}
+            </div>
+
+            <div class="product-city">
+                ${selectedCity.toUpperCase()}
+            </div>
+
+            <div class="main-rate">
+                ₹${formatRate(mainRate)}
+            </div>
+
+            <div class="rate-label">
+                Updated today
+            </div>
+
+
+            <table class="rate-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Packing
+                        </th>
+
+                        <th>
+                            Rate
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    ${tableRows}
+
+                </tbody>
+
+            </table>
+
+
+            <button
+                class="whatsapp"
+                onclick="copyWhatsApp('${key}')"
+            >
+
+                COPY FOR WHATSAPP
+
+            </button>
+
+        </div>
+
+    `;
+
+
+    return card;
+
+}
+
+
+/* ==================================================
+   RENDER PRODUCTS
+================================================== */
+
+function renderProducts(){
+
+    const grid =
+        document
+        .getElementById(
+            "productGrid"
+        );
+
+
+    grid.innerHTML =
+        "";
+
+
+    /*
+       REQUIRED ORDER:
+
+       1 PALM
+       2 VISVITA
+       3 SUNFLOWER
+       4 GROUNDNUT
+       5 COTTONSEED
+       6 MUSTARD
+       7 SOYA
+    */
+
+    const order = [
+
+        "palm",
+        "visvita",
+        "sunflower",
+        "groundnut",
+        "cotton",
+        "mustard",
+        "soya"
+
+    ];
+
+
+    order.forEach(
+        key => {
+
+            const product =
+                getProductData(
+                    key
+                );
+
+
+            if(
+                !product
+            ){
+
+                return;
+
+            }
+
+
+            const card =
+                createProductCard(
+                    key,
+                    product
+                );
+
+
+            grid.appendChild(
+                card
+            );
+
+        }
+    );
+
+
+    updateMonthBox();
+
+
+    const months =
+        getMonthNames();
+
+
+    document
+    .getElementById(
+        "updatedText"
+    )
+    .innerText =
+        selectedMonth === "CURRENT"
+        ?
+        "Current rate • " + months.current
+        :
+        "Next rate • " + months.next;
+
+}
+
+
+/* ==================================================
+   WHATSAPP TEXT
+================================================== */
+
+function getWhatsAppText(
+    key
+){
+
+    const product =
+        getProductData(
+            key
+        );
+
+
+    const months =
+        getMonthNames();
+
+
+    let text =
+        "JAY SIYARAM\n\n";
+
+
+    text +=
+        "VISHWAS REFOILS & CONSUMER LIMITED\n";
+
+
+    text +=
+        "DAILY RATE\n\n";
+
+
+    text +=
+        "CITY: "
+        +
+        selectedCity.toUpperCase()
+        +
+        "\n";
+
+
+    if(
+        isMonthProduct(key)
+    ){
+
+        text +=
+            "MONTH: "
+            +
+            (
+                selectedMonth === "CURRENT"
+                ?
+                months.current
+                :
+                months.next
+            )
+            +
+            "\n";
+
+    }
+
+
+    text +=
+        "\n"
+        +
+        product.name
+        +
+        "\n";
+
+
+    text +=
+        "--------------------\n";
+
+
+    product.rates.forEach(
+        row => {
+
+            text +=
+                row[0]
+                +
+                " : ₹"
+                +
+                formatRate(
+                    row[1]
+                )
+                +
+                "\n";
+
+        }
+    );
+
+
+    text +=
+        "\nTERMS & CONDITIONS\n";
+
+
+    text +=
+        "1. NEXT DAY PAYMENT\n";
+
+
+    text +=
+        "2. GST EXTRA\n";
+
+
+    text +=
+        "3. EX OUR PLANT\n";
+
+
+    text +=
+        "4. UP TO 15 DAY DELIVERY CONDITION\n";
+
+
+    text +=
+        "5. ADVANCE PAYMENT 10 RS DISC TIN\n";
+
+
+    text +=
+        "6. ADVANCE PAYMENT CP PACK 50 PAISA PER LITRE\n";
+
+
+    text +=
+        "7. LOADING CHARGES EXTRA\n";
+
+
+    return text;
+
+}
+
+
+/* ==================================================
+   COPY WHATSAPP
+================================================== */
+
+function copyWhatsApp(
+    key
+){
+
+    const text =
+        getWhatsAppText(
+            key
+        );
+
+
+    /*
+       Try clipboard first.
+    */
+
+    if(
+        navigator.clipboard
+    ){
+
+        navigator.clipboard
+        .writeText(
+            text
+        )
+        .then(
+            () => {
+
+                alert(
+                    "Rate list copied. Ab WhatsApp me paste kar sakte ho."
+                );
+
+            }
+        )
+        .catch(
+            () => {
+
+                fallbackCopy(
+                    text
+                );
+
+            }
+        );
+
+    }
+    else{
+
+        fallbackCopy(
+            text
+        );
+
+    }
+
+}
+
+
+/* ==================================================
+   FALLBACK COPY
+================================================== */
+
+function fallbackCopy(
+    text
+){
+
+    const textarea =
+        document
+        .createElement(
+            "textarea"
+        );
+
+
+    textarea.value =
+        text;
+
+
+    document
+        .body
+        .appendChild(
+            textarea
+        );
+
+
+    textarea.select();
+
+
+    document
+        .execCommand(
+            "copy"
+        );
+
+
+    textarea.remove();
+
+
+    alert(
+        "Rate list copied."
+    );
+
+}
+
+
+/* ==================================================
+   START
+================================================== */
+
+renderProducts();
+
+</script>
+
+</body>
+</html>
