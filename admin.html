@@ -373,18 +373,23 @@ td:first-child{font-weight:900}
 
     <div class="table-wrap">
       
-<table>
+<div class="loose-master-box">
+      <div><div class="loose-master-title">🛢️ LOOSE OIL RATE</div><div class="loose-master-sub">Master rate — per 10 KG</div></div>
+      <input id="looseOilRate" type="number" step="0.01" placeholder="1000.00">
+      <button type="button" id="looseOilLockBtn" class="master-lock-btn" onclick="toggleLooseOilLock()">🔓 LOCK MASTER</button>
+    </div>
+    <table>
         <thead>
           <tr>
             <th>
       PRODUCT NAME / PACKING
       <button type="button" id="productNameLockBtn" class="inline-lock-btn" onclick="toggleProductNameLock()">🔓</button>
     </th>
-            <th>MASTER LINK</th>
-            <th>OLD RATE</th>
-            <th>FORMULA</th>
-            <th>EXTRA COSTING</th>
-            <th>ROUND OFF</th>
+            <th>MASTER LINK<br><button type="button" class="inline-lock-btn" data-field-lock="link" onclick="toggleFieldLock('link')">🔓</button></th>
+            <th>OLD RATE<br><button type="button" class="inline-lock-btn" data-field-lock="old" onclick="toggleFieldLock('old')">🔓</button></th>
+            <th>FORMULA<br><button type="button" class="inline-lock-btn" data-field-lock="formula" onclick="toggleFieldLock('formula')">🔓</button></th>
+            <th>EXTRA COSTING<br><button type="button" class="inline-lock-btn" data-field-lock="extra" onclick="toggleFieldLock('extra')">🔓</button></th>
+            <th>ROUND OFF<br><button type="button" class="inline-lock-btn" data-field-lock="round" onclick="toggleFieldLock('round')">🔓</button></th>
             <th>NEW RATE</th>
             
             <th>EDIT</th>
@@ -448,6 +453,9 @@ function storageSave(){
  localStorage.setItem(HISTORY_KEY,JSON.stringify(history));
 }
 
+function looseOilLocked(){return localStorage.getItem("VISHWAS_LOOSE_OIL_LOCK_V2")==="1";}
+function toggleLooseOilLock(){if(!unlocked){showMessage("🔒 UNLOCK ADMIN PANEL FIRST");return}localStorage.setItem("VISHWAS_LOOSE_OIL_LOCK_V2",looseOilLocked()?"0":"1");updateLooseOilLockUI();}
+function updateLooseOilLockUI(){const b=$("looseOilLockBtn"),i=$("looseOilRate");if(!b)return;const l=looseOilLocked();b.textContent=l?"🔒 MASTER LOCKED":"🔓 LOCK MASTER";b.classList.toggle("locked",l);if(i)i.disabled=l||!unlocked;}
 function productData(){
  db[city] ||= {};
  db[city][product] ||= {
@@ -488,13 +496,12 @@ function saveCategories(cats){
 }
 
 function renderCategories(){
-  const cats=getCategories();
-  $("categoryList").innerHTML=cats.map(c=>
-    `<div class="category-item">
-      <button type="button" class="${product===c.id?"active":""}" onclick="setProduct('${esc(c.id)}')">${esc(c.name)}</button>
-      <button type="button" class="category-edit" onclick="editProductCategory('${esc(c.id)}')">✏️</button>
-    </div>`
-  ).join("");
+ const cats=getCategories();
+ $("categoryList").innerHTML=cats.map(c=>`<div class="category-item">
+ <button type="button" class="${product===c.id?"active":""}" onclick="setProduct('${esc(c.id)}')">${esc(c.name)}</button>
+ <button type="button" class="category-edit" onclick="editProductCategory('${esc(c.id)}')">✏️</button>
+ <button type="button" class="category-edit" onclick="deleteProductCategory('${esc(c.id)}')">🗑️</button>
+ </div>`).join("");
 }
 
 function addProductCategory(){
@@ -507,7 +514,7 @@ function addProductCategory(){
   cats.push({id,name:clean});
   saveCategories(cats);
   db[city] ||= {};
-  db[city][id] ||= {packings:[],settings:{}};
+  db[city][id] ||= {packings:[],settings:{},looseOilRate:""};
   storageSave();
   product=id;
   PRODUCTS[id]={name:clean,packings:[]};
@@ -517,6 +524,15 @@ function addProductCategory(){
   showMessage(`✅ ${clean} category added`);
 }
 
+function deleteProductCategory(id){
+ if(!unlocked){showMessage("🔒 UNLOCK ADMIN PANEL FIRST");return}
+ const cats=getCategories(),c=cats.find(x=>x.id===id);if(!c)return;
+ if(cats.length<=1){showMessage("At least one category is required.");return}
+ if(!confirm(`Delete category "${c.name}" and its data?`))return;
+ saveCategories(cats.filter(x=>x.id!==id));
+ for(const cityName of Object.keys(db)) if(db[cityName]) delete db[cityName][id];
+ delete PRODUCTS[id]; product=getCategories()[0].id; storageSave();renderProductTabs();load();showMessage("🗑️ Category deleted");
+}
 function editProductCategory(id){
   if(!unlocked){showMessage("🔒 UNLOCK ADMIN PANEL FIRST");return}
   const cats=getCategories();
@@ -533,6 +549,10 @@ function editProductCategory(id){
   showMessage("✅ Product category updated");
 }
 
+const FIELD_LOCK_KEY="VISHWAS_FIELD_LOCKS_V3";
+function getFieldLocks(){return JSON.parse(localStorage.getItem(FIELD_LOCK_KEY)||'{"name":false,"link":false,"old":false,"formula":false,"extra":false,"round":false}');}
+function toggleFieldLock(field){if(!unlocked){showMessage("🔒 UNLOCK ADMIN PANEL FIRST");return}const l=getFieldLocks();l[field]=!l[field];localStorage.setItem(FIELD_LOCK_KEY,JSON.stringify(l));updateFieldLockUI();renderTable();}
+function updateFieldLockUI(){const l=getFieldLocks();document.querySelectorAll("[data-field-lock]").forEach(b=>{const on=!!l[b.dataset.fieldLock];b.textContent=on?"🔒":"🔓";b.classList.toggle("locked",on);});}
 function toggleProductNameLock(){
   if(!unlocked){showMessage("🔒 UNLOCK ADMIN PANEL FIRST");return}
   const key="VISHWAS_PRODUCT_NAME_LOCK_V1";
@@ -565,7 +585,7 @@ function renderProductTabs(){
 }
 
 function allMasterLinks(){
- const s=new Set(["MASTER RATE"]);
+ const s=new Set(["LOOSE OIL RATE"]);
  Object.values(PRODUCTS).forEach(p=>p.packings.forEach(r=>{if(String(r[0]).trim())s.add(r[0])}));
  Object.values(db).forEach(cd=>Object.values(cd||{}).forEach(pd=>
   (pd.packings||[]).forEach(r=>{if(String(r[0]).trim())s.add(r[0])})
@@ -597,33 +617,22 @@ function roundRate(v,r){
 }
 
 function parseFormula(formula,master){
- let f=String(formula||"").trim().toUpperCase();
- if(!f)return Number(master)||0;
- f=f.replace(/\bMASTER\b/g,String(Number(master)||0)).replace(/,/g,"");
- if(!/^[0-9+\-*/().\s]+$/.test(f))return NaN;
- try{
-  const n=Function('"use strict";return ('+f+')')();
-  return Number.isFinite(n)?Number(n):NaN;
- }catch(e){return NaN}
+ let f=String(formula||"").trim().toUpperCase().replace(/\\s+/g,"");
+ if(!f) return Number(master)||0;
+ f=f.replace(/\\bMASTER\\b/g,String(Number(master)||0)).replace(/,/g,"");
+ if(!/^[0-9+\\-*/().]+$/.test(f)) return NaN;
+ try{const n=Function('"use strict";return ('+f+')')();return Number.isFinite(n)?Number(n):NaN}catch(e){return NaN}
 }
 
 function resolveMaster(link){
  const d=productData();
- if(link==="MASTER RATE"){
-  const r=d.packings.find(x=>String(x[0]).toLowerCase().includes("15 kg")||
-    String(x[0]).toLowerCase().includes("15kg")||
-    String(x[0]).toLowerCase().includes("15 ltr"));
-  if(r&&r[1]!==""&&r[1]!=null)return Number(r[1])||0;
-  const r1=d.packings.find(x=>String(x[0]).toLowerCase().includes("1 ltr"));
-  if(r1&&r1[1]!==""&&r1[1]!=null)return Number(r1[1])||0;
-  return 0;
- }
+ if(link==="LOOSE OIL RATE" || link==="MASTER RATE") return Number(d.looseOilRate||0);
  const local=d.packings.find(x=>x[0]===link);
- if(local&&local[1]!==""&&local[1]!=null)return Number(local[1])||0;
+ if(local && local[1]!=="" && local[1]!=null) return Number(local[1])||0;
  for(const cd of Object.values(db)){
   for(const pd of Object.values(cd||{})){
    const r=(pd.packings||[]).find(x=>x[0]===link);
-   if(r&&r[1]!==""&&r[1]!=null)return Number(r[1])||0;
+   if(r && r[1]!=="" && r[1]!=null) return Number(r[1])||0;
   }
  }
  return 0;
@@ -632,7 +641,7 @@ function resolveMaster(link){
 function calcRow(i){
  const d=productData(),row=d.packings[i];
  if(!row)return "";
- const link=$("link-"+i)?.value||"MASTER RATE";
+ const link=$("link-"+i)?.value||"LOOSE OIL RATE";
  const formula=$("formula-"+i)?.value||"MASTER*1";
  const extra=Number($("extra-"+i)?.value)||0;
  const round=Number($("round-"+i)?.value)||0;
@@ -689,7 +698,7 @@ function renderTable(){
  d.packings.forEach((row,i)=>{
   const name=row[0]??"",old=row[1]??"";
   const s=d.settings[name]||{};
-  const link=s.link||"MASTER RATE";
+  const link=s.link||"LOOSE OIL RATE";
   const formula=s.formula||defaultFormula(name);
   const extra=s.extra??0;
   const round=s.round??defaultRound(name);
@@ -708,19 +717,19 @@ function renderTable(){
   tr.innerHTML=`
    <td><input id="name-${i}" type="text" value="${esc(name)}" placeholder="Product / Packing"
       ${unlocked&&!productNameLocked()?"":"disabled"}></td>
-   <td><select id="link-${i}" ${unlocked&&!locks.link?"":"disabled"}>
+   <td><select id="link-${i}" ${unlocked&&!getFieldLocks().link?"":"disabled"}>
       ${allMasterLinks().map(x=>`<option value="${esc(x)}" ${x===link?"selected":""}>${esc(x)}</option>`).join("")}
    </select></td>
    <td><input id="old-${i}" class="master-input" type="number" step="0.01"
       value="${old===""?"":Number(old).toFixed(2)}" placeholder="Master rate"
-      ${unlocked&&!locks.old?"":"disabled"}></td>
+      ${unlocked&&!getFieldLocks().old?"":"disabled"}></td>
    <td><input id="formula-${i}" class="formula-input" type="text"
       value="${esc(formula)}" placeholder="MASTER*3"
-      ${unlocked&&!locks.formula?"":"disabled"}></td>
+      ${unlocked&&!getFieldLocks().formula?"":"disabled"}></td>
    <td><input id="extra-${i}" type="number" step="0.01" value="${extra}" placeholder="0"
-      ${unlocked&&!locks.extra?"":"disabled"}></td>
+      ${unlocked&&!getFieldLocks().extra?"":"disabled"}></td>
    <td><input id="round-${i}" type="number" step="0.01" value="${round}" placeholder="0.10"
-      ${unlocked&&!locks.round?"":"disabled"}></td>
+      ${unlocked&&!getFieldLocks().round?"":"disabled"}></td>
    <td><input id="new-${i}" class="new-rate" type="number" step="0.01" disabled></td>
    <td><button type="button" class="btn btn-light" style="padding:6px 9px;color:#b00000"
        onclick="deletePacking(${i})">🗑️</button></td>
@@ -746,7 +755,7 @@ function saveRowSetting(i){
  row[1]=$("old-"+i)?.value??row[1];
  if(newName!==oldName)delete d.settings[oldName];
  d.settings[newName]={
-  link:$("link-"+i)?.value||"MASTER RATE",
+  link:$("link-"+i)?.value||"LOOSE OIL RATE",
   formula:$("formula-"+i)?.value||"MASTER*1",
   extra:Number($("extra-"+i)?.value)||0,
   round:Number($("round-"+i)?.value)||.10,
@@ -768,7 +777,7 @@ function addPacking(){
  if(!unlocked){showMessage("🔒 UNLOCK ADMIN PANEL FIRST");return}
  const d=productData();
  d.packings.push(["",""]);
- d.settings[""]={link:"MASTER RATE",formula:"MASTER*1",extra:0,round:.10,
+ d.settings[""]={link:"LOOSE OIL RATE",formula:"MASTER*1",extra:0,round:.10,
   locks:{name:false,link:false,old:false,formula:false,extra:false,round:false}};
  storageSave();renderTable();
  const i=d.packings.length-1;
@@ -857,6 +866,10 @@ function getCustomerVisibleRows(cityName,productName){
 
 function load(){
  updateProductNameLockUI();
+ updateFieldLockUI();
+ updateLooseOilLockUI();
+ const pd=productData();
+ if($("looseOilRate")){$("looseOilRate").value=pd.looseOilRate??"";$("looseOilRate").oninput=()=>{pd.looseOilRate=$("looseOilRate").value;storageSave();calculate();};}
  renderCategories();
  const d=productData();
  $("master15Old").value="";
