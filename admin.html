@@ -190,6 +190,69 @@ td:first-child{font-weight:900}
   .master-grid-inner{grid-template-columns:1fr}
   .toast{top:70px;right:10px}
 }
+
+/* Excel style formula cells */
+.formula-input{font-family:Consolas,monospace;background:#fffdf2!important;font-weight:700}
+.master-input{background:#eaf7ee!important;font-weight:900}
+.cell-lock{white-space:nowrap;text-align:center}
+.cell-lock button{border:0;border-radius:7px;padding:6px 8px;cursor:pointer;font-weight:800;margin:1px}
+.cell-lock .locked{background:#333;color:#fff}
+.cell-lock .unlocked{background:#e8f6ed;color:#087743}
+
+
+/* ===== TOP FIELD-WISE LOCKING ===== */
+.field-lock-toolbar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+  padding:12px;
+  margin:12px 0 16px;
+  border:1px solid #e4e4e4;
+  border-radius:12px;
+  background:#fafafa;
+}
+.field-lock-title{
+  font-weight:800;
+  margin-right:4px;
+}
+.field-lock-btn{
+  border:1px solid #d8d8d8;
+  background:#fff;
+  color:#222;
+  border-radius:8px;
+  padding:8px 11px;
+  cursor:pointer;
+  font-weight:700;
+  font-size:12px;
+}
+.field-lock-btn.is-locked{
+  background:#222;
+  color:#fff;
+  border-color:#222;
+}
+.field-lock-btn.is-locked .lock-icon{color:#fff}
+
+
+.category-manager{
+  margin:12px 0 16px;
+  padding:14px;
+  border:1px solid #e5e5e5;
+  border-radius:12px;
+  background:#fafafa;
+}
+.category-title{font-weight:900;margin-bottom:10px}
+.category-list{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px}
+.category-item{display:flex;align-items:center;gap:5px}
+.category-item button{border:1px solid #ddd;background:#fff;border-radius:8px;padding:7px 10px;font-weight:800;cursor:pointer}
+.category-item button.active{background:#222;color:#fff}
+.category-edit{font-size:11px;padding:5px 7px!important}
+.inline-lock-btn{
+  margin-left:5px;border:1px solid #ddd;background:#fff;border-radius:6px;
+  padding:4px 7px;cursor:pointer;font-weight:800;
+}
+.inline-lock-btn.locked{background:#222;color:#fff;border-color:#222}
+
 </style>
 </head>
 
@@ -302,21 +365,29 @@ td:first-child{font-weight:900}
     </div>
 
     <div class="note" style="margin-bottom:12px">
-      Example: 15 KG me <b>+15</b> aur kisi packing ka factor <b>0.50</b> hai,
-      to us packing me +7.50 lagega. Round-off ke according final rate banega.
-      1 LTR master bhi isi tarah alag control hota hai.
+      <b>Excel-style formula:</b> Master rate enter karo, phir formula likho.
+      Example: <b>MASTER*3</b> → 1000 × 3 = 3000.
+      Extra Costing alag se add hogi aur Round Off ke baad New Rate niklega.
+      <b>Product Name blank ya Old Rate blank = Customer Panel par row hide.</b>
     </div>
 
     <div class="table-wrap">
-      <table>
+      
+<table>
         <thead>
           <tr>
-            <th>PACKING</th>
-            <th>OLD RATE</th>
+            <th>
+      PRODUCT NAME / PACKING
+      <button type="button" id="productNameLockBtn" class="inline-lock-btn" onclick="toggleProductNameLock()">🔓</button>
+    </th>
             <th>MASTER LINK</th>
-            <th>RATE CHANGE FACTOR</th>
+            <th>OLD RATE</th>
+            <th>FORMULA</th>
+            <th>EXTRA COSTING</th>
             <th>ROUND OFF</th>
             <th>NEW RATE</th>
+            
+            <th>EDIT</th>
           </tr>
         </thead>
         <tbody id="rateRows"></tbody>
@@ -349,389 +420,471 @@ td:first-child{font-weight:900}
   </div>
 </div>
 
-<script>
-/* =========================================================
-   VISHWAS ADMIN — SINGLE FILE VERSION
-   ========================================================= */
 
-const PRODUCTS = {
-  palm: {
-    name:"PALM",
-    packings:[
-      ["15 KG N TIN",2384],
-      ["15 KG S TIN",2339],
-      ["15 LTR N TIN",2174],
-      ["15 LTR S TIN",2129],
-      ["5 LTR JAR",731],
-      ["4.150 KG JAR",701],
-      ["2 LTR JAR",299.46],
-      ["1.6 KG JAR",274.46],
-      ["1 LTR BOTTLE",146.20],
-      ["1 LTR POUCH",141.20],
-      ["790 GM BOTTLE",136.20],
-      ["750 GM POUCH",124.70],
-      ["500 ML BOTTLE",74.60],
-      ["500 ML POUCH",72.10],
-      ["395 GM BOTTLE",69.60]
-    ]
-  },
-  visvita: {
-    name:"VISVITA",
-    packings:[
-      ["15 KG OLD TIN",0],
-      ["15 KG NEW TIN",0]
-    ]
-  },
-  soya:{name:"SOYA",packings:[]},
-  sunflower:{name:"SUNFLOWER",packings:[]},
-  groundnut:{name:"GROUNDNUT",packings:[]},
-  cotton:{name:"COTTONSEED",packings:[]},
-  mustard:{name:"MUSTARD",packings:[]}
+<script>
+const PRODUCTS={
+ palm:{name:"PALM",packings:[
+  ["15 KG N TIN",2384],["15 KG S TIN",2339],["15 LTR N TIN",2174],
+  ["15 LTR S TIN",2129],["5 LTR JAR",731],["4.150 KG JAR",701],
+  ["2 LTR JAR",299.46],["1.6 KG JAR",274.46],["1 LTR BOTTLE",146.20],
+  ["1 LTR POUCH",141.20],["790 GM BOTTLE",136.20],["750 GM POUCH",124.70],
+  ["500 ML BOTTLE",74.60],["500 ML POUCH",72.10],["395 GM BOTTLE",69.60]
+ ]},
+ visvita:{name:"VISVITA",packings:[["15 KG OLD TIN",""],["15 KG NEW TIN",""]]},
+ soya:{name:"SOYA",packings:[]},sunflower:{name:"SUNFLOWER",packings:[]},
+ groundnut:{name:"GROUNDNUT",packings:[]},cotton:{name:"COTTONSEED",packings:[]},
+ mustard:{name:"MUSTARD",packings:[]}
 };
 
-const CITIES = ["rajkot","ahmedabad","udaan"];
-
-let city = "rajkot";
-let product = "palm";
-let unlocked = false;
-
-const DB_KEY = "VISHWAS_ADMIN_RATE_DATA_V6";
-const HISTORY_KEY = "VISHWAS_ADMIN_MASTER_HISTORY_V6";
-
-let db = JSON.parse(localStorage.getItem(DB_KEY) || "{}");
-let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
-
-const $ = id => document.getElementById(id);
+const DB_KEY="VISHWAS_ADMIN_EXCEL_RATE_V8";
+const HISTORY_KEY="VISHWAS_ADMIN_MASTER_HISTORY_V8";
+let city="rajkot",product="palm",unlocked=false;
+let db=JSON.parse(localStorage.getItem(DB_KEY)||"{}");
+let history=JSON.parse(localStorage.getItem(HISTORY_KEY)||"[]");
+const $=id=>document.getElementById(id);
 
 function storageSave(){
-  localStorage.setItem(DB_KEY, JSON.stringify(db));
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+ localStorage.setItem(DB_KEY,JSON.stringify(db));
+ localStorage.setItem(HISTORY_KEY,JSON.stringify(history));
 }
 
 function productData(){
-  db[city] ||= {};
-  db[city][product] ||= {
-    packings: JSON.parse(JSON.stringify(PRODUCTS[product].packings)),
-    master15Change:0,
-    master1Change:0,
-    settings:{}
-  };
-  return db[city][product];
+ db[city] ||= {};
+ db[city][product] ||= {
+   packings:JSON.parse(JSON.stringify(PRODUCTS[product].packings)),
+   settings:{}
+ };
+ return db[city][product];
 }
 
-function defaultMaster(name){
-  const n=name.toLowerCase();
-  if(n.includes("15 kg") || n.includes("15kg") || n.includes("15 ltr")) return "15KG";
-  if(n.includes("1 ltr")) return "1LTR";
-  return "1LTR";
-}
-
-function defaultFactor(name){
-  const n=name.toLowerCase();
-  if(n.includes("15 kg") || n.includes("15kg") || n.includes("15 ltr")) return 1;
-  if(n.includes("5 ltr") || n.includes("4.150")) return 0.5;
-  if(n.includes("2 ltr") || n.includes("1.6")) return 0.5;
-  if(n.includes("1 ltr") || n.includes("790") || n.includes("750")) return 1;
-  if(n.includes("500") || n.includes("395")) return 0.5;
-  return 1;
-}
-
-function defaultRound(name){
-  const n=name.toLowerCase();
-  if(n.includes("15 kg") || n.includes("15kg") || n.includes("15 ltr")) return 1;
-  if(n.includes("5 ltr") || n.includes("4.150")) return 0.5;
-  return 0.10;
-}
-
-function roundRate(value, round){
-  if(!round || round<=0) return Number(value.toFixed(2));
-  return Number((Math.round(value/round)*round).toFixed(2));
+function esc(v){
+ return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;")
+ .replaceAll(">","&gt;").replaceAll('"',"&quot;");
 }
 
 function setCity(v){
-  city=v;
-  document.querySelectorAll("#cityTabs .tab").forEach(x=>x.classList.toggle("active",x.dataset.city===v));
-  load();
+ city=v;
+ document.querySelectorAll("#cityTabs .tab").forEach(x=>x.classList.toggle("active",x.dataset.city===v));
+ load();
 }
 
 function setProduct(v){
-  product=v;
-  document.querySelectorAll("#productTabs .tab").forEach(x=>x.classList.toggle("active",x.dataset.product===v));
+ product=v;
+ document.querySelectorAll("#productTabs .tab").forEach(x=>x.classList.toggle("active",x.dataset.product===v));
+ load();
+}
+
+
+const CATEGORY_KEY="VISHWAS_PRODUCT_CATEGORIES_V1";
+
+function getCategories(){
+  const saved=JSON.parse(localStorage.getItem(CATEGORY_KEY)||"null");
+  if(Array.isArray(saved) && saved.length) return saved;
+  return Object.entries(PRODUCTS).map(([id,p])=>({id,name:p.name}));
+}
+
+function saveCategories(cats){
+  localStorage.setItem(CATEGORY_KEY,JSON.stringify(cats));
+}
+
+function renderCategories(){
+  const cats=getCategories();
+  $("categoryList").innerHTML=cats.map(c=>
+    `<div class="category-item">
+      <button type="button" class="${product===c.id?"active":""}" onclick="setProduct('${esc(c.id)}')">${esc(c.name)}</button>
+      <button type="button" class="category-edit" onclick="editProductCategory('${esc(c.id)}')">✏️</button>
+    </div>`
+  ).join("");
+}
+
+function addProductCategory(){
+  if(!unlocked){showMessage("🔒 UNLOCK ADMIN PANEL FIRST");return}
+  const name=prompt("New Product Category Name:");
+  if(!name || !name.trim()) return;
+  const clean=name.trim();
+  const id=clean.toLowerCase().replace(/[^a-z0-9]+/g,"_")+"_"+Date.now();
+  const cats=getCategories();
+  cats.push({id,name:clean});
+  saveCategories(cats);
+  db[city] ||= {};
+  db[city][id] ||= {packings:[],settings:{}};
+  storageSave();
+  product=id;
+  PRODUCTS[id]={name:clean,packings:[]};
+  renderCategories();
+  renderProductTabs();
   load();
+  showMessage(`✅ ${clean} category added`);
+}
+
+function editProductCategory(id){
+  if(!unlocked){showMessage("🔒 UNLOCK ADMIN PANEL FIRST");return}
+  const cats=getCategories();
+  const c=cats.find(x=>x.id===id);
+  if(!c)return;
+  const name=prompt("Edit Product Category Name:",c.name);
+  if(!name || !name.trim())return;
+  c.name=name.trim();
+  saveCategories(cats);
+  if(PRODUCTS[id]) PRODUCTS[id].name=c.name;
+  renderCategories();
+  renderProductTabs();
+  load();
+  showMessage("✅ Product category updated");
+}
+
+function toggleProductNameLock(){
+  if(!unlocked){showMessage("🔒 UNLOCK ADMIN PANEL FIRST");return}
+  const key="VISHWAS_PRODUCT_NAME_LOCK_V1";
+  const locked=localStorage.getItem(key)==="1";
+  localStorage.setItem(key,locked?"0":"1");
+  updateProductNameLockUI();
+  renderTable();
+}
+
+function productNameLocked(){
+  return localStorage.getItem("VISHWAS_PRODUCT_NAME_LOCK_V1")==="1";
+}
+
+function updateProductNameLockUI(){
+  const b=$("productNameLockBtn");
+  if(!b)return;
+  const locked=productNameLocked();
+  b.textContent=locked?"🔒":"🔓";
+  b.classList.toggle("locked",locked);
+  b.title=locked?"Product Name locked":"Product Name unlocked";
 }
 
 function renderProductTabs(){
-  $("productTabs").innerHTML = Object.entries(PRODUCTS).map(([key,p])=>
-    `<button class="tab ${key===product?"active":""}" data-product="${key}">${p.name}</button>`
-  ).join("");
-
-  document.querySelectorAll("#productTabs .tab").forEach(btn=>{
-    btn.onclick=()=>setProduct(btn.dataset.product);
-  });
+ const cats=getCategories();
+ $("productTabs").innerHTML=cats.map(c=>
+  `<button class="tab ${c.id===product?"active":""}" data-product="${esc(c.id)}">${esc(c.name)}</button>`
+ ).join("");
+ document.querySelectorAll("#productTabs .tab").forEach(b=>b.onclick=()=>setProduct(b.dataset.product));
+ renderCategories();
 }
 
-function ensurePackings(){
-  const d=productData();
+function allMasterLinks(){
+ const s=new Set(["MASTER RATE"]);
+ Object.values(PRODUCTS).forEach(p=>p.packings.forEach(r=>{if(String(r[0]).trim())s.add(r[0])}));
+ Object.values(db).forEach(cd=>Object.values(cd||{}).forEach(pd=>
+  (pd.packings||[]).forEach(r=>{if(String(r[0]).trim())s.add(r[0])})
+ ));
+ return [...s];
+}
 
-  if(!d.packings || !d.packings.length){
-    d.packings=JSON.parse(JSON.stringify(PRODUCTS[product].packings));
+function defaultFormula(name){
+ const n=String(name||"").toLowerCase();
+ if(n.includes("15 kg")||n.includes("15kg")||n.includes("15 ltr")) return "MASTER*1";
+ if(n.includes("5 ltr")||n.includes("4.150")) return "MASTER*0.50";
+ if(n.includes("2 ltr")||n.includes("1.6")) return "MASTER*0.50";
+ if(n.includes("1 ltr")||n.includes("790")||n.includes("750")) return "MASTER*1";
+ if(n.includes("500")||n.includes("395")) return "MASTER*0.50";
+ return "MASTER*1";
+}
+
+function defaultRound(name){
+ const n=String(name||"").toLowerCase();
+ if(n.includes("15 kg")||n.includes("15kg")||n.includes("15 ltr")) return 1;
+ if(n.includes("5 ltr")||n.includes("4.150")) return .5;
+ return .10;
+}
+
+function roundRate(v,r){
+ v=Number(v)||0;r=Number(r)||0;
+ if(r<=0)return Number(v.toFixed(2));
+ return Number((Math.round(v/r)*r).toFixed(2));
+}
+
+function parseFormula(formula,master){
+ let f=String(formula||"").trim().toUpperCase();
+ if(!f)return Number(master)||0;
+ f=f.replace(/\bMASTER\b/g,String(Number(master)||0)).replace(/,/g,"");
+ if(!/^[0-9+\-*/().\s]+$/.test(f))return NaN;
+ try{
+  const n=Function('"use strict";return ('+f+')')();
+  return Number.isFinite(n)?Number(n):NaN;
+ }catch(e){return NaN}
+}
+
+function resolveMaster(link){
+ const d=productData();
+ if(link==="MASTER RATE"){
+  const r=d.packings.find(x=>String(x[0]).toLowerCase().includes("15 kg")||
+    String(x[0]).toLowerCase().includes("15kg")||
+    String(x[0]).toLowerCase().includes("15 ltr"));
+  if(r&&r[1]!==""&&r[1]!=null)return Number(r[1])||0;
+  const r1=d.packings.find(x=>String(x[0]).toLowerCase().includes("1 ltr"));
+  if(r1&&r1[1]!==""&&r1[1]!=null)return Number(r1[1])||0;
+  return 0;
+ }
+ const local=d.packings.find(x=>x[0]===link);
+ if(local&&local[1]!==""&&local[1]!=null)return Number(local[1])||0;
+ for(const cd of Object.values(db)){
+  for(const pd of Object.values(cd||{})){
+   const r=(pd.packings||[]).find(x=>x[0]===link);
+   if(r&&r[1]!==""&&r[1]!=null)return Number(r[1])||0;
   }
-
-  return d;
+ }
+ return 0;
 }
 
-function findMaster15(d){
-  return d.packings.find(x=>{
-    const n=x[0].toLowerCase();
-    return n.includes("15 kg") || n.includes("15kg") || n.includes("15 ltr");
-  });
-}
-
-function findMaster1(d){
-  return d.packings.find(x=>x[0].toLowerCase().includes("1 ltr"));
+function calcRow(i){
+ const d=productData(),row=d.packings[i];
+ if(!row)return "";
+ const link=$("link-"+i)?.value||"MASTER RATE";
+ const formula=$("formula-"+i)?.value||"MASTER*1";
+ const extra=Number($("extra-"+i)?.value)||0;
+ const round=Number($("round-"+i)?.value)||0;
+ const base=parseFormula(formula,resolveMaster(link));
+ if(!Number.isFinite(base))return "";
+ return roundRate(base+extra,round);
 }
 
 function calculate(){
-  const d=ensurePackings();
+ const d=productData();
+ d.packings.forEach((r,i)=>{
+  const n=calcRow(i);
+  if($("new-"+i))$("new-"+i).value=n===""?"":Number(n).toFixed(2);
+ });
+}
 
-  const c15=Number($("master15Change").value)||0;
-  const c1=Number($("master1Change").value)||0;
 
-  $("master15New").value=(Number($("master15Old").value||0)+c15).toFixed(2);
-  $("master1New").value=(Number($("master1Old").value||0)+c1).toFixed(2);
+const GLOBAL_LOCK_KEY = "VISHWAS_GLOBAL_FIELD_LOCKS_V1";
 
-  d.packings.forEach((row,i)=>{
-    const old=Number($("old-"+i).value)||0;
-    const link=$("link-"+i).value;
-    const factor=Number($("factor-"+i).value)||0;
-    const round=Number($("round-"+i).value)||0;
+function getGlobalLocks(){
+  return JSON.parse(localStorage.getItem(GLOBAL_LOCK_KEY)||'{"name":false,"link":false,"old":false,"formula":false,"extra":false,"round":false}');
+}
 
-    let change=0;
-    if(link==="15KG") change=c15*factor;
-    else if(link==="1LTR") change=c1*factor;
+function saveGlobalLocks(v){
+  localStorage.setItem(GLOBAL_LOCK_KEY, JSON.stringify(v));
+}
 
-    let nr=old;
-    if(link!=="MANUAL") nr=roundRate(old+change,round);
+function toggleGlobalLock(field){
+  if(!unlocked){
+    showMessage("🔒 UNLOCK ADMIN PANEL FIRST");
+    return;
+  }
+  const locks=getGlobalLocks();
+  locks[field]=!locks[field];
+  saveGlobalLocks(locks);
+  updateGlobalLockUI();
+  renderTable();
+}
 
-    $("new-"+i).value=nr.toFixed(2);
+function updateGlobalLockUI(){
+  const locks=getGlobalLocks();
+  document.querySelectorAll(".field-lock-btn").forEach(btn=>{
+    const field=btn.dataset.lock;
+    const locked=!!locks[field];
+    btn.classList.toggle("is-locked",locked);
+    const icon=btn.querySelector(".lock-icon");
+    if(icon) icon.textContent=locked?"🔒":"🔓";
   });
 }
 
 function renderTable(){
-  const d=ensurePackings();
-  const body=$("rateRows");
-  body.innerHTML="";
+ const d=productData();
+ $("rateRows").innerHTML="";
+ d.packings.forEach((row,i)=>{
+  const name=row[0]??"",old=row[1]??"";
+  const s=d.settings[name]||{};
+  const link=s.link||"MASTER RATE";
+  const formula=s.formula||defaultFormula(name);
+  const extra=s.extra??0;
+  const round=s.round??defaultRound(name);
+  const localLocks=s.locks||{name:false,link:false,old:false,formula:false,extra:false,round:false};
+  const globalLocks=getGlobalLocks();
+  const locks={
+    name:globalLocks.name || localLocks.name,
+    link:globalLocks.link || localLocks.link,
+    old:globalLocks.old || localLocks.old,
+    formula:globalLocks.formula || localLocks.formula,
+    extra:globalLocks.extra || localLocks.extra,
+    round:globalLocks.round || localLocks.round
+  };
 
-  d.packings.forEach((row,i)=>{
-    const name=row[0], old=row[1];
-    const s=d.settings[name] || {};
-    const link=s.link ?? defaultMaster(name);
-    const factor=s.factor ?? defaultFactor(name);
-    const round=s.round ?? defaultRound(name);
+  const tr=document.createElement("tr");
+  tr.innerHTML=`
+   <td><input id="name-${i}" type="text" value="${esc(name)}" placeholder="Product / Packing"
+      ${unlocked&&!productNameLocked()?"":"disabled"}></td>
+   <td><select id="link-${i}" ${unlocked&&!locks.link?"":"disabled"}>
+      ${allMasterLinks().map(x=>`<option value="${esc(x)}" ${x===link?"selected":""}>${esc(x)}</option>`).join("")}
+   </select></td>
+   <td><input id="old-${i}" class="master-input" type="number" step="0.01"
+      value="${old===""?"":Number(old).toFixed(2)}" placeholder="Master rate"
+      ${unlocked&&!locks.old?"":"disabled"}></td>
+   <td><input id="formula-${i}" class="formula-input" type="text"
+      value="${esc(formula)}" placeholder="MASTER*3"
+      ${unlocked&&!locks.formula?"":"disabled"}></td>
+   <td><input id="extra-${i}" type="number" step="0.01" value="${extra}" placeholder="0"
+      ${unlocked&&!locks.extra?"":"disabled"}></td>
+   <td><input id="round-${i}" type="number" step="0.01" value="${round}" placeholder="0.10"
+      ${unlocked&&!locks.round?"":"disabled"}></td>
+   <td><input id="new-${i}" class="new-rate" type="number" step="0.01" disabled></td>
+   <td><button type="button" class="btn btn-light" style="padding:6px 9px;color:#b00000"
+       onclick="deletePacking(${i})">🗑️</button></td>
+  `;
+  $("rateRows").appendChild(tr);
 
-    const isMaster = link==="15KG" && (
-      name.toLowerCase().includes("15 kg") ||
-      name.toLowerCase().includes("15kg") ||
-      name.toLowerCase().includes("15 ltr")
-    ) || link==="1LTR" && name.toLowerCase().includes("1 ltr");
-
-    const tr=document.createElement("tr");
-    if(isMaster) tr.className="master-row";
-
-    tr.innerHTML=`
-      <td>${name}${isMaster?'<span class="master-label">MASTER</span>':""}</td>
-      <td><input id="old-${i}" type="number" step="0.01" value="${Number(old).toFixed(2)}" ${unlocked?"":"disabled"}></td>
-      <td>
-        <select id="link-${i}" ${unlocked?"":"disabled"}>
-          <option value="15KG" ${link==="15KG"?"selected":""}>15 KG MASTER</option>
-          <option value="1LTR" ${link==="1LTR"?"selected":""}>1 LTR MASTER</option>
-          <option value="MANUAL" ${link==="MANUAL"?"selected":""}>MANUAL</option>
-        </select>
-      </td>
-      <td><input id="factor-${i}" class="rate-link" type="number" step="0.01" value="${factor}" ${unlocked?"":"disabled"}></td>
-      <td><input id="round-${i}" class="round" type="number" step="0.01" value="${round}" ${unlocked?"":"disabled"}></td>
-      <td><input id="new-${i}" class="new-rate" type="number" step="0.01" value="${Number(old).toFixed(2)}" disabled></td>
-    `;
-    body.appendChild(tr);
-
-    ["old-","link-","factor-","round-"].forEach(prefix=>{
-      $(prefix+i).addEventListener("input",calculate);
-      $(prefix+i).addEventListener("change",calculate);
-    });
+  ["name-","link-","old-","formula-","extra-","round-"].forEach(pre=>{
+   const el=$(pre+i);
+   if(!el)return;
+   el.addEventListener("input",()=>{saveRowSetting(i);calculate()});
+   el.addEventListener("change",()=>{saveRowSetting(i);calculate()});
   });
-
-  $("tableTitle").textContent=`${PRODUCTS[product].name} — ${city.toUpperCase()} — PACKING RATE FORMULA`;
-  calculate();
+ });
+ $("tableTitle").textContent=`${PRODUCTS[product].name} — ${city.toUpperCase()} — EXCEL STYLE RATE FORMULA`;
+ calculate();
 }
 
-function load(){
-  const d=ensurePackings();
-  const m15=findMaster15(d);
-  const m1=findMaster1(d);
+function saveRowSetting(i){
+ const d=productData(),row=d.packings[i];if(!row)return;
+ const oldName=row[0],newName=$("name-"+i)?.value??oldName;
+ const oldSetting=d.settings[oldName]||{};
+ row[0]=newName;
+ row[1]=$("old-"+i)?.value??row[1];
+ if(newName!==oldName)delete d.settings[oldName];
+ d.settings[newName]={
+  link:$("link-"+i)?.value||"MASTER RATE",
+  formula:$("formula-"+i)?.value||"MASTER*1",
+  extra:Number($("extra-"+i)?.value)||0,
+  round:Number($("round-"+i)?.value)||.10,
+  locks:{name:productNameLocked(),link:false,old:false,formula:false,extra:false,round:false}
+ };
+}
 
-  $("master15Old").value=m15?Number(m15[1]).toFixed(2):"0.00";
-  $("master1Old").value=m1?Number(m1[1]).toFixed(2):"0.00";
-  $("master15Change").value=d.master15Change||0;
-  $("master1Change").value=d.master1Change||0;
+function toggleCellLock(i,key){
+ if(!unlocked){showMessage("🔒 UNLOCK ADMIN PANEL FIRST");return}
+ const d=productData(),row=d.packings[i];if(!row)return;
+ const name=$("name-"+i)?.value??row[0];
+ d.settings[name] ||= {};
+ d.settings[name].locks ||= {name:false,link:false,old:false,formula:false,extra:false,round:false};
+ d.settings[name].locks[key]=!d.settings[name].locks[key];
+ storageSave();renderTable();
+}
 
-  renderTable();
-  renderHistory();
+function addPacking(){
+ if(!unlocked){showMessage("🔒 UNLOCK ADMIN PANEL FIRST");return}
+ const d=productData();
+ d.packings.push(["",""]);
+ d.settings[""]={link:"MASTER RATE",formula:"MASTER*1",extra:0,round:.10,
+  locks:{name:false,link:false,old:false,formula:false,extra:false,round:false}};
+ storageSave();renderTable();
+ const i=d.packings.length-1;
+ setTimeout(()=>{$("name-"+i)?.focus();$("name-"+i)?.scrollIntoView({behavior:"smooth",block:"center"})},100);
+}
 
-  $("statusText").textContent=`${PRODUCTS[product].name} / ${city.toUpperCase()}`;
+function deletePacking(i){
+ if(!unlocked){showMessage("🔒 UNLOCK ADMIN PANEL FIRST");return}
+ const d=productData(),name=d.packings[i]?.[0]||"blank row";
+ if(!confirm(`Delete "${name}"?`))return;
+ delete d.settings[name];d.packings.splice(i,1);
+ storageSave();renderTable();showMessage("🗑️ ROW DELETED");
 }
 
 function toggleLock(){
-  unlocked=!unlocked;
-
-  $("lockBtn").textContent=unlocked?"🔓 LOCKED OFF — EDIT MODE":"🔒 LOCKED — SAFE MODE";
-  $("lockBtn").className=unlocked?"btn btn-dark":"btn btn-gold";
-  $("lockStatus").textContent=unlocked?"🔓 UNLOCKED":"🔒 LOCKED";
-  $("lockStatus").className=unlocked?"badge unlock":"badge lock";
-  $("saveBtn").disabled=!unlocked;
-
-  $("master15Change").disabled=!unlocked;
-  $("master1Change").disabled=!unlocked;
-
-  renderTable();
+ unlocked=!unlocked;
+ $("lockBtn").textContent=unlocked?"🔓 EDIT MODE — CLICK TO LOCK":"🔒 LOCKED — SAFE MODE";
+ $("lockBtn").className=unlocked?"btn btn-dark":"btn btn-gold";
+ $("lockStatus").textContent=unlocked?"🔓 UNLOCKED":"🔒 LOCKED";
+ $("lockStatus").className=unlocked?"badge unlock":"badge lock";
+ $("saveBtn").disabled=!unlocked;
+ $("master15Change").disabled=!unlocked;
+ $("master1Change").disabled=!unlocked;
+ renderTable();
 }
 
 function cleanHistory(){
-  const limit=Date.now()-3*24*60*60*1000;
-  history=history.filter(x=>new Date(x.timestamp).getTime()>=limit);
-  history.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
+ const limit=Date.now()-3*24*60*60*1000;
+ history=history.filter(x=>new Date(x.timestamp).getTime()>=limit);
+ history.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
 }
 
 function renderHistory(){
-  cleanHistory();
-
-  if(!history.length){
-    $("historyList").innerHTML=`<div class="empty">Last 3 days me koi MASTER rate change nahi hua.</div>`;
-    return;
-  }
-
-  $("historyList").innerHTML=history.map(x=>{
-    const d=new Date(x.timestamp);
-    return `
-      <div class="history-item">
-        <div class="history-left">
-          <strong>${x.product} — ${x.master}</strong>
-          <div class="history-meta">
-            ${x.city.toUpperCase()} · ${d.toLocaleString()}
-          </div>
-        </div>
-        <div>
-          <span class="old">₹${Number(x.oldRate).toFixed(2)}</span>
-          &nbsp;→&nbsp;
-          <span class="new">₹${Number(x.newRate).toFixed(2)}</span>
-        </div>
-      </div>
-    `;
-  }).join("");
+ cleanHistory();
+ if(!history.length){$("historyList").innerHTML='<div class="empty">Last 3 days me koi MASTER rate change nahi hua.</div>';return}
+ $("historyList").innerHTML=history.map(x=>{
+  const d=new Date(x.timestamp);
+  return `<div class="history-item"><div class="history-left">
+   <strong>${esc(x.product)} — ${esc(x.master)}</strong>
+   <div class="history-meta">${esc(x.city.toUpperCase())} · ${d.toLocaleString()}</div>
+   </div><div><span class="old">₹${Number(x.oldRate).toFixed(2)}</span> → <span class="new">₹${Number(x.newRate).toFixed(2)}</span></div></div>`;
+ }).join("");
 }
 
 function showSuccess(message){
-  $("toastSub").textContent=message;
-  $("toast").classList.add("show");
-  setTimeout(()=>$("toast").classList.remove("show"),3500);
+ $("toastSub").textContent=message;
+ $("toast").classList.add("show");
+ setTimeout(()=>$("toast").classList.remove("show"),3500);
 }
+function showMessage(m){showSuccess(m)}
 
 function saveRates(){
-  if(!unlocked) return;
+ if(!unlocked)return;
+ const d=productData();
+ const before=d.packings.map(r=>[r[0],r[1]]);
+ d.packings.forEach((r,i)=>saveRowSetting(i));
 
-  const d=ensurePackings();
-  const c15=Number($("master15Change").value)||0;
-  const c1=Number($("master1Change").value)||0;
-
-  const old15=findMaster15(d);
-  const old1=findMaster1(d);
-
-  const new15=old15?Number($("master15New").value):null;
-  const new1=old1?Number($("master1New").value):null;
-
-  let masterChanges=0;
-
-  if(old15 && c15!==0 && new15!==Number(old15[1])){
-    history.push({
-      timestamp:new Date().toISOString(),
-      city,product:PRODUCTS[product].name,
-      master:"15 KG MASTER",
-      oldRate:Number(old15[1]),
-      newRate:new15
-    });
-    masterChanges++;
+ let changes=0;
+ d.packings.forEach((r,i)=>{
+  const old=before[i];
+  if(old&&old[0]===r[0]&&old[1]!==""&&r[1]!==""&&Number(old[1])!==Number(r[1])){
+   if(r[0].toLowerCase().includes("15 kg")||r[0].toLowerCase().includes("15kg")||r[0].toLowerCase().includes("15 ltr")||r[0].toLowerCase().includes("1 ltr")){
+    history.push({timestamp:new Date().toISOString(),city,product:PRODUCTS[product].name,
+      master:r[0],oldRate:Number(old[1]),newRate:Number(r[1])});
+    changes++;
+   }
   }
-
-  if(old1 && c1!==0 && new1!==Number(old1[1])){
-    history.push({
-      timestamp:new Date().toISOString(),
-      city,product:PRODUCTS[product].name,
-      master:"1 LTR MASTER",
-      oldRate:Number(old1[1]),
-      newRate:new1
-    });
-    masterChanges++;
-  }
-
-  d.packings.forEach((row,i)=>{
-    const old=Number($("old-"+i).value)||0;
-    const nr=Number($("new-"+i).value)||0;
-    const link=$("link-"+i).value;
-    const factor=Number($("factor-"+i).value)||0;
-    const round=Number($("round-"+i).value)||0;
-
-    row[1]=nr;
-    d.settings[row[0]]={link,factor,round};
-  });
-
-  d.master15Change=0;
-  d.master1Change=0;
-
-  history=history.slice(0,100);
-  cleanHistory();
-  storageSave();
-
-  $("saveBtn").disabled=true;
-  $("saveLoading").classList.add("show");
-  $("saveText").style.display="none";
-
-  setTimeout(()=>{
-    $("saveLoading").classList.remove("show");
-    $("saveText").style.display="inline";
-
-    $("master15Change").value=0;
-    $("master1Change").value=0;
-
-    load();
-
-    showSuccess(
-      masterChanges
-      ? `${masterChanges} master rate update saved successfully.`
-      : "Rate update saved successfully."
-    );
-  },500);
+ });
+ cleanHistory();storageSave();
+ $("saveBtn").disabled=true;
+ $("saveLoading").classList.add("show");$("saveText").style.display="none";
+ setTimeout(()=>{
+  $("saveLoading").classList.remove("show");$("saveText").style.display="inline";
+  load();showSuccess(changes?`${changes} master rate update saved successfully.`:"All rate/formula changes saved successfully.");
+ },500);
 }
 
-document.querySelectorAll("#cityTabs .tab").forEach(btn=>{
-  btn.onclick=()=>setCity(btn.dataset.city);
-});
+/* Customer panel: BLANK PRODUCT NAME OR BLANK RATE = HIDDEN */
+function getCustomerVisibleRows(cityName,productName){
+ const pd=(db[cityName]||{})[productName];
+ if(!pd)return [];
+ return (pd.packings||[]).filter(r=>{
+  return String(r[0]??"").trim()!=="" && r[1]!=="" && r[1]!==null && r[1]!==undefined && Number.isFinite(Number(r[1]));
+ });
+}
 
+function load(){
+ updateProductNameLockUI();
+ renderCategories();
+ const d=productData();
+ $("master15Old").value="";
+ $("master1Old").value="";
+ renderTable();renderHistory();
+ $("statusText").textContent=`${PRODUCTS[product].name} / ${city.toUpperCase()}`;
+
+ if(!$("addPackingButton")){
+  const b=document.createElement("button");
+  b.id="addPackingButton";b.className="btn btn-red";
+  b.style.marginTop="8px";b.textContent="＋ ADD PRODUCT / WEIGHT";b.onclick=addPacking;
+  $("tableTitle").parentElement.appendChild(b);
+ }
+}
+
+document.querySelectorAll("#cityTabs .tab").forEach(b=>b.onclick=()=>setCity(b.dataset.city));
 $("lockBtn").onclick=toggleLock;
 $("saveBtn").onclick=saveRates;
-
 $("master15Change").addEventListener("input",calculate);
 $("master1Change").addEventListener("input",calculate);
-
 $("clearHistoryBtn").onclick=()=>{
-  if(confirm("Last 3 days ki MASTER history delete karni hai?")){
-    history=[];
-    storageSave();
-    renderHistory();
-  }
+ if(confirm("Last 3 days ki MASTER history delete karni hai?")){history=[];storageSave();renderHistory();}
 };
 
 renderProductTabs();
 load();
 </script>
+
 
 </body>
 </html>
