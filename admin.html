@@ -3,304 +3,600 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vishwas Refoils — Admin Rate Panel</title>
+<title>Vishwas Rate Admin</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f5f6f8;color:#222}
-header{background:#111827;color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;gap:15px}
-.brand{font-size:20px;font-weight:900}.sub{font-size:12px;opacity:.7;margin-top:3px}
-.wrap{max-width:1450px;margin:20px auto;padding:0 16px}
-.card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px;margin-bottom:16px;box-shadow:0 4px 15px rgba(0,0,0,.04)}
-.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-button,input,select{font:inherit}
-button{cursor:pointer}
-.btn{border:0;border-radius:9px;padding:9px 13px;font-weight:800}
-.btn-dark{background:#111827;color:#fff}.btn-green{background:#0f766e;color:#fff}.btn-red{background:#b91c1c;color:#fff}.btn-light{background:#f3f4f6;color:#111827;border:1px solid #d1d5db}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.section-title{font-weight:900;font-size:15px;margin-bottom:10px}
-.city-btn,.cat-btn{padding:9px 14px;border:1px solid #d1d5db;background:#fff;border-radius:9px;font-weight:800}
-.city-btn.active,.cat-btn.active{background:#111827;color:#fff;border-color:#111827}
-.cat-item{display:flex;align-items:center;gap:4px}
-.small{padding:6px 8px!important;font-size:12px}
-.category-list{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
-.loose{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#fffaf0;border:1px solid #ead9aa;border-radius:12px;padding:14px}
-.loose-title{font-weight:900}.hint{font-size:12px;color:#777}
-.loose input{width:180px;padding:10px;border:1px solid #cfd4dc;border-radius:8px;font-weight:800}
-.lock{border:1px solid #cfd4dc;background:#fff;border-radius:8px;padding:9px 12px;font-weight:800}
-.lock.on{background:#111827;color:#fff}
-.table-wrap{overflow:auto;border:1px solid #e5e7eb;border-radius:12px}
-table{width:100%;min-width:1050px;border-collapse:collapse;background:#fff}
-th,td{padding:9px;border-bottom:1px solid #eee;text-align:left;vertical-align:middle}
-th{background:#f8fafc;font-size:12px;white-space:nowrap}
-td input,td select{width:100%;min-width:120px;padding:8px;border:1px solid #d1d5db;border-radius:7px;background:#fff}
-td input:disabled,td select:disabled{background:#f1f3f5;color:#777}
-.newrate{font-weight:900;background:#f0fdf4!important}
-.lock-btn{font-size:11px;padding:4px 7px;margin-top:4px;border:1px solid #d1d5db;border-radius:6px;background:#fff}
-.lock-btn.on{background:#111827;color:#fff}
-.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.notice{position:fixed;right:22px;bottom:22px;background:#111827;color:#fff;padding:13px 17px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.25);display:none;z-index:1000;font-weight:800}
-.empty{text-align:center;padding:35px;color:#777}
+html{scroll-behavior:smooth}
+body{
+  margin:0;font-family:Arial,Helvetica,sans-serif;background:#f3f6f8;color:#101828
+}
+.topbar{
+  position:sticky;top:0;z-index:50;background:#101827;color:#fff;padding:14px 22px;
+  display:flex;justify-content:space-between;align-items:center;gap:15px;
+  box-shadow:0 5px 25px #0002
+}
+.brand{font-size:21px;font-weight:900}.sub{font-size:12px;color:#cbd5e1;margin-top:3px}
+.wrap{max-width:1500px;margin:18px auto;padding:0 14px}
+.card{
+  background:#fff;border:1px solid #e1e7ec;border-radius:15px;padding:16px;
+  margin-bottom:15px;box-shadow:0 5px 20px #1720330b;animation:rise .35s ease
+}
+.title{font-weight:900;font-size:17px;margin-bottom:12px}
+.flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{
+  border:0;border-radius:9px;padding:10px 15px;font-weight:900;cursor:pointer;
+  transition:.18s transform,.18s box-shadow
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 7px 18px #0002}
+.green{background:#087f70;color:#fff}.dark{background:#101827;color:#fff}
+.light{background:#f5f7f9;border:1px solid #ccd4dc;color:#111827}
+.city{
+  padding:10px 18px;border:1px solid #cbd5e1;background:#fff;border-radius:9px;
+  font-weight:900;cursor:pointer
+}
+.city.active{background:#101827;color:#fff;box-shadow:0 5px 15px #10182733}
+.productList{display:flex;flex-wrap:wrap;gap:8px;min-height:45px;align-items:center}
+.productItem{display:flex;align-items:center}
+.productBtn{
+  padding:10px 17px;border:1px solid #cbd5e1;background:#fff;border-radius:9px;
+  font-weight:900;cursor:pointer
+}
+.productBtn.active{background:#087f70;color:#fff;border-color:#087f70}
+.productTools{
+  display:none;margin-left:7px;gap:4px;align-items:center
+}
+.productItem.selected .productTools{display:flex}
+.productTools button{padding:7px 9px;font-size:12px}
+.empty{
+  width:100%;padding:30px;text-align:center;color:#667085;border:1px dashed #cbd5e1;
+  border-radius:10px;background:#fafbfc
+}
+.masterRow{
+  background:#fff9ec;border:1px solid #ead49a;border-radius:12px;padding:14px;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap
+}
+.masterName{font-weight:900}.hint{font-size:12px;color:#667085}
+input,select,textarea{
+  font:inherit;border:1px solid #cbd5e1;border-radius:8px;padding:9px;
+  background:#fff;outline:none;transition:.18s
+}
+input:focus,select:focus,textarea:focus{
+  border-color:#087f70;box-shadow:0 0 0 3px #087f7020
+}
+.masterInput{width:170px;font-weight:900}
+.lock{
+  border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:9px 12px;
+  font-weight:900;cursor:pointer
+}
+.lock.on{background:#101827;color:#fff}
+.preview{
+  display:flex;gap:8px;align-items:stretch;flex-wrap:wrap;margin-left:auto
+}
+.previewBox{
+  min-width:125px;background:#fff;border:1px solid #d9dee5;border-radius:9px;padding:8px 12px
+}
+.previewLabel{font-size:11px;color:#667085;font-weight:800}
+.previewValue{font-size:18px;font-weight:900;margin-top:3px}
+.previewChange{color:#087f70}.previewNegative{color:#b42318}
+.previewSelect{min-width:150px}
+.tableWrap{overflow:auto;border:1px solid #dde3e8;border-radius:11px}
+table{border-collapse:collapse;width:100%;min-width:1180px}
+th,td{padding:8px;border-bottom:1px solid #e7ebef;text-align:left;vertical-align:middle}
+th{background:#eef1f4;font-size:12px;white-space:nowrap}
+td input,td select{width:100%;min-width:125px}
+td input:disabled,td select:disabled{background:#edf0f2;color:#737b85}
+.newRate{background:#e7f7ee!important;font-weight:900}
+.lockMini{
+  display:block;margin-top:5px;padding:4px 8px;border:1px solid #cbd5e1;
+  border-radius:5px;background:#fff;font-size:12px;font-weight:900;cursor:pointer
+}
+.lockMini.on{background:#101827;color:#fff}
+.note{margin-top:15px;padding:13px;border-radius:11px;background:#fafafa;border:1px solid #e1e5e9}
+.note label{display:block;font-weight:900;margin-bottom:7px}
+.note textarea{width:100%;min-height:105px;resize:vertical}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
+.historyRow{padding:9px 0;border-bottom:1px solid #e9edf1;font-size:13px}
+.toast{
+  position:fixed;right:20px;bottom:20px;z-index:999;background:#101827;color:#fff;
+  padding:14px 18px;border-radius:10px;font-weight:900;box-shadow:0 12px 35px #0004;
+  display:none
+}
+.modal{
+  position:fixed;inset:0;background:#10182799;display:none;align-items:center;
+  justify-content:center;z-index:200;padding:15px
+}
+.modalBox{
+  background:#fff;width:min(460px,100%);border-radius:16px;padding:20px;
+  box-shadow:0 20px 70px #0005;animation:pop .2s ease
+}
+.modalBox h3{margin:0 0 12px}.modalBox input{width:100%;font-size:16px}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+@media(max-width:850px){
+ .topbar{padding:12px}.brand{font-size:16px}.wrap{padding:0 8px}
+ .preview{margin-left:0}.previewBox{min-width:105px}
+}
 </style>
 </head>
 <body>
-<header>
-  <div><div class="brand">VISHWAS REFOILS & CONSUMER LIMITED</div><div class="sub">Private Rate Administration Panel</div></div>
-  <div class="row">
-    <span id="statusText">LOCKED</span>
-    <button class="btn btn-dark" id="adminLockBtn" onclick="toggleAdmin()">🔓 UNLOCK ADMIN</button>
+
+<header class="topbar">
+  <div>
+    <div class="brand">VISHWAS REFOILS &amp; CONSUMER LIMITED</div>
+    <div class="sub">Private Rate Administration Panel</div>
+  </div>
+  <div class="flex">
+    <span id="status">LOCKED</span>
+    <button class="btn dark" id="adminToggle">🔓 UNLOCK ADMIN</button>
   </div>
 </header>
 
-<div class="wrap">
-  <div class="card">
-    <div class="section-title">CITY</div>
-    <div class="row" id="cityList"></div>
-  </div>
+<main class="wrap">
 
-  <div class="card">
-    <div class="section-title">PRODUCT CATEGORY</div>
-    <div class="category-list" id="categoryList"></div>
-    <div class="actions">
-      <button class="btn btn-green" onclick="addCategory()">＋ ADD PRODUCT CATEGORY</button>
+<section class="card">
+  <div class="title">CITY</div>
+  <div class="flex" id="cityArea"></div>
+</section>
+
+<section class="card">
+  <div class="title">PRODUCTS</div>
+  <div class="productList" id="productArea"></div>
+  <div class="actions">
+    <button class="btn green" id="addProduct">＋ ADD PRODUCT</button>
+  </div>
+</section>
+
+<section class="card">
+  <div class="masterRow">
+    <div>
+      <div class="masterName">🛢️ LOOSE OIL RATE</div>
+      <div class="hint">Master rate per 10 KG</div>
     </div>
-  </div>
 
-  <div class="card">
-    <div class="loose">
-      <div>
-        <div class="loose-title">🛢️ LOOSE OIL RATE</div>
-        <div class="hint">Master rate per 10 KG</div>
+    <input id="looseRate" class="masterInput" type="number" step="0.01" placeholder="Enter rate">
+
+    <button id="masterLock" class="lock">🔓 MASTER LOCK</button>
+
+    <div class="preview" id="masterPreview">
+      <select id="previewPacking" class="previewSelect"></select>
+      <div class="previewBox">
+        <div class="previewLabel">OLD RATE</div>
+        <div class="previewValue" id="pvOld">—</div>
       </div>
-      <input id="looseRate" type="number" step="0.01" placeholder="Enter master rate">
-      <button class="lock" id="looseLock" onclick="toggleLooseLock()">🔓 MASTER LOCK</button>
+      <div class="previewBox">
+        <div class="previewLabel">CHANGE</div>
+        <div class="previewValue previewChange" id="pvChange">—</div>
+      </div>
+      <div class="previewBox">
+        <div class="previewLabel">NEW RATE</div>
+        <div class="previewValue" id="pvNew">—</div>
+      </div>
     </div>
   </div>
+</section>
 
-  <div class="card">
-    <div class="section-title">RATE SETUP</div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>PACKING<br><button class="lock-btn" data-lock="packing" onclick="toggleField('packing')">🔓</button></th>
-            <th>MASTER LINK<br><button class="lock-btn" data-lock="master" onclick="toggleField('master')">🔓</button></th>
-            <th>OLD RATE<br><button class="lock-btn" data-lock="old" onclick="toggleField('old')">🔓</button></th>
-            <th>FORMULA<br><button class="lock-btn" data-lock="formula" onclick="toggleField('formula')">🔓</button></th>
-            <th>EXTRA COSTING<br><button class="lock-btn" data-lock="extra" onclick="toggleField('extra')">🔓</button></th>
-            <th>ROUND OFF<br><button class="lock-btn" data-lock="round" onclick="toggleField('round')">🔓</button></th>
-            <th>NEW RATE</th><th>ACTION</th>
-          </tr>
-        </thead>
-        <tbody id="rateBody"></tbody>
-      </table>
-    </div>
+<section class="card">
+  <div class="title">RATE SETUP</div>
+  <div class="tableWrap">
+    <table>
+      <thead>
+        <tr>
+          <th>PACKING<br><button class="lockMini" data-lock="packing">🔓</button></th>
+          <th>MASTER LINK<br><button class="lockMini" data-lock="master">🔓</button></th>
+          <th>OLD RATE<br><button class="lockMini" data-lock="old">🔓</button></th>
+          <th>FORMULA<br><button class="lockMini" data-lock="formula">🔓</button></th>
+          <th>EXTRA COSTING<br><button class="lockMini" data-lock="extra">🔓</button></th>
+          <th>ROUND OFF<br><button class="lockMini" data-lock="round">🔓</button></th>
+          <th>NEW RATE</th>
+          <th>ACTION</th>
+        </tr>
+      </thead>
+      <tbody id="rateBody"></tbody>
+    </table>
+  </div>
+
+  <div class="actions">
+    <button class="btn green" id="addPacking">＋ ADD PACKING / WEIGHT</button>
+    <button class="btn dark" id="saveAll">💾 SAVE ALL</button>
+  </div>
+
+  <div class="note">
+    <label>📝 NARRATION / TERMS &amp; CONDITIONS</label>
+    <textarea id="narration" placeholder="GST EXTRA
+NEXT DAY PAYMENT
+ADVANCE PAYMENT DISCOUNT
+LOADING CHARGES EXTRA
+OTHER NOTES..."></textarea>
     <div class="actions">
-      <button class="btn btn-green" onclick="addPacking()">＋ ADD PACKING / WEIGHT</button>
-      <button class="btn btn-dark" onclick="saveAll()">💾 SAVE ALL</button>
+      <button class="btn light" id="saveNote">💾 SAVE NARRATION</button>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="title">📋 RATE HISTORY — LAST 3 UPDATES</div>
+  <div id="history"></div>
+</section>
+
+</main>
+
+<div class="modal" id="modal">
+  <div class="modalBox">
+    <h3 id="modalTitle">Add Product</h3>
+    <input id="modalInput" autocomplete="off">
+    <div class="actions">
+      <button class="btn green" id="modalSave">SAVE</button>
+      <button class="btn light" id="modalCancel">CANCEL</button>
     </div>
   </div>
 </div>
-<div class="notice" id="notice"></div>
+
+<div class="toast" id="toast"></div>
 
 <script>
-const KEY="VRCL_RATE_ADMIN_V6";
-let unlocked=false;
-let city="Rajkot";
-let category="";
-let db={cities:{Rajkot:{},Ahmedabad:{},Udaan:{}}};
+(function(){
 
-const defaultState=()=>({
-  cities:{Rajkot:{},Ahmedabad:{},Udaan:{}},
-  categories:[]
-});
+const KEY="VRCL_ADMIN_DATA_V11";
+const LOCKKEY="VRCL_ADMIN_LOCKS_V11";
+const MASTERKEY="VRCL_ADMIN_MASTERLOCK_V11";
 
-function loadDB(){
+let admin=false, city="Rajkot", productId="", modalMode="", modalId="";
+
+const $=id=>document.getElementById(id);
+
+function emptyDB(){
+  return {products:[],cities:{Rajkot:{},Ahmedabad:{},Udaan:{}},history:[]};
+}
+function load(){
   try{
-    const raw=localStorage.getItem(KEY);
-    db=raw?JSON.parse(raw):defaultState();
-  }catch(e){db=defaultState()}
-  if(!db.cities) db=defaultState();
-  ["Rajkot","Ahmedabad","Udaan"].forEach(c=>db.cities[c] ||= {});
-  if(!Array.isArray(db.categories))db.categories=[];
+    const x=JSON.parse(localStorage.getItem(KEY));
+    if(x && Array.isArray(x.products) && x.cities)return x;
+  }catch(e){}
+  return emptyDB();
 }
-function saveDB(){localStorage.setItem(KEY,JSON.stringify(db))}
-function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
-function money(v){return Number(v||0).toFixed(2)}
-function msg(t){const n=document.getElementById("notice");n.textContent=t;n.style.display="block";setTimeout(()=>n.style.display="none",1800)}
+let db=load();
 
-function toggleAdmin(){
- unlocked=!unlocked;
- document.getElementById("statusText").textContent=unlocked?"UNLOCKED":"LOCKED";
- document.getElementById("adminLockBtn").textContent=unlocked?"🔒 LOCK ADMIN":"🔓 UNLOCK ADMIN";
- render();
+function save(){localStorage.setItem(KEY,JSON.stringify(db))}
+function getLocks(){
+  try{
+    return Object.assign(
+      {packing:false,master:false,old:false,formula:false,extra:false,round:false},
+      JSON.parse(localStorage.getItem(LOCKKEY)||"{}")
+    );
+  }catch(e){
+    return {packing:false,master:false,old:false,formula:false,extra:false,round:false};
+  }
 }
-function ensureAccess(){if(!unlocked){msg("🔒 Unlock Admin first");return false}return true}
+function saveLocks(x){localStorage.setItem(LOCKKEY,JSON.stringify(x))}
+function masterLocked(){return localStorage.getItem(MASTERKEY)==="1"}
+function esc(s){
+  return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function notify(t){
+  const x=$("toast");x.textContent=t;x.style.display="block";
+  clearTimeout(window.__toast);window.__toast=setTimeout(()=>x.style.display="none",2300);
+}
+function requireAdmin(){
+  if(!admin){notify("🔒 UNLOCK ADMIN FIRST");return false}
+  return true;
+}
+function data(){
+  if(!productId)return null;
+  if(!db.cities[city][productId]){
+    db.cities[city][productId]={looseRate:"",packings:[],narration:""};
+  }
+  return db.cities[city][productId];
+}
 
 function renderCities(){
- document.getElementById("cityList").innerHTML=["Rajkot","Ahmedabad","Udaan"].map(c=>
- `<button class="city-btn ${c===city?"active":""}" onclick="setCity('${c}')">${c}</button>`).join("");
-}
-function setCity(c){city=c;render()}
-
-function renderCategories(){
- const el=document.getElementById("categoryList");
- el.innerHTML=db.categories.map(c=>`<div class="cat-item">
-   <button class="cat-btn ${c.id===category?"active":""}" onclick="setCategory('${c.id}')">${esc(c.name)}</button>
-   <button class="btn btn-light small" onclick="editCategory('${c.id}')">✏️</button>
-   <button class="btn btn-light small" onclick="deleteCategory('${c.id}')">🗑️</button>
- </div>`).join("");
- if(!db.categories.length)el.innerHTML='<div class="empty">No product category yet. Click “＋ ADD PRODUCT CATEGORY” to start.</div>';
-}
-function addCategory(){
- if(!ensureAccess())return;
- const n=prompt("Product Category Name:");
- if(!n||!n.trim())return;
- const id="c_"+Date.now();
- db.categories.push({id,name:n.trim()});
- ["Rajkot","Ahmedabad","Udaan"].forEach(c=>db.cities[c][id]={looseRate:"",packings:[]});
- category=id;saveDB();render();msg("✅ Product category added");
-}
-function editCategory(id){
- if(!ensureAccess())return;
- const c=db.categories.find(x=>x.id===id);if(!c)return;
- const n=prompt("Edit Product Category:",c.name);
- if(!n||!n.trim())return;
- c.name=n.trim();saveDB();render();msg("✅ Category updated");
-}
-function deleteCategory(id){
- if(!ensureAccess())return;
- const c=db.categories.find(x=>x.id===id);if(!c)return;
- if(!confirm("Delete "+c.name+" and all its rate data?"))return;
- db.categories=db.categories.filter(x=>x.id!==id);
- ["Rajkot","Ahmedabad","Udaan"].forEach(x=>delete db.cities[x][id]);
- category=db.categories[0]?.id||"";saveDB();render();msg("🗑️ Category deleted");
-}
-function setCategory(id){category=id;render()}
-
-function current(){
- if(!category)return null;
- db.cities[city][category] ||= {looseRate:"",packings:[]};
- db.cities[city][category].packings ||= [];
- return db.cities[city][category];
-}
-function getLocks(){
- return JSON.parse(localStorage.getItem("VRCL_FIELD_LOCKS_V6")||'{"packing":false,"master":false,"old":false,"formula":false,"extra":false,"round":false}');
-}
-function toggleField(f){
- if(!ensureAccess())return;
- const l=getLocks();l[f]=!l[f];localStorage.setItem("VRCL_FIELD_LOCKS_V6",JSON.stringify(l));render();
-}
-function looseLocked(){return localStorage.getItem("VRCL_LOOSE_LOCK_V6")==="1"}
-function toggleLooseLock(){
- if(!ensureAccess())return;
- localStorage.setItem("VRCL_LOOSE_LOCK_V6",looseLocked()?"0":"1");render();
+  $("cityArea").innerHTML=["Rajkot","Ahmedabad","Udaan"].map(c=>
+    `<button class="city ${c===city?"active":""}" data-city="${c}">${c}</button>`
+  ).join("");
+  document.querySelectorAll("[data-city]").forEach(b=>b.onclick=()=>{
+    city=b.dataset.city;render();
+  });
 }
 
-function masterRate(link){
- const d=current();if(!d)return 0;
- if(link==="LOOSE OIL RATE")return Number(d.looseRate)||0;
- const r=d.packings.find(x=>x.packing===link);
- return r?Number(r.newRate)||0:0;
+function renderProducts(){
+  const area=$("productArea");
+  if(!db.products.length){
+    area.innerHTML='<div class="empty">No products added. Click “＋ ADD PRODUCT”.</div>';
+    return;
+  }
+  area.innerHTML=db.products.map(p=>`
+    <div class="productItem ${p.id===productId?"selected":""}">
+      <button class="productBtn ${p.id===productId?"active":""}" data-product="${p.id}">${esc(p.name)}</button>
+      <div class="productTools">
+        <button class="btn light" data-edit="${p.id}" title="Edit selected product">✏️</button>
+        <button class="btn light" data-delete="${p.id}" title="Delete selected product">🗑️</button>
+      </div>
+    </div>
+  `).join("");
+
+  document.querySelectorAll("[data-product]").forEach(b=>b.onclick=()=>{
+    productId=b.dataset.product;render();
+  });
+  document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openModal("edit",b.dataset.edit));
+  document.querySelectorAll("[data-delete]").forEach(b=>b.onclick=()=>deleteProduct(b.dataset.delete));
 }
-function calc(formula,master){
- let f=String(formula||"").trim().toUpperCase();
- if(!f)return Number(master)||0;
- f=f.replace(/MASTER/g,"("+Number(master||0)+")").replace(/,/g,"");
- if(!/^[0-9+\\-*/().\\s]+$/.test(f))return 0;
- try{let n=Function('"use strict";return '+f)();return Number.isFinite(n)?n:0}catch(e){return 0}
+
+function openModal(mode,id=""){
+  if(!requireAdmin())return;
+  modalMode=mode;modalId=id;
+  $("modalTitle").textContent=mode==="edit"?"Edit Product":"Add Product";
+  $("modalInput").value=mode==="edit"?(db.products.find(p=>p.id===id)?.name||""):"";
+  $("modal").style.display="flex";
+  setTimeout(()=>$("modalInput").focus(),60);
+}
+function closeModal(){$("modal").style.display="none"}
+function modalSave(){
+  if(!requireAdmin())return;
+  const name=$("modalInput").value.trim();
+  if(!name){notify("⚠️ ENTER PRODUCT NAME");return}
+  if(modalMode==="add"){
+    const id="p_"+Date.now()+"_"+Math.random().toString(16).slice(2);
+    db.products.push({id,name});
+    ["Rajkot","Ahmedabad","Udaan"].forEach(c=>{
+      db.cities[c][id]={looseRate:"",packings:[],narration:""};
+    });
+    productId=id;save();closeModal();render();notify("✅ PRODUCT ADDED");
+  }else{
+    const p=db.products.find(x=>x.id===modalId);
+    if(p){p.name=name;save();closeModal();render();notify("✅ PRODUCT UPDATED")}
+  }
+}
+function deleteProduct(id){
+  if(!requireAdmin())return;
+  const p=db.products.find(x=>x.id===id);if(!p)return;
+  if(!confirm("Delete "+p.name+" from all cities?"))return;
+  db.products=db.products.filter(x=>x.id!==id);
+  ["Rajkot","Ahmedabad","Udaan"].forEach(c=>delete db.cities[c][id]);
+  productId=db.products[0]?.id||"";
+  save();render();notify("🗑️ PRODUCT DELETED");
+}
+
+function toggleAdmin(){
+  admin=!admin;
+  $("status").textContent=admin?"UNLOCKED":"LOCKED";
+  $("adminToggle").textContent=admin?"🔒 LOCK ADMIN":"🔓 UNLOCK ADMIN";
+  render();
+  notify(admin?"🔓 ADMIN UNLOCKED":"🔒 ADMIN LOCKED");
+}
+function toggleMaster(){
+  if(!requireAdmin())return;
+  localStorage.setItem(MASTERKEY,masterLocked()?"0":"1");
+  renderMaster();notify(masterLocked()?"🔒 MASTER LOCKED":"🔓 MASTER UNLOCKED");
+}
+
+function calcFormula(formula,master){
+  let f=String(formula||"").trim();
+  if(!f)return Number(master)||0;
+  f=f.toUpperCase().replace(/MASTER/g,"("+Number(master||0)+")");
+  if(!/^[0-9+\-*/().\s]+$/.test(f))return 0;
+  try{
+    const n=Function('"use strict";return '+f)();
+    return Number.isFinite(Number(n))?Number(n):0;
+  }catch(e){return 0}
 }
 function roundValue(v,r){
- const step=Number(r);
- if(!step)return Number(v);
- return Math.round(Number(v)/step)*step;
+  const n=Number(r);
+  if(!n)return Number(v)||0;
+  return Math.round(Number(v)/n)*n;
 }
-function newRate(row){
- const m=masterRate(row.master||"LOOSE OIL RATE");
- const base=calc(row.formula,m);
- return roundValue(base+Number(row.extra||0),row.round);
+function masterValue(d,link){
+  if(link==="LOOSE OIL RATE")return Number(d.looseRate)||0;
+  const r=d.packings.find(x=>x.packing===link);
+  return r?Number(r.newRate)||0:0;
+}
+function rowRate(d,r){
+  return roundValue(
+    calcFormula(r.formula||"MASTER*1",masterValue(d,r.master||"LOOSE OIL RATE"))
+    +Number(r.extra||0),r.round
+  );
 }
 
-function render(){
- loadDB();renderCities();renderCategories();
- const d=current();
- const lr=document.getElementById("looseRate");
- if(lr){
-   lr.value=d?d.looseRate:"";
-   lr.disabled=!unlocked||looseLocked();
- }
- const lb=document.getElementById("looseLock");
- lb.textContent=looseLocked()?"🔒 MASTER LOCKED":"🔓 MASTER LOCK";
- lb.classList.toggle("on",looseLocked());
-
- const locks=getLocks();
- document.querySelectorAll("[data-lock]").forEach(b=>{
-   const on=!!locks[b.dataset.lock];b.textContent=on?"🔒":"🔓";b.classList.toggle("on",on);
- });
-
- const body=document.getElementById("rateBody");
- if(!d){body.innerHTML='<tr><td colspan="8" class="empty">First create a PRODUCT CATEGORY.</td></tr>';return}
- if(!d.packings.length){body.innerHTML='<tr><td colspan="8" class="empty">No packing added. Click “＋ ADD PACKING / WEIGHT”.</td></tr>';return}
-
- body.innerHTML=d.packings.map((r,i)=>{
-   const nr=newRate(r);
-   return `<tr>
-    <td><input data-i="${i}" data-f="packing" value="${esc(r.packing)}" ${!unlocked||locks.packing?"disabled":""}></td>
-    <td><select data-i="${i}" data-f="master" ${!unlocked||locks.master?"disabled":""}>
-      <option value="LOOSE OIL RATE">LOOSE OIL RATE</option>
-      ${d.packings.filter((x,j)=>j!==i&&x.packing).map(x=>`<option value="${esc(x.packing)}" ${r.master===x.packing?"selected":""}>${esc(x.packing)}</option>`).join("")}
-    </select></td>
-    <td><input type="number" step="0.01" data-i="${i}" data-f="old" value="${r.oldRate??""}" ${!unlocked||locks.old?"disabled":""}></td>
-    <td><input data-i="${i}" data-f="formula" value="${esc(r.formula||"MASTER*1")}" placeholder="MASTER*3 / -100" ${!unlocked||locks.formula?"disabled":""}></td>
-    <td><input type="number" step="0.01" data-i="${i}" data-f="extra" value="${r.extra??0}" ${!unlocked||locks.extra?"disabled":""}></td>
-    <td><input type="number" step="0.01" data-i="${i}" data-f="round" value="${r.round??0}" placeholder="0.10" ${!unlocked||locks.round?"disabled":""}></td>
-    <td><input class="newrate" value="${money(nr)}" disabled></td>
-    <td><button class="btn btn-light small" onclick="deletePacking(${i})">🗑️</button></td>
-   </tr>`;
- }).join("");
-
- if(unlocked && !looseLocked()){
-   lr.oninput=()=>{d.looseRate=lr.value;saveDB();refreshNewRates()}
- }else if(lr)lr.oninput=null;
+function renderMaster(){
+  const d=data();
+  $("looseRate").value=d?d.looseRate:"";
+  $("looseRate").disabled=!admin||masterLocked();
+  $("masterLock").textContent=masterLocked()?"🔒 MASTER LOCKED":"🔓 MASTER LOCK";
+  $("masterLock").classList.toggle("on",masterLocked());
+  renderPreview();
 }
-function refreshNewRates(){
- const d=current();if(!d)return;
- document.querySelectorAll("#rateBody tr").forEach((tr,i)=>{
-   const input=tr.querySelector(".newrate");if(input)input.value=money(newRate(d.packings[i]));
- });
-}
-function syncInputs(){
- const d=current();if(!d)return;
- document.querySelectorAll("#rateBody [data-i]").forEach(el=>{
-   const i=Number(el.dataset.i),f=el.dataset.f;
-   if(d.packings[i])d.packings[i][f]=el.value;
- });
- saveDB();refreshNewRates();
-}
-document.addEventListener("input",e=>{
- if(e.target.matches("#rateBody [data-i]"))syncInputs();
-});
-document.addEventListener("change",e=>{
- if(e.target.matches("#rateBody [data-i]"))syncInputs();
-});
 
+function renderPreview(){
+  const d=data(),sel=$("previewPacking");
+  if(!d||!d.packings.length){
+    sel.innerHTML='<option value="">Select packing</option>';
+    $("pvOld").textContent="—";$("pvChange").textContent="—";$("pvNew").textContent="—";
+    return;
+  }
+  const current=sel.value && d.packings.some(r=>r.packing===sel.value)?sel.value:d.packings[0].packing;
+  sel.innerHTML=d.packings.map(r=>
+    `<option value="${esc(r.packing)}">${esc(r.packing||"Unnamed packing")}</option>`
+  ).join("");
+  sel.value=current;
+
+  const r=d.packings.find(x=>x.packing===current);
+  if(!r){return}
+  const old=Number(r.oldRate)||0;
+  const nw=rowRate(d,r);
+  const ch=nw-old;
+  $("pvOld").textContent=old.toFixed(2);
+  $("pvChange").textContent=(ch>=0?"+":"")+ch.toFixed(2);
+  $("pvChange").className="previewValue "+(ch<0?"previewNegative":"previewChange");
+  $("pvNew").textContent=nw.toFixed(2);
+}
+
+function renderTable(){
+  const body=$("rateBody"),d=data();
+  if(!d){
+    body.innerHTML='<tr><td colspan="8" class="empty">Select a product first.</td></tr>';
+    return;
+  }
+  if(!d.packings.length){
+    body.innerHTML='<tr><td colspan="8" class="empty">No packing yet. Click “＋ ADD PACKING / WEIGHT”.</td></tr>';
+    return;
+  }
+  const l=getLocks();
+
+  body.innerHTML=d.packings.map((r,i)=>{
+    const opts=d.packings.map((x,j)=>j!==i&&x.packing?
+      `<option value="${esc(x.packing)}" ${r.master===x.packing?"selected":""}>${esc(x.packing)}</option>`:""
+    ).join("");
+    return `<tr>
+      <td><input data-i="${i}" data-f="packing" value="${esc(r.packing)}" ${!admin||l.packing?"disabled":""}></td>
+      <td><select data-i="${i}" data-f="master" ${!admin||l.master?"disabled":""}>
+        <option value="LOOSE OIL RATE" ${r.master==="LOOSE OIL RATE"?"selected":""}>LOOSE OIL RATE</option>${opts}
+      </select></td>
+      <td><input type="number" step="0.01" data-i="${i}" data-f="oldRate" value="${esc(r.oldRate)}" ${!admin||l.old?"disabled":""}></td>
+      <td><input data-i="${i}" data-f="formula" value="${esc(r.formula)}" placeholder="MASTER*3 / -100" ${!admin||l.formula?"disabled":""}></td>
+      <td><input type="number" step="0.01" data-i="${i}" data-f="extra" value="${esc(r.extra)}" ${!admin||l.extra?"disabled":""}></td>
+      <td><input type="number" step="0.01" data-i="${i}" data-f="round" value="${esc(r.round)}" placeholder="0.10" ${!admin||l.round?"disabled":""}></td>
+      <td><input class="newRate" data-newrate="${i}" disabled value="${rowRate(d,r).toFixed(2)}"></td>
+      <td><button class="btn light" data-rowdelete="${i}" style="padding:7px 9px">🗑️</button></td>
+    </tr>`;
+  }).join("");
+
+  document.querySelectorAll("[data-rowdelete]").forEach(b=>b.onclick=()=>{
+    if(!requireAdmin())return;
+    d.packings.splice(Number(b.dataset.rowdelete),1);save();render();notify("🗑️ PACKING DELETED");
+  });
+}
+
+/* IMPORTANT FIX:
+   Do not rebuild the input DOM on every keypress.
+   This prevents the old "only one letter can be typed" problem.
+*/
+function syncRowFromElement(el){
+  const d=data();if(!d)return;
+  const i=Number(el.dataset.i),f=el.dataset.f;
+  if(d.packings[i])d.packings[i][f]=el.value;
+}
+function refreshCalculatedRates(){
+  const d=data();if(!d)return;
+  d.packings.forEach((r,i)=>{
+    const el=document.querySelector(`[data-newrate="${i}"]`);
+    if(el)el.value=rowRate(d,r).toFixed(2);
+  });
+  renderPreview();
+}
+
+function renderNote(){
+  const d=data();
+  $("narration").value=d?d.narration:"";
+  $("narration").disabled=!admin;
+}
+function renderLocks(){
+  const l=getLocks();
+  document.querySelectorAll("[data-lock]").forEach(b=>{
+    const on=!!l[b.dataset.lock];
+    b.textContent=on?"🔒":"🔓";b.classList.toggle("on",on);
+  });
+}
+
+function toggleColumn(key){
+  if(!requireAdmin())return;
+  const l=getLocks();l[key]=!l[key];saveLocks(l);renderLocks();renderTable();
+  notify(l[key]?"🔒 COLUMN LOCKED":"🔓 COLUMN UNLOCKED");
+}
 function addPacking(){
- if(!ensureAccess())return;
- const d=current();if(!d){msg("First add a product category");return}
- d.packings.push({packing:"",master:"LOOSE OIL RATE",oldRate:"",formula:"MASTER*1",extra:0,round:0});
- saveDB();render();msg("✅ Packing row added");
+  if(!requireAdmin())return;
+  if(!productId){notify("⚠️ SELECT PRODUCT FIRST");return}
+  const d=data();
+  d.packings.push({
+    packing:"",master:"LOOSE OIL RATE",oldRate:"",formula:"MASTER*1",extra:0,round:0,newRate:0
+  });
+  save();renderTable();renderPreview();notify("✅ PACKING ADDED");
 }
-function deletePacking(i){
- if(!ensureAccess())return;
- const d=current();if(!d)return;
- if(!confirm("Delete this packing?"))return;
- d.packings.splice(i,1);saveDB();render();msg("🗑️ Packing deleted");
-}
+
 function saveAll(){
- if(!ensureAccess())return;
- syncInputs();msg("✅ RATE SAVED SUCCESSFULLY");
+  if(!requireAdmin())return;
+  const d=data();if(!d){notify("⚠️ SELECT PRODUCT FIRST");return}
+
+  /* Read the current visible values without destroying the inputs. */
+  document.querySelectorAll("#rateBody [data-i]").forEach(el=>syncRowFromElement(el));
+
+  /* Calculate first, then move NEW RATE -> OLD RATE as requested. */
+  const calculated=d.packings.map(r=>rowRate(d,r));
+  d.packings.forEach((r,i)=>{
+    r.newRate=calculated[i];
+    r.oldRate=calculated[i];
+  });
+
+  db.history.unshift({
+    time:new Date().toLocaleString(),
+    city,
+    product:db.products.find(p=>p.id===productId)?.name||"",
+    looseRate:d.looseRate,
+    rates:d.packings.map((r,i)=>({packing:r.packing,rate:calculated[i]}))
+  });
+  db.history=db.history.slice(0,30);
+  save();render();notify("✅ RATE UPDATE SUCCESSFULLY SAVED");
 }
-loadDB();
+
+function saveNote(){
+  if(!requireAdmin())return;
+  const d=data();if(!d)return;
+  d.narration=$("narration").value;save();notify("✅ NARRATION SAVED");
+}
+function renderHistory(){
+  const a=db.history.slice(0,3);
+  $("history").innerHTML=a.length?a.map(x=>
+    `<div class="historyRow"><b>${esc(x.product)}</b> — ${esc(x.city)} — ${esc(x.time)}
+     ${x.looseRate!==""?" — Loose ₹"+esc(x.looseRate):""}</div>`
+  ).join(""):'<div class="empty">No rate update history yet.</div>';
+}
+function render(){
+  renderCities();renderProducts();renderMaster();renderTable();renderNote();renderLocks();renderHistory();
+}
+
+/* Top buttons */
+$("adminToggle").onclick=toggleAdmin;
+$("addProduct").onclick=()=>openModal("add");
+$("modalSave").onclick=modalSave;
+$("modalCancel").onclick=closeModal;
+$("modal").onclick=e=>{if(e.target===$("modal"))closeModal()};
+$("modalInput").addEventListener("keydown",e=>{if(e.key==="Enter")modalSave()});
+$("masterLock").onclick=toggleMaster;
+$("addPacking").onclick=addPacking;
+$("saveAll").onclick=saveAll;
+$("saveNote").onclick=saveNote;
+$("previewPacking").onchange=renderPreview;
+
+/* Lock buttons are delegated so re-rendering cannot break them. */
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-lock]");
+  if(b)toggleColumn(b.dataset.lock);
+});
+
+/* Loose oil: update without rebuilding the table. */
+$("looseRate").addEventListener("input",e=>{
+  if(!admin||masterLocked())return;
+  const d=data();if(!d)return;
+  d.looseRate=e.target.value;
+  save();
+  refreshCalculatedRates();
+});
+
+/* Table inputs: save silently while typing; never re-render the row. */
+$("rateBody").addEventListener("input",e=>{
+  const el=e.target.closest("[data-i]");
+  if(!el)return;
+  syncRowFromElement(el);
+  refreshCalculatedRates();
+});
+$("rateBody").addEventListener("change",e=>{
+  const el=e.target.closest("[data-i]");
+  if(!el)return;
+  syncRowFromElement(el);
+  save();
+  refreshCalculatedRates();
+});
+
 render();
+
+})();
 </script>
 </body>
 </html>
