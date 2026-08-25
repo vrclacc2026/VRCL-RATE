@@ -8,9 +8,7 @@
 <style>
 *{box-sizing:border-box}
 
-html{
-  scroll-behavior:smooth
-}
+html{scroll-behavior:smooth}
 
 body{
   margin:0;
@@ -172,17 +170,15 @@ body{
   background:#fafbfc
 }
 
-
 /* =========================================================
-   EXCEL STYLE CALCULATION BOX
+   MASTER / EXCEL STYLE BOX
    ========================================================= */
 
 .masterRow{
   background:#fff9ec;
   border:1px solid #ead49a;
   border-radius:12px;
-  padding:14px;
-  display:block
+  padding:14px
 }
 
 .masterHeader{
@@ -204,7 +200,8 @@ body{
 
 .masterInput{
   width:170px;
-  font-weight:900
+  font-weight:900;
+  font-size:18px
 }
 
 .lock{
@@ -221,44 +218,42 @@ body{
   color:#fff
 }
 
-
-/* Excel photo jaisa box */
+/* Excel photo jaisa chhota calculation row */
 
 .excelBox{
   width:100%;
   display:grid;
   grid-template-columns:
-    minmax(150px,1fr)
-    32px
-    minmax(250px,2fr)
-    32px
-    minmax(120px,1fr)
-    32px
-    minmax(160px,1fr);
+    150px
+    35px
+    minmax(230px,1fr)
+    35px
+    120px
+    35px
+    150px;
 
-  align-items:center;
-  gap:7px;
+  align-items:stretch;
+  gap:0;
 
   background:#fff;
-  border:1px solid #c9d0d6;
+  border:1px solid #aeb7bf;
   border-radius:4px;
-  padding:0;
-  overflow:hidden
+  overflow:hidden;
+  box-shadow:0 1px 3px #0001
 }
 
 .excelCell{
-  min-height:76px;
+  min-height:72px;
   background:#fff;
   padding:8px 10px;
-  border-right:1px solid #c9d0d6
-}
-
-.excelCell:last-child{
-  border-right:0
+  border-right:1px solid #c9d0d6;
+  display:flex;
+  flex-direction:column;
+  justify-content:center
 }
 
 .excelLabel{
-  font-size:11px;
+  font-size:10px;
   font-weight:900;
   color:#087f70;
   margin-bottom:5px;
@@ -269,8 +264,8 @@ body{
   width:100%;
   border:0;
   outline:none;
-  padding:5px 0;
-  font-size:19px;
+  padding:3px 0;
+  font-size:18px;
   font-weight:900;
   background:#fff;
   color:#101828
@@ -280,37 +275,43 @@ body{
   color:#087f70
 }
 
+.excelCell input:disabled{
+  background:#fff;
+  color:#101828;
+  opacity:1;
+  cursor:not-allowed
+}
+
 .excelFormula input{
-  font-size:16px
+  font-size:15px
 }
 
 .excelOperator{
-  text-align:center;
+  min-height:72px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#f4f6f8;
+  border-right:1px solid #c9d0d6;
   font-size:20px;
   font-weight:900;
   color:#667085
 }
 
 .excelResult{
-  background:#eef9f1;
-  min-height:76px;
+  min-height:72px;
+  background:#eaf7ed;
   padding:8px 12px;
-  border-left:1px solid #b8d7c1
+  display:flex;
+  flex-direction:column;
+  justify-content:center
 }
 
 .excelResultValue{
-  font-size:24px;
+  font-size:23px;
   font-weight:900;
-  color:#087f70;
-  margin-top:4px
+  color:#087f70
 }
-
-.excelHelp{
-  margin-top:8px;
-  font-size:12px;
-  color:#667085
-}
-
 
 /* =========================================================
    TABLE
@@ -468,9 +469,6 @@ td select:disabled{
   font-size:16px
 }
 
-
-/* Firebase status */
-
 .cloudStatus{
   font-size:11px;
   font-weight:900;
@@ -487,9 +485,6 @@ td select:disabled{
 .cloudStatus.offline{
   background:#b42318
 }
-
-
-/* Mobile */
 
 @media(max-width:850px){
 
@@ -532,16 +527,13 @@ td select:disabled{
     border-bottom:1px solid #c9d0d6
   }
 
-  .excelCell:nth-child(3){
+  .excelCell:nth-child(3),
+  .excelCell:nth-child(7){
     border-right:0
   }
 
   .excelResult{
     border-left:0
-  }
-
-  .excelHelp{
-    line-height:1.5
   }
 
   .cloudStatus{
@@ -608,7 +600,6 @@ td select:disabled{
 
 <main class="wrap">
 
-
 <!-- CITY -->
 
 <section class="card">
@@ -643,7 +634,7 @@ td select:disabled{
 </section>
 
 
-<!-- MASTER + EXCEL BOX -->
+<!-- MASTER -->
 
 <section class="card">
 
@@ -678,7 +669,7 @@ td select:disabled{
     </div>
 
 
-    <!-- ONLY THIS BOX IS EXCEL STYLE -->
+    <!-- EXCEL STYLE CALCULATION BOX -->
 
     <div class="excelBox">
 
@@ -692,7 +683,8 @@ td select:disabled{
           id="excelMaster"
           type="number"
           step="0.01"
-          placeholder="1680"
+          placeholder="0.00"
+          disabled
         >
 
       </div>
@@ -712,7 +704,7 @@ td select:disabled{
         <input
           id="excelFormula"
           type="text"
-          placeholder="MASTER RATE/10*1.365"
+          placeholder="MASTER/2"
         >
 
       </div>
@@ -733,7 +725,7 @@ td select:disabled{
           id="excelRound"
           type="number"
           step="0.01"
-          placeholder="-10"
+          placeholder="0"
         >
 
       </div>
@@ -761,16 +753,6 @@ td select:disabled{
 
     </div>
 
-
-    <div class="excelHelp">
-      Formula examples:
-      <b>MASTER/2</b> |
-      <b>/2</b> |
-      <b>MASTER RATE/10*1.365</b> |
-      <b>*1.365</b> |
-      <b>-10</b>
-    </div>
-
   </div>
 
 </section>
@@ -783,7 +765,6 @@ td select:disabled{
   <div class="title">
     RATE SETUP
   </div>
-
 
   <div class="tableWrap">
 
@@ -804,7 +785,6 @@ td select:disabled{
             </button>
           </th>
 
-
           <th>
             MASTER LINK
             <br>
@@ -815,7 +795,6 @@ td select:disabled{
               🔓
             </button>
           </th>
-
 
           <th>
             OLD RATE
@@ -828,7 +807,6 @@ td select:disabled{
             </button>
           </th>
 
-
           <th>
             FORMULA
             <br>
@@ -839,7 +817,6 @@ td select:disabled{
               🔓
             </button>
           </th>
-
 
           <th>
             EXTRA COSTING
@@ -852,7 +829,6 @@ td select:disabled{
             </button>
           </th>
 
-
           <th>
             R OFF
             <br>
@@ -864,11 +840,9 @@ td select:disabled{
             </button>
           </th>
 
-
           <th>
             NEW RATE
           </th>
-
 
           <th>
             ACTION
@@ -878,13 +852,11 @@ td select:disabled{
 
       </thead>
 
-
       <tbody id="rateBody"></tbody>
 
     </table>
 
   </div>
-
 
   <div class="actions">
 
@@ -895,7 +867,6 @@ td select:disabled{
       ＋ ADD PACKING / WEIGHT
     </button>
 
-
     <button
       class="btn dark"
       id="saveAll"
@@ -905,8 +876,6 @@ td select:disabled{
 
   </div>
 
-
-  <!-- NARRATION -->
 
   <div class="note">
 
@@ -951,7 +920,6 @@ OTHER NOTES..."
 
 </section>
 
-
 </main>
 
 
@@ -993,15 +961,10 @@ OTHER NOTES..."
 </div>
 
 
-<div
-  class="toast"
-  id="toast"
-></div>
+<div class="toast" id="toast"></div>
 
 
-<!-- =========================================================
-     FIREBASE
-     ========================================================= -->
+<!-- FIREBASE -->
 
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-auth-compat.js"></script>
@@ -1013,19 +976,8 @@ OTHER NOTES..."
 
 "use strict";
 
-
 /* =========================================================
-   1. FIREBASE CONFIG
-   =========================================================
-
-   YAHAN APNE FIREBASE PROJECT KI DETAILS PASTE KARNI HAIN.
-
-   Firebase Console:
-   Project Settings
-   -> Your apps
-   -> Web app
-   -> Firebase SDK configuration
-
+   FIREBASE CONFIG
    ========================================================= */
 
 const FIREBASE_CONFIG = {
@@ -1055,23 +1007,21 @@ const FIREBASE_CONFIG = {
 
 
 /* =========================================================
-   LOCAL STORAGE
+   KEYS
    ========================================================= */
 
 const KEY =
-  "VRCL_ADMIN_DATA_V12";
-
+  "VRCL_ADMIN_DATA_V13";
 
 const LOCKKEY =
-  "VRCL_ADMIN_LOCKS_V12";
-
+  "VRCL_ADMIN_LOCKS_V13";
 
 const MASTERKEY =
-  "VRCL_ADMIN_MASTERLOCK_V12";
+  "VRCL_ADMIN_MASTERLOCK_V13";
 
 
 /* =========================================================
-   APP STATE
+   STATE
    ========================================================= */
 
 let admin = false;
@@ -1166,7 +1116,7 @@ let db = loadLocal();
 
 
 /* =========================================================
-   LOCAL SAVE
+   SAVE LOCAL
    ========================================================= */
 
 function saveLocal(){
@@ -1250,7 +1200,7 @@ function masterLocked(){
 
 
 /* =========================================================
-   ESCAPE HTML
+   ESCAPE
    ========================================================= */
 
 function esc(s){
@@ -1292,8 +1242,10 @@ function notify(t){
   window.__toast =
     setTimeout(
       () => {
+
         x.style.display =
           "none";
+
       },
       2500
     );
@@ -1379,12 +1331,14 @@ function renderCities(){
 
     .map(
       c => `
+
         <button
           class="city ${c===city ? "active":""}"
           data-city="${c}"
         >
           ${c}
         </button>
+
       `
     )
 
@@ -1883,12 +1837,10 @@ function toggleMaster(){
 
 
 /* =========================================================
-   EXCEL STYLE FORMULA ENGINE
+   FORMULA ENGINE
    ========================================================= */
 
-function normalizeFormula(
-  formula
-){
+function normalizeFormula(formula){
 
   let f =
     String(
@@ -1905,9 +1857,7 @@ function normalizeFormula(
   }
 
 
-  /*
-    MASTER RATE -> MASTER
-  */
+  /* MASTER RATE = MASTER */
 
   f =
     f.replace(
@@ -1923,9 +1873,7 @@ function normalizeFormula(
     );
 
 
-  /*
-    Remove rupee and comma
-  */
+  /* Remove currency and commas */
 
   f =
     f.replace(
@@ -1934,9 +1882,7 @@ function normalizeFormula(
     );
 
 
-  /*
-    X / × -> *
-  */
+  /* x / × become * */
 
   f =
     f.replace(
@@ -1945,9 +1891,7 @@ function normalizeFormula(
     );
 
 
-  /*
-    Remove spaces
-  */
+  /* Remove spaces */
 
   f =
     f.replace(
@@ -1957,19 +1901,12 @@ function normalizeFormula(
 
 
   /*
-    Excel shorthand:
+    Short formula support
 
-    /2
-    *1.365
-    +100
-    -10
-
-    become:
-
-    MASTER/2
-    MASTER*1.365
-    MASTER+100
-    MASTER-10
+    /2     -> MASTER/2
+    *2     -> MASTER*2
+    +100   -> MASTER+100
+    -10    -> MASTER-10
   */
 
   if(
@@ -1989,7 +1926,7 @@ function normalizeFormula(
 
 
 /* =========================================================
-   CALCULATE FORMULA
+   SAFE FORMULA CALCULATION
    ========================================================= */
 
 function calcFormula(
@@ -2008,7 +1945,7 @@ function calcFormula(
 
 
   /*
-    MASTER replace
+    MASTER ko actual number se replace
   */
 
   f =
@@ -2019,8 +1956,7 @@ function calcFormula(
 
 
   /*
-    Only mathematical
-    characters allowed
+    Sirf mathematical characters allow
   */
 
   if(
@@ -2036,16 +1972,18 @@ function calcFormula(
 
     const result =
       Function(
-        '"use strict"; return (' +
+        '"use strict";return (' +
         f +
         ')'
       )();
 
 
+    const n =
+      Number(result);
+
+
     if(
-      !Number.isFinite(
-        Number(result)
-      )
+      !Number.isFinite(n)
     ){
 
       return 0;
@@ -2053,12 +1991,12 @@ function calcFormula(
     }
 
 
-    return Number(result);
+    return n;
 
   }catch(error){
 
     console.error(
-      "Formula Error:",
+      "Formula error:",
       formula,
       error
     );
@@ -2071,75 +2009,74 @@ function calcFormula(
 
 
 /* =========================================================
-   MASTER VALUE
+   MASTER LINK VALUE
    ========================================================= */
 
-function masterValue(
+function getMasterForRow(
   d,
-  link
+  row,
+  cache,
+  visiting
 ){
 
   /*
-    Direct loose master
+    Default = LOOSE OIL RATE
   */
 
   if(
-    !link ||
-    link==="LOOSE OIL RATE" ||
-    link==="MASTER" ||
-    link==="MASTER RATE"
+    !row.master ||
+    row.master==="LOOSE OIL RATE" ||
+    row.master==="MASTER" ||
+    row.master==="MASTER RATE"
   ){
 
-    return (
-      Number(
-        d.looseRate
-      ) || 0
-    );
+    return Number(
+      d.looseRate
+    ) || 0;
 
   }
 
 
   /*
-    Product/packing linked
-    master
+    Agar kisi doosri packing ko
+    master link kiya hai
   */
 
   const linked =
     d.packings.find(
       x =>
         x.packing ===
-        link
+        row.master
     );
 
 
-  if(linked){
+  if(!linked){
 
-    return calculateRow(
-      d,
-      linked,
-      {}
-    );
+    return Number(
+      d.looseRate
+    ) || 0;
 
   }
 
 
-  return (
-    Number(
-      d.looseRate
-    ) || 0
+  return calculateRow(
+    d,
+    linked,
+    cache,
+    visiting
   );
 
 }
 
 
 /* =========================================================
-   CALCULATE ALL ROWS
+   CALCULATE ROW
    ========================================================= */
 
 function calculateRow(
   d,
   row,
-  cache,
+  cache={},
   visiting={}
 ){
 
@@ -2176,7 +2113,7 @@ function calculateRow(
   ){
 
     console.warn(
-      "Circular Master Link:",
+      "Circular master link:",
       key
     );
 
@@ -2189,78 +2126,38 @@ function calculateRow(
     true;
 
 
-  let master = 0;
-
-
   /*
-    Loose Oil Master
+    MASTER RATE
   */
 
-  if(
-    !row.master ||
-    row.master==="LOOSE OIL RATE" ||
-    row.master==="MASTER" ||
-    row.master==="MASTER RATE"
-  ){
-
-    master =
-      Number(
-        d.looseRate
-      ) || 0;
-
-  }else{
-
-    /*
-      Another packing as master
-    */
-
-    const linked =
-      d.packings.find(
-        x =>
-          x.packing ===
-          row.master
-      );
-
-
-    if(linked){
-
-      master =
-        calculateRow(
-          d,
-          linked,
-          cache,
-          visiting
-        );
-
-    }else{
-
-      master = 0;
-
-    }
-
-  }
+  const master =
+    getMasterForRow(
+      d,
+      row,
+      cache,
+      visiting
+    );
 
 
   /*
-    Formula
+    FORMULA
   */
 
   const formulaValue =
     calcFormula(
-      row.formula ||
-      "MASTER",
+      row.formula || "MASTER",
       master
     );
 
 
   /*
-    Extra Costing
+    EXTRA COSTING
   */
 
   const extra =
     Number(
-      row.extra || 0
-    );
+      row.extra
+    ) || 0;
 
 
   /*
@@ -2269,31 +2166,29 @@ function calculateRow(
 
   const rOff =
     Number(
-      row.round || 0
-    );
+      row.round
+    ) || 0;
 
 
   /*
     FINAL
   */
 
-  const result =
-    formulaValue +
-    extra +
-    rOff;
-
-
   const finalValue =
     Number(
-      result.toFixed(2)
+      (
+        formulaValue +
+        extra +
+        rOff
+      ).toFixed(2)
     );
 
 
-  cache[key] =
+  row.newRate =
     finalValue;
 
 
-  row.newRate =
+  cache[key] =
     finalValue;
 
 
@@ -2305,9 +2200,11 @@ function calculateRow(
 }
 
 
-function calculateAllRows(
-  d
-){
+/* =========================================================
+   CALCULATE ALL
+   ========================================================= */
+
+function calculateAllRows(d){
 
   if(
     !d ||
@@ -2344,7 +2241,7 @@ function calculateAllRows(
 
 
 /* =========================================================
-   EXCEL TOP BOX
+   EXCEL TOP CALCULATION
    ========================================================= */
 
 function updateExcelBox(){
@@ -2355,6 +2252,8 @@ function updateExcelBox(){
 
   if(!d){
 
+    $("excelMaster").value = "";
+
     $("excelResult")
       .textContent =
       "0.00";
@@ -2364,20 +2263,31 @@ function updateExcelBox(){
   }
 
 
+  /*
+    IMPORTANT:
+    MASTER RATE always comes
+    from LOOSE OIL RATE.
+  */
+
   const master =
     Number(
-      $("excelMaster")
-        .value
+      d.looseRate
     ) || 0;
+
+
+  $("excelMaster")
+    .value =
+    d.looseRate || "";
 
 
   const formula =
     $("excelFormula")
-      .value ||
+      .value
+      .trim() ||
     "MASTER";
 
 
-  const formulaResult =
+  const formulaValue =
     calcFormula(
       formula,
       master
@@ -2391,15 +2301,15 @@ function updateExcelBox(){
     ) || 0;
 
 
-  const finalResult =
-    formulaResult +
+  const result =
+    formulaValue +
     rOff;
 
 
   $("excelResult")
     .textContent =
     Number(
-      finalResult.toFixed(2)
+      result.toFixed(2)
     ).toFixed(2);
 
 }
@@ -2441,26 +2351,19 @@ function renderMaster(){
 
 
   /*
-    Excel box master = loose rate
+    Excel MASTER RATE
+    is NOT independently editable.
+    It is linked to loose rate.
   */
 
-  if(d){
-
-    $("excelMaster")
-      .value =
-      d.looseRate || "";
-
-  }else{
-
-    $("excelMaster")
-      .value = "";
-
-  }
+  $("excelMaster").value =
+    d
+      ? d.looseRate || ""
+      : "";
 
 
   $("excelMaster").disabled =
-    !admin ||
-    masterLocked();
+    true;
 
 
   updateExcelBox();
@@ -2522,27 +2425,34 @@ function renderTable(){
           d.packings
 
           .map(
-            (x,j) =>
+            (x,j) => {
 
-              j!==i &&
-              x.packing
+              if(
+                j===i ||
+                !x.packing
+              ){
 
-              ?
+                return "";
 
-              `
-              <option
-                value="${esc(x.packing)}"
-                ${
-                  r.master===x.packing
-                    ? "selected"
-                    : ""
-                }
-              >
-                ${esc(x.packing)}
-              </option>
-              `
+              }
 
-              : ""
+
+              return `
+
+                <option
+                  value="${esc(x.packing)}"
+                  ${
+                    r.master===x.packing
+                      ? "selected"
+                      : ""
+                  }
+                >
+                  ${esc(x.packing)}
+                </option>
+
+              `;
+
+            }
           )
 
           .join("");
@@ -2585,6 +2495,7 @@ function renderTable(){
                 <option
                   value="LOOSE OIL RATE"
                   ${
+                    !r.master ||
                     r.master==="LOOSE OIL RATE"
                       ? "selected"
                       : ""
@@ -2624,8 +2535,8 @@ function renderTable(){
               <input
                 data-i="${i}"
                 data-f="formula"
-                value="${esc(r.formula)}"
-                placeholder="MASTER/2 or /2"
+                value="${esc(r.formula || "MASTER")}"
+                placeholder="MASTER/2"
                 ${
                   !admin ||
                   l.formula
@@ -2644,7 +2555,7 @@ function renderTable(){
                 step="0.01"
                 data-i="${i}"
                 data-f="extra"
-                value="${esc(r.extra)}"
+                value="${esc(r.extra ?? 0)}"
                 ${
                   !admin ||
                   l.extra
@@ -2663,8 +2574,8 @@ function renderTable(){
                 step="0.01"
                 data-i="${i}"
                 data-f="round"
-                value="${esc(r.round)}"
-                placeholder="-10"
+                value="${esc(r.round ?? 0)}"
+                placeholder="0"
                 ${
                   !admin ||
                   l.round
@@ -2731,13 +2642,19 @@ function renderTable(){
             }
 
 
-            d.packings.splice(
+            const i =
               Number(
                 b.dataset.rowdelete
-              ),
+              );
+
+
+            d.packings.splice(
+              i,
               1
             );
 
+
+            calculateAllRows(d);
 
             await saveAllData();
 
@@ -2756,12 +2673,10 @@ function renderTable(){
 
 
 /* =========================================================
-   SYNC TABLE ELEMENT
+   SYNC TABLE
    ========================================================= */
 
-function syncRowFromElement(
-  el
-){
+function syncRowFromElement(el){
 
   const d =
     data();
@@ -2797,7 +2712,7 @@ function syncRowFromElement(
 
 
 /* =========================================================
-   REFRESH CALCULATIONS
+   REFRESH RATES
    ========================================================= */
 
 function refreshCalculatedRates(){
@@ -2909,9 +2824,7 @@ function renderLocks(){
    COLUMN LOCK
    ========================================================= */
 
-function toggleColumn(
-  key
-){
+function toggleColumn(key){
 
   if(
     !requireAdmin()
@@ -3002,22 +2915,9 @@ function addPacking(){
 
   renderTable();
 
-  renderPreview();
-
   notify(
     "✅ PACKING ADDED"
   );
-
-}
-
-
-/* =========================================================
-   PREVIEW - SAME AS EXCEL TOP BOX
-   ========================================================= */
-
-function renderPreview(){
-
-  updateExcelBox();
 
 }
 
@@ -3053,7 +2953,7 @@ async function saveAll(){
 
 
   /*
-    Read current fields
+    Read current table
   */
 
   document
@@ -3070,10 +2970,6 @@ async function saveAll(){
       }
     );
 
-
-  /*
-    Calculate everything
-  */
 
   calculateAllRows(d);
 
@@ -3309,7 +3205,7 @@ function setCloudStatus(
 
 
 /* =========================================================
-   FIREBASE CHECK
+   FIREBASE CONFIG CHECK
    ========================================================= */
 
 function firebaseConfigReady(){
@@ -3336,7 +3232,7 @@ function firebaseConfigReady(){
 
 
 /* =========================================================
-   FIREBASE INITIALIZE
+   FIREBASE INIT
    ========================================================= */
 
 async function initFirebase(){
@@ -3406,10 +3302,6 @@ async function initFirebase(){
     );
 
 
-    /*
-      Read cloud once
-    */
-
     const snapshot =
       await firebaseRef.once(
         "value"
@@ -3468,21 +3360,12 @@ async function initFirebase(){
 
     }else{
 
-      /*
-        First time:
-        upload local data
-      */
-
       await firebaseRef.set(
         db
       );
 
     }
 
-
-    /*
-      REALTIME LISTENER
-    */
 
     firebaseRef.on(
       "value",
@@ -3584,10 +3467,6 @@ async function initFirebase(){
 
 async function cloudSave(){
 
-  /*
-    Always local save
-  */
-
   saveLocal();
 
 
@@ -3658,10 +3537,39 @@ async function saveAllData(){
 
 
 /* =========================================================
-   RENDER EVERYTHING
+   RENDER
    ========================================================= */
 
 function render(){
+
+  /*
+    First product auto-select
+  */
+
+  if(
+    !productId &&
+    db.products.length
+  ){
+
+    productId =
+      db.products[0].id;
+
+  }
+
+
+  if(
+    productId &&
+    !db.products.some(
+      p =>
+        p.id===productId
+    )
+  ){
+
+    productId =
+      db.products[0]?.id || "";
+
+  }
+
 
   renderCities();
 
@@ -3778,7 +3686,7 @@ document.addEventListener(
 
 
 /* =========================================================
-   LOOSE RATE INPUT
+   LOOSE OIL RATE
    ========================================================= */
 
 $("looseRate")
@@ -3812,7 +3720,7 @@ $("looseRate")
 
 
       /*
-        Excel top box
+        MASTER RATE automatically linked
       */
 
       $("excelMaster")
@@ -3822,13 +3730,7 @@ $("looseRate")
 
       calculateAllRows(d);
 
-
       refreshCalculatedRates();
-
-
-      /*
-        Local save while typing
-      */
 
       saveLocal();
 
@@ -3837,49 +3739,32 @@ $("looseRate")
 
 
 /* =========================================================
-   EXCEL MASTER INPUT
+   EXCEL MASTER
+   IMPORTANT:
+   It is DISPLAY ONLY.
+   It always follows LOOSE OIL RATE.
    ========================================================= */
 
 $("excelMaster")
   .addEventListener(
     "input",
-    e => {
+    () => {
 
-      if(
-        !admin ||
-        masterLocked()
-      ){
-
-        return;
-
-      }
-
+      /*
+        No independent editing.
+        Master rate comes from loose rate.
+      */
 
       const d =
         data();
 
+      if(d){
 
-      if(!d){
-
-        return;
+        $("excelMaster")
+          .value =
+          d.looseRate || "";
 
       }
-
-
-      d.looseRate =
-        e.target.value;
-
-
-      $("looseRate")
-        .value =
-        e.target.value;
-
-
-      calculateAllRows(d);
-
-      refreshCalculatedRates();
-
-      saveLocal();
 
     }
   );
@@ -3944,7 +3829,6 @@ $("rateBody")
 
       refreshCalculatedRates();
 
-
       saveLocal();
 
     }
@@ -3982,7 +3866,6 @@ $("rateBody")
       saveLocal();
 
       await cloudSave();
-
 
       refreshCalculatedRates();
 
