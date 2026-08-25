@@ -525,7 +525,7 @@ function saveAll(){
   });
 
   db.history.unshift({
-    time:new Date().toLocaleString(),
+    :new Date().toLocaleString(),
     city,
     product:db.products.find(p=>p.id===productId)?.name||"",
     looseRate:d.looseRate,
