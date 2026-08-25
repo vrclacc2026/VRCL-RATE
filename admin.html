@@ -525,7 +525,7 @@ function saveAll(){
   });
 
   db.history.unshift({
-    :new Date().toLocaleString(),
+    time:new Date().toLocaleString(),
     city,
     product:db.products.find(p=>p.id===productId)?.name||"",
     looseRate:d.looseRate,
@@ -543,7 +543,11 @@ function saveNote(){
 function renderHistory(){
   const a=db.history.slice(0,3);
   $("history").innerHTML=a.length?a.map(x=>
-    `<div class="historyRow"><b>${esc(x.product)}</b> — ${esc(x.city)} — ${esc(x.time)}
+    `<div class="historyRow"><b>${esc(x.product)}</b> — ${esc(x.city)} — ${new Date(x.time).toLocaleDateString("en-IN", {
+  day: "2-digit",
+  month: "long",
+  year: "numeric"
+})}
      ${x.looseRate!==""?" — Loose ₹"+esc(x.looseRate):""}</div>`
   ).join(""):'<div class="empty">No rate update history yet.</div>';
 }
