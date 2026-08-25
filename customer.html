@@ -8,19 +8,19 @@
 *{box-sizing:border-box}
 body{
  margin:0;
- background:linear-gradient(135deg,#f4f7fb,#eef7f4);
+ background:#ffffff;
  color:#172033;
  font-family:Arial,Helvetica,sans-serif;
 }
 header{
- background:rgba(255,255,255,.96);
+ background:#ffffff;
  border-bottom:1px solid #e5e7eb;
  position:sticky;top:0;z-index:10;
  box-shadow:0 4px 18px #00000012;
 }
 .head{max-width:1400px;margin:auto;padding:12px 20px}
 .brand{display:flex;align-items:center;gap:12px}
-.logo{width:52px;height:52px;object-fit:contain;border-radius:50%;border:1px solid #eee}
+.logo{width:82px;height:82px;object-fit:contain;border-radius:10px;border:2px solid #b71c1c;background:#fff;box-shadow:0 5px 16px #b71c1c45;animation:logoFloat 3s ease-in-out infinite}
 .company{font-size:20px;font-weight:900;letter-spacing:.2px}
 .sub{font-size:11px;color:#667085;margin-top:3px;font-weight:700}
 .citybar{
@@ -28,20 +28,20 @@ header{
  display:flex;gap:7px;flex-wrap:wrap
 }
 .city{
- border:1px solid #d0d5dd;background:#fff;border-radius:8px;
+ border:1px solid #d0d5dd;background:#ffffff;border-radius:8px;
  padding:7px 13px;font-weight:900;cursor:pointer;transition:.2s
 }
 .city:hover{transform:translateY(-1px)}
 .city.active{
- background:linear-gradient(135deg,#07856f,#0b6f61);
- color:#fff;border-color:#07856f;box-shadow:0 4px 12px #07856f35
+ background:linear-gradient(135deg,#b71c1c,#ef5350,#8e0000);
+ color:#fff;border-color:#b71c1c;box-shadow:0 4px 12px #b71c1c35
 }
 .date{margin-left:auto;color:#667085;font-size:11px;font-weight:700;align-self:center}
 
 main{max-width:1400px;margin:16px auto;padding:0 14px}
 .grid{
  display:grid;
- grid-template-columns:repeat(3,minmax(0,1fr));
+ grid-template-columns:repeat(4,minmax(0,1fr));
  gap:14px;
 }
 .card{
@@ -55,15 +55,20 @@ main{max-width:1400px;margin:16px auto;padding:0 14px}
  transition:transform .25s,box-shadow .25s,border-color .25s;
  animation:cardIn .45s ease both;
 }
-.card:before{
+.card:after{content:"";position:absolute;top:-80%;left:-40%;width:35%;height:260%;background:linear-gradient(90deg,transparent,#ffffff66,transparent);transform:rotate(18deg);pointer-events:none;animation:shine 5s ease-in-out infinite;}\n.card:before{
  content:"";
  position:absolute;left:0;top:0;right:0;height:4px;
- background:linear-gradient(90deg,#07856f,#19a974,#f0b429);
+ background:linear-gradient(90deg,#8e0000,#ef5350,#ff8a80,#ef5350,#8e0000);
 }
 .card:hover{
  transform:translateY(-4px);
  box-shadow:0 12px 28px #00000018;
- border-color:#b8ddd4;
+ border-color:#b71c1c;
+}
+.productPhoto{
+ width:54px;height:54px;object-fit:cover;border-radius:9px;
+ border:2px solid #b71c1c;background:#fff;box-shadow:0 3px 10px #b71c1c35;
+ flex:0 0 auto;animation:photoPulse 3.5s ease-in-out infinite;
 }
 .top{
  display:flex;
@@ -91,7 +96,7 @@ main{max-width:1400px;margin:16px auto;padding:0 14px}
  border:0;
  width:27px;height:24px;
  border-radius:6px;
- background:#087f70;
+ background:linear-gradient(135deg,#b71c1c,#ef5350,#8e0000);
  color:#fff;
  font-size:12px;
  font-weight:900;
@@ -101,7 +106,7 @@ main{max-width:1400px;margin:16px auto;padding:0 14px}
  box-shadow:0 2px 6px #087f7030;
  transition:.18s;
 }
-.copy:hover{background:#065f54;transform:scale(1.08)}
+.copy:hover{background:#8e0000;transform:scale(1.08)}
 .copy:active{transform:scale(.94)}
 
 table{
@@ -120,13 +125,13 @@ th,td{
  font-size:11px;
 }
 th{
- background:#e8f5f1;
- color:#075e52;
+ background:linear-gradient(90deg,#fff5f5,#ffcdd2,#ef9a9a,#ffcdd2,#fff5f5);
+ color:#8e0000;
  font-weight:900;
  text-align:center;
 }
 td{
- background:#f8fffd;
+ background:#ffffff;
  font-weight:900;
 }
 td:first-child{
@@ -135,13 +140,13 @@ td:first-child{
 }
 td:last-child{
  text-align:right;
- color:#075e52;
+ color:#8e0000;
 }
 tr:last-child td{border-bottom:0}
-tr:hover td{background:#eaf8f4}
+tr:hover td{background:#fff2b8}
 
 .notes{
- background:#fff;
+ background:#ffffff;
  border:1px solid #dfe5eb;
  border-radius:12px;
  padding:13px;
@@ -151,27 +156,57 @@ tr:hover td{background:#eaf8f4}
 .notes h3{margin:0 0 7px;font-size:14px;color:#075e52}
 .notesText{white-space:pre-line;font-size:12px;color:#344054;line-height:1.5}
 
+ .productTerms{
+ margin-top:9px;padding:8px 9px;border-radius:8px;
+ background:linear-gradient(135deg,#fff5f5,#ffffff);
+ border:1px solid #ef9a9a;color:#394150;font-size:10px;line-height:1.45;
+}
+.productTerms strong{display:block;color:#8e0000;font-size:10px;margin-bottom:3px}
+.productTermsLine{white-space:pre-line}
 .empty{
- background:#fff;border:1px dashed #cbd5e1;border-radius:12px;
+ background:#ffffff;border:1px dashed #cbd5e1;border-radius:12px;
  padding:35px;text-align:center;color:#667085
 }
 .toast{
  display:none;position:fixed;right:18px;bottom:18px;
- background:#087f70;color:#fff;padding:11px 15px;border-radius:9px;
+ background:linear-gradient(135deg,#b71c1c,#ef5350,#8e0000);color:#fff;padding:11px 15px;border-radius:9px;
  font-weight:900;z-index:50;box-shadow:0 8px 24px #0003
 }
+@keyframes logoFloat{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-4px) rotate(1deg)}}
+@keyframes photoPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+@keyframes shine{0%,70%{left:-40%}100%{left:130%}}
 @keyframes cardIn{
  from{opacity:0;transform:translateY(12px) scale(.98)}
  to{opacity:1;transform:translateY(0) scale(1)}
 }
-@media(max-width:900px){
+@media(max-width:1100px){
  .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:600px){
  .company{font-size:17px}
  .date{width:100%;margin-left:0}
  .grid{grid-template-columns:1fr}
+ .card{padding:10px}
+ .name{font-size:15px}
+ .productPhoto{width:48px;height:48px}
+ th,td{font-size:12px;padding:7px 6px}
+ .copy{width:30px;height:27px;line-height:27px;font-size:13px}
 }
+
+.card{animation:cardIn .55s cubic-bezier(.2,.7,.2,1) both;}
+.card:nth-child(2){animation-delay:.06s}.card:nth-child(3){animation-delay:.12s}
+.card:nth-child(4){animation-delay:.18s}.card:nth-child(5){animation-delay:.24s}
+.card:nth-child(6){animation-delay:.30s}.card:nth-child(7){animation-delay:.36s}
+.card:nth-child(8){animation-delay:.42s}
+.card:hover .productPhoto{animation:photoBounce .7s ease;}
+td:last-child{animation:ratePulse 2.8s ease-in-out infinite;}
+@keyframes photoBounce{0%,100%{transform:scale(1)}50%{transform:scale(1.10) rotate(1deg)}}
+@keyframes ratePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+@keyframes termsGlow{0%,100%{transform:translateY(0);box-shadow:0 3px 10px #b71c1c18}50%{transform:translateY(-1px);box-shadow:0 5px 15px #b71c1c30}}
+@keyframes redSweep{0%{background-position:-250% 0}100%{background-position:250% 0}}
+.card:before{background-size:250% 100%;animation:redSweep 4s linear infinite}
+th{background-size:250% 100%;animation:redSweep 5s linear infinite}
+
 </style>
 </head>
 <body>
@@ -207,15 +242,45 @@ function rows(p,cd){
  let d=cd[p.id]||p.cities?.[selectedCity]||p;
  return Array.isArray(d?.packings)?d.packings:Array.isArray(d?.rows)?d.rows:[];
 }
-function note(p,cd){return (cd[p.id]||p.cities?.[selectedCity]||p)?.narration||""}
+function note(p,cd){
+  const x=cd[p.id]||p.cities?.[selectedCity]||p;
+  return x?.narration||x?.terms||x?.termsAndConditions||p?.narration||p?.terms||"";
+}
 function toast(t){let x=document.getElementById("toast");x.textContent=t;x.style.display="block";clearTimeout(window.tt);window.tt=setTimeout(()=>x.style.display="none",1700)}
+function currentDateText(){
+ return new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"long",year:"numeric"});
+}
+function buildCopyText(p,rs,n){
+ const lines=["JAY SIYARAM","*VISHWAS REFOILS & CONSUMER LIMITED*",currentDateText(),"",p.name];
+ rs.forEach(r=>lines.push((r.packing||r.name||"")+"    "+Number(r.newRate??r.rate??r.price??0).toFixed(2)));
+ if(String(n||"").trim()){
+  lines.push("","TERMS & CONDITIONS",...String(n).trim().split(/\r?\n/));
+ }
+ lines.push("");
+ return lines.join("\n");
+}
 function copyRate(p,rs,n){
- let text=p.name+"\n"+rs.map(r=>(r.packing||r.name)+" : "+money(r.newRate??r.rate??r.price)).join("\n");
- if(n.trim())text+="\n\n"+n.trim();
- if(navigator.clipboard)navigator.clipboard.writeText(text).then(()=>toast("✓ RATE COPIED")).catch(()=>fallback(text));
+ let text=buildCopyText(p,rs,n);
+ if(navigator.clipboard) navigator.clipboard.writeText(text).then(()=>toast("✓ RATE COPIED")).catch(()=>fallback(text));
  else fallback(text);
 }
-function fallback(text){let a=document.createElement("textarea");a.value=text;document.body.appendChild(a);a.select();document.execCommand("copy");a.remove();toast("✓ RATE COPIED")}
+function fallback(text){
+ let a=document.createElement("textarea");a.value=text;
+ document.body.appendChild(a);a.select();document.execCommand("copy");a.remove();
+ toast("✓ RATE COPIED");
+}
+
+function productPhoto(name){
+ const n=String(name||"").toLowerCase();
+ if(n.includes("palm")) return "https://images.unsplash.com/photo-1598514982901-ae6277d9f1f2?auto=format&fit=crop&w=160&q=80";
+ if(n.includes("sun")) return "https://images.unsplash.com/photo-1620706857370-e1b9770e8ce5?auto=format&fit=crop&w=160&q=80";
+ if(n.includes("ground")) return "https://images.unsplash.com/photo-1599599810694-e8e8e1d7b1d8?auto=format&fit=crop&w=160&q=80";
+ if(n.includes("cotton")) return "https://images.unsplash.com/photo-1606791405792-1004f1718d0c?auto=format&fit=crop&w=160&q=80";
+ if(n.includes("mustard")) return "https://images.unsplash.com/photo-1508747703725-719777637510?auto=format&fit=crop&w=160&q=80";
+ if(n.includes("soya")||n.includes("soy")) return "https://images.unsplash.com/photo-1603048719539-4c9b3a4e7f5b?auto=format&fit=crop&w=160&q=80";
+ if(n.includes("visvita")) return "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=160&q=80";
+ return "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=160&q=80";
+}
 function render(){
  const d=data(),root=document.getElementById("products");
  if(!d){root.innerHTML='<div class="empty">No products/rates added yet.</div>';return}
@@ -223,24 +288,34 @@ function render(){
  const list=(Array.isArray(d.products)?d.products:[]).filter(p=>String(p.name||"").trim()&&rows(p,cd).some(r=>String(r.packing||r.name||"").trim()));
  if(!list.length){root.innerHTML='<div class="empty">No products/rates available for '+esc(selectedCity)+'.</div>';document.getElementById("notesBox").style.display="none";return}
  root.innerHTML=list.map((p,i)=>{
-  const rs=rows(p,cd).filter(r=>String(r.packing||r.name||"").trim()),first=rs[0];
+  const rs=rows(p,cd).filter(r=>String(r.packing||r.name||"").trim());
+  let terms=String(note(p,cd)||"").trim();
+   if(!terms && /palm/i.test(String(p.name||""))){
+     terms="Rates are subject to change. Please confirm the latest rate before placing the order.";
+   }
   return `<article class="card"><div class="top">
    <div>
     <div class="name">
+      <img class="productPhoto" src="${productPhoto(p.name)}" alt="${esc(p.name)}" onerror="this.style.display='none'">
       <span>${esc(p.name)}</span>
       <button class="copy" data-i="${i}" title="Copy ${esc(p.name)} rate">⧉</button>
     </div>
     <div class="small">Updated rate</div>
    </div>
-   <!-- Main product rate intentionally not shown beside product name -->
   </div>
-  <table><thead><tr><th>PACKING</th><th>RATE</th></tr></thead><tbody>${rs.map(r=>`<tr><td>${esc(r.packing||r.name)}</td><td>${money(r.newRate??r.rate??r.price)}</td></tr>`).join("")}</tbody></table>
+  <table><thead><tr><th>PACKING</th><th>RATE</th></tr></thead>
+  <tbody>${rs.map(r=>`<tr><td>${esc(r.packing||r.name)}</td><td>${money(r.newRate??r.rate??r.price)}</td></tr>`).join("")}</tbody></table>
+  ${terms ? `<div class="productTerms"><strong>TERMS &amp; CONDITIONS — CUSTOMER</strong><div class="productTermsLine">${esc(terms)}</div></div>` : ""}
   </article>`
  }).join("");
- root.querySelectorAll(".copy").forEach((b,i)=>{b.onclick=()=>{let p=list[i],rs=rows(p,cd).filter(r=>String(r.packing||r.name||"").trim());copyRate(p,rs,note(p,cd))}});
- let ns=list.map(p=>note(p,cd).trim()).filter(Boolean);
- document.getElementById("notesBox").style.display=ns.length?"block":"none";
- if(ns.length)document.getElementById("notes").textContent=[...new Set(ns)].join("\n\n");
+ root.querySelectorAll(".copy").forEach((b,i)=>{
+  b.onclick=()=>{
+   let p=list[i],rs=rows(p,cd).filter(r=>String(r.packing||r.name||"").trim());
+   copyRate(p,rs,note(p,cd))
+  }
+ });
+ document.getElementById("notesBox").style.display="none";
+ 
 }
 document.querySelectorAll(".city").forEach(b=>b.onclick=()=>{selectedCity=b.dataset.city;document.querySelectorAll(".city").forEach(x=>x.classList.remove("active"));b.classList.add("active");render()});
 document.getElementById("date").textContent=new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"long",year:"numeric"});
