@@ -2,1052 +2,250 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Vishwas Refoils - Rate List</title>
-
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vishwas Rate - Customer</title>
 <style>
-
-*{
-    box-sizing:border-box;
-}
-
+*{box-sizing:border-box}
 body{
-    margin:0;
-    background:#f5f5f5;
-    font-family:Arial,Helvetica,sans-serif;
-    color:#222;
+ margin:0;
+ background:linear-gradient(135deg,#f4f7fb,#eef7f4);
+ color:#172033;
+ font-family:Arial,Helvetica,sans-serif;
 }
-
-/* HEADER */
-
-.header{
-    background:#ffffff;
-    text-align:center;
-    padding:12px 10px;
-    box-shadow:0 2px 8px rgba(0,0,0,.12);
+header{
+ background:rgba(255,255,255,.96);
+ border-bottom:1px solid #e5e7eb;
+ position:sticky;top:0;z-index:10;
+ box-shadow:0 4px 18px #00000012;
 }
-
-.logo{
-    width:170px;
-    max-width:70%;
+.head{max-width:1400px;margin:auto;padding:12px 20px}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:52px;height:52px;object-fit:contain;border-radius:50%;border:1px solid #eee}
+.company{font-size:20px;font-weight:900;letter-spacing:.2px}
+.sub{font-size:11px;color:#667085;margin-top:3px;font-weight:700}
+.citybar{
+ max-width:1400px;margin:auto;padding:8px 20px 12px;
+ display:flex;gap:7px;flex-wrap:wrap
 }
-
-.company{
-    font-size:18px;
-    font-weight:bold;
-    margin-top:5px;
+.city{
+ border:1px solid #d0d5dd;background:#fff;border-radius:8px;
+ padding:7px 13px;font-weight:900;cursor:pointer;transition:.2s
 }
-
-.date{
-    font-size:13px;
-    color:#666;
-    margin-top:4px;
+.city:hover{transform:translateY(-1px)}
+.city.active{
+ background:linear-gradient(135deg,#07856f,#0b6f61);
+ color:#fff;border-color:#07856f;box-shadow:0 4px 12px #07856f35
 }
+.date{margin-left:auto;color:#667085;font-size:11px;font-weight:700;align-self:center}
 
-/* CITY */
-
-.city-bar{
-    background:#a90000;
-    color:white;
-    text-align:center;
-    padding:11px;
-    font-size:18px;
-    font-weight:bold;
+main{max-width:1400px;margin:16px auto;padding:0 14px}
+.grid{
+ display:grid;
+ grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:14px;
 }
-
-/* MAIN */
-
-.container{
-    max-width:900px;
-    margin:auto;
-    padding:12px;
+.card{
+ position:relative;
+ overflow:hidden;
+ background:rgba(255,255,255,.97);
+ border:1px solid #dfe5eb;
+ border-radius:14px;
+ padding:11px;
+ box-shadow:0 7px 20px #0000000d;
+ transition:transform .25s,box-shadow .25s,border-color .25s;
+ animation:cardIn .45s ease both;
 }
-
-/* PRODUCT TABS */
-
-.product-tabs{
-    display:flex;
-    gap:6px;
-    overflow-x:auto;
-    padding-bottom:10px;
+.card:before{
+ content:"";
+ position:absolute;left:0;top:0;right:0;height:4px;
+ background:linear-gradient(90deg,#07856f,#19a974,#f0b429);
 }
-
-.product-tabs button{
-    white-space:nowrap;
-    border:0;
-    background:#ddd;
-    padding:9px 14px;
-    border-radius:20px;
-    cursor:pointer;
-    font-weight:bold;
+.card:hover{
+ transform:translateY(-4px);
+ box-shadow:0 12px 28px #00000018;
+ border-color:#b8ddd4;
 }
-
-.product-tabs button.active{
-    background:#a90000;
-    color:white;
+.top{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ gap:7px;
+ padding-top:3px;
 }
-
-/* MONTH */
-
-.month-box{
-    background:white;
-    padding:10px;
-    border-radius:10px;
-    margin-bottom:12px;
-    text-align:center;
+.name{
+ font-size:16px;
+ font-weight:900;
+ letter-spacing:.2px;
+ color:#111827;
+ display:flex;
+ align-items:center;
+ gap:5px;
 }
-
-.month-box button{
-    border:1px solid #aaa;
-    background:white;
-    padding:8px 15px;
-    border-radius:7px;
-    margin:3px;
-    cursor:pointer;
+.small{
+ font-size:10px;
+ color:#667085;
+ margin-top:2px;
 }
-
-.month-box button.active{
-    background:#a90000;
-    color:white;
+.copy{
+ flex:0 0 auto;
+ border:0;
+ width:27px;height:24px;
+ border-radius:6px;
+ background:#087f70;
+ color:#fff;
+ font-size:12px;
+ font-weight:900;
+ cursor:pointer;
+ padding:0;
+ line-height:24px;
+ box-shadow:0 2px 6px #087f7030;
+ transition:.18s;
 }
+.copy:hover{background:#065f54;transform:scale(1.08)}
+.copy:active{transform:scale(.94)}
 
-/* PRODUCT */
-
-.product-card{
-    background:white;
-    border-radius:12px;
-    overflow:hidden;
-    box-shadow:0 2px 10px rgba(0,0,0,.08);
-    margin-bottom:15px;
+table{
+ width:100%;
+ border-collapse:separate;
+ border-spacing:0;
+ margin-top:9px;
+ overflow:hidden;
+ border:1px solid #d5dde5;
+ border-radius:8px;
 }
-
-.product-title{
-    background:#a90000;
-    color:white;
-    padding:12px;
-    font-size:18px;
-    font-weight:bold;
+th,td{
+ border:0;
+ border-bottom:1px solid #d5dde5;
+ padding:6px 7px;
+ font-size:11px;
 }
-
-.product-photo{
-    width:100%;
-    height:130px;
-    object-fit:contain;
-    background:#fafafa;
-    padding:10px;
+th{
+ background:#e8f5f1;
+ color:#075e52;
+ font-weight:900;
+ text-align:center;
 }
-
-.rate-table{
-    width:100%;
-    border-collapse:collapse;
+td{
+ background:#f8fffd;
+ font-weight:900;
 }
-
-.rate-table th{
-    background:#eeeeee;
-    padding:9px;
-    text-align:left;
+td:first-child{
+ color:#263238;
+ font-weight:900;
 }
-
-.rate-table td{
-    padding:9px;
-    border-top:1px solid #eee;
+td:last-child{
+ text-align:right;
+ color:#075e52;
 }
+tr:last-child td{border-bottom:0}
+tr:hover td{background:#eaf8f4}
 
-.rate{
-    text-align:right;
-    font-size:16px;
-    font-weight:bold;
+.notes{
+ background:#fff;
+ border:1px solid #dfe5eb;
+ border-radius:12px;
+ padding:13px;
+ margin-top:16px;
+ box-shadow:0 5px 16px #0000000b;
 }
+.notes h3{margin:0 0 7px;font-size:14px;color:#075e52}
+.notesText{white-space:pre-line;font-size:12px;color:#344054;line-height:1.5}
 
-/* TERMS */
-
-.terms{
-    background:white;
-    padding:15px;
-    border-radius:12px;
-    margin-top:15px;
+.empty{
+ background:#fff;border:1px dashed #cbd5e1;border-radius:12px;
+ padding:35px;text-align:center;color:#667085
 }
-
-.terms h3{
-    margin-top:0;
-    color:#a90000;
+.toast{
+ display:none;position:fixed;right:18px;bottom:18px;
+ background:#087f70;color:#fff;padding:11px 15px;border-radius:9px;
+ font-weight:900;z-index:50;box-shadow:0 8px 24px #0003
 }
-
-.terms p{
-    margin:7px 0;
-    font-size:14px;
+@keyframes cardIn{
+ from{opacity:0;transform:translateY(12px) scale(.98)}
+ to{opacity:1;transform:translateY(0) scale(1)}
 }
-
-/* WHATSAPP */
-
-.whatsapp{
-    position:fixed;
-    right:18px;
-    bottom:18px;
-    background:#198754;
-    color:white;
-    border:0;
-    padding:13px 18px;
-    border-radius:30px;
-    font-weight:bold;
-    box-shadow:0 3px 10px rgba(0,0,0,.25);
-    cursor:pointer;
+@media(max-width:900px){
+ .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
-
-/* FOOTER */
-
-.footer{
-    text-align:center;
-    color:#777;
-    font-size:12px;
-    padding:20px;
-}
-
 @media(max-width:600px){
-
-    .company{
-        font-size:15px;
-    }
-
-    .rate-table td,
-    .rate-table th{
-        padding:8px 6px;
-        font-size:13px;
-    }
-
-    .rate{
-        font-size:14px;
-    }
-
+ .company{font-size:17px}
+ .date{width:100%;margin-left:0}
+ .grid{grid-template-columns:1fr}
 }
-
 </style>
 </head>
-
-
 <body>
-
-
-<!-- HEADER -->
-
-<div class="header">
-
-    <img
-        src="assets/images/vishwas-logo.png"
-        class="logo"
-        onerror="this.style.display='none'"
-    >
-
-    <div class="company">
-        VISHWAS REFOILS & CONSUMER LIMITED
-    </div>
-
-    <div class="date" id="date">
-    </div>
-
+<header>
+<div class="head"><div class="brand">
+<img class="logo" src="logo.png" alt="Logo">
+<div><div class="company">VISHWAS REFOILS &amp; CONSUMER LIMITED</div><div class="sub">DAILY RATE</div></div>
+</div></div>
+<div class="citybar">
+<button class="city active" data-city="Rajkot">RAJKOT</button>
+<button class="city" data-city="Ahmedabad">AHMEDABAD</button>
+<button class="city" data-city="Udaan">UDAAN</button>
+<span id="date" class="date"></span>
 </div>
-
-
-<!-- CITY -->
-
-<div class="city-bar" id="cityName">
-    RAJKOT RATE
-</div>
-
-
-<div class="container">
-
-
-<!-- PRODUCT TABS -->
-
-<div class="product-tabs">
-
-    <button
-        class="active"
-        onclick="selectProduct('palm',this)"
-    >
-        PALMOLEIN
-    </button>
-
-    <button
-        onclick="selectProduct('visvita',this)"
-    >
-        VISVITA
-    </button>
-
-    <button
-        onclick="selectProduct('sunflower',this)"
-    >
-        SUNFLOWER
-    </button>
-
-    <button
-        onclick="selectProduct('groundnut',this)"
-    >
-        GROUNDNUT
-    </button>
-
-    <button
-        onclick="selectProduct('cotton',this)"
-    >
-        COTTON
-    </button>
-
-    <button
-        onclick="selectProduct('mustard',this)"
-    >
-        MUSTARD
-    </button>
-
-    <button
-        onclick="selectProduct('soya',this)"
-    >
-        SOYA
-    </button>
-
-</div>
-
-
-<!-- MONTH -->
-
-<div
-    class="month-box"
-    id="monthBox"
->
-
-    <b>RATE MONTH</b>
-
-    <br>
-
-    <button
-        class="active"
-        onclick="selectMonth('AUG',this)"
-    >
-        AUG
-    </button>
-
-    <button
-        onclick="selectMonth('SEP',this)"
-    >
-        SEP
-    </button>
-
-</div>
-
-
-<!-- PRODUCT -->
-
-<div
-    class="product-card"
->
-
-    <div
-        class="product-title"
-        id="productTitle"
-    >
-        Palmolein
-    </div>
-
-
-    <img
-        id="productPhoto"
-        class="product-photo"
-        src="assets/images/products/palm.jpg"
-        onerror="this.style.display='none'"
-    >
-
-
-    <table class="rate-table">
-
-        <thead>
-
-            <tr>
-
-                <th>
-                    PACKING
-                </th>
-
-                <th style="text-align:right">
-                    RATE
-                </th>
-
-            </tr>
-
-        </thead>
-
-        <tbody
-            id="rateBody"
-        >
-
-        </tbody>
-
-    </table>
-
-</div>
-
-
-<!-- TERMS -->
-
-<div class="terms">
-
-    <h3>
-        TERMS & CONDITIONS
-    </h3>
-
-    <p>
-        (1) NEXT DAY PAYMENT
-    </p>
-
-    <p>
-        (2) GST EXTRA
-    </p>
-
-    <p>
-        (3) EX OUR PLANT
-    </p>
-
-    <p>
-        (4) UP TO 15 DAY DELIVERY CONDITION
-    </p>
-
-    <p>
-        *(5) ADVANCE PAYMENT ₹10 DISC TIN*
-    </p>
-
-    <p>
-        *(6) ADVANCE PAYMENT CP PACK 50 PAISA PER LITRE*
-    </p>
-
-    <p>
-        (7) LOADING CHARGES EXTRA
-    </p>
-
-</div>
-
-
-</div>
-
-
-<button
-    class="whatsapp"
-    onclick="copyWhatsApp()"
->
-    COPY FOR WHATSAPP
-</button>
-
-
-<div class="footer">
-
-    Vishwas Refoils & Consumer Limited
-
-</div>
-
-
+</header>
+<main>
+<div id="products" class="grid"></div>
+<section id="notesBox" class="notes" style="display:none"><h3>TERMS &amp; CONDITIONS</h3><div id="notes" class="notesText"></div></section>
+</main>
+<div id="toast" class="toast"></div>
 
 <script>
-
-
-// =================================================
-// CUSTOMER CITY
-// =================================================
-//
-// IMPORTANT:
-// Later Firebase permission ke according
-// ye city automatically set hogi.
-//
-// Testing ke liye:
-// rajkot
-// ahmedabad
-// udaan
-// =================================================
-
-
-const CUSTOMER_CITY =
-    localStorage.getItem(
-        "customerCity"
-    )
-    ||
-    "rajkot";
-
-
-// =================================================
-// PRODUCT NAMES
-// =================================================
-
-
-const productNames = {
-
-    palm:"Palmolein",
-
-    visvita:"Visvita",
-
-    sunflower:"Sunflower",
-
-    groundnut:"Groundnut",
-
-    cotton:"Cottonseed",
-
-    mustard:"Mustard",
-
-    soya:"Soya"
-
-};
-
-
-// =================================================
-// PRODUCT PHOTOS
-// =================================================
-
-
-const productPhotos = {
-
-    palm:
-    "assets/images/products/palm.jpg",
-
-    visvita:
-    "assets/images/products/visvita.jpg",
-
-    sunflower:
-    "assets/images/products/sunflower.jpg",
-
-    groundnut:
-    "assets/images/products/groundnut.jpg",
-
-    cotton:
-    "assets/images/products/cotton.jpg",
-
-    mustard:
-    "assets/images/products/mustard.jpg",
-
-    soya:
-    "assets/images/products/soya.jpg"
-
-};
-
-
-// =================================================
-// PALMOLEIN DEMO DATA
-// =================================================
-
-
-const palmData = [
-
-    ["15 KG N TIN",2384],
-
-    ["15 KG S TIN",2339],
-
-    ["15 LTR N TIN",2174],
-
-    ["15 LTR S TIN",2129],
-
-    ["5 LTR JAR",731],
-
-    ["4.150 KG JAR",701],
-
-    ["2 LTR JAR",299.46],
-
-    ["1.6 KG JAR",274.46],
-
-    ["1 LTR BOTTLE",146.20],
-
-    ["1 LTR POUCH",141.20],
-
-    ["790 GM BOTTLE",136.20],
-
-    ["750 GM POUCH",124.70],
-
-    ["500 ML BOTTLE",74.60],
-
-    ["500 ML POUCH",72.10],
-
-    ["395 GM BOTTLE",69.60]
-
-];
-
-
-// =================================================
-// VISVITA
-// =================================================
-
-
-const visvitaData = [
-
-    ["15 KG OLD TIN",0],
-
-    ["15 KG NEW TIN",0]
-
-];
-
-
-// =================================================
-// OTHER PRODUCTS
-// =================================================
-
-
-const emptyProduct = [
-
-    ["15 KG",0],
-
-    ["5 LTR",0],
-
-    ["1 LTR",0],
-
-    ["500 ML",0]
-
-];
-
-
-// =================================================
-// GET PRODUCT DATA
-// =================================================
-
-
-function getProductData(
-    product
-){
-
-    if(
-        product === "palm"
-    ){
-
-        return palmData;
-
-    }
-
-
-    if(
-        product === "visvita"
-    ){
-
-        return visvitaData;
-
-    }
-
-
-    return emptyProduct;
-
+const STORAGE_KEYS=["VRCL_ADMIN_DATA_V11","VRCL_ADMIN_DATA","vishwas-rate-data"];
+let selectedCity="Rajkot";
+
+function data(){
+ for(const k of STORAGE_KEYS){try{const x=localStorage.getItem(k);if(x)return JSON.parse(x)}catch(e){}}
+ return null;
 }
-
-
-// =================================================
-// CURRENT PRODUCT
-// =================================================
-
-
-let currentProduct =
-    "palm";
-
-
-// =================================================
-// CURRENT MONTH
-// =================================================
-
-
-let currentMonth =
-    "AUG";
-
-
-// =================================================
-// DATE
-// =================================================
-
-
-document
-.getElementById(
-    "date"
-)
-.innerText =
-new Date()
-.toLocaleDateString(
-    "en-IN",
-    {
-        day:"2-digit",
-        month:"long",
-        year:"numeric"
-    }
-);
-
-
-// =================================================
-// CITY NAME
-// =================================================
-
-
-const cityNames = {
-
-    rajkot:
-    "RAJKOT RATE",
-
-    ahmedabad:
-    "AHMEDABAD RATE",
-
-    udaan:
-    "UDAAN RATE"
-
-};
-
-
-document
-.getElementById(
-    "cityName"
-)
-.innerText =
-cityNames[
-    CUSTOMER_CITY
-]
-||
-"RATE";
-
-
-// =================================================
-// LOAD RATES FROM ADMIN
-// =================================================
-
-
-function getSavedRates(){
-
-    const saved =
-        localStorage.getItem(
-            "vishwasRates"
-        );
-
-
-    if(
-        saved
-    ){
-
-        return JSON.parse(
-            saved
-        );
-
-    }
-
-
-    return {};
-
+function esc(x){return String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function money(x){let n=Number(x);return Number.isFinite(n)?"₹"+n.toFixed(2):"₹0.00"}
+function rows(p,cd){
+ let d=cd[p.id]||p.cities?.[selectedCity]||p;
+ return Array.isArray(d?.packings)?d.packings:Array.isArray(d?.rows)?d.rows:[];
 }
-
-
-// =================================================
-// LOAD PRODUCT
-// =================================================
-
-
-function loadProduct(){
-
-    const body =
-        document.getElementById(
-            "rateBody"
-        );
-
-
-    body.innerHTML = "";
-
-
-    const data =
-        getProductData(
-            currentProduct
-        );
-
-
-    const savedRates =
-        getSavedRates();
-
-
-    let cityData =
-        savedRates
-        ?.
-        [CUSTOMER_CITY]
-        ?.
-        [currentProduct];
-
-
-    data.forEach(
-        (item,index) => {
-
-            let rate =
-                item[1];
-
-
-            if(
-                cityData &&
-                cityData[index]
-            ){
-
-                rate =
-                    cityData[index]
-                    .rate;
-
-            }
-
-
-            const tr =
-                document.createElement(
-                    "tr"
-                );
-
-
-            tr.innerHTML = `
-
-                <td>
-                    ${item[0]}
-                </td>
-
-                <td class="rate">
-                    ₹${Number(rate).toFixed(2)}
-                </td>
-
-            `;
-
-
-            body.appendChild(
-                tr
-            );
-
-        }
-    );
-
-
-    document
-    .getElementById(
-        "productTitle"
-    )
-    .innerText =
-    productNames[
-        currentProduct
-    ];
-
-
-    document
-    .getElementById(
-        "productPhoto"
-    )
-    .src =
-    productPhotos[
-        currentProduct
-    ];
-
+function note(p,cd){return (cd[p.id]||p.cities?.[selectedCity]||p)?.narration||""}
+function toast(t){let x=document.getElementById("toast");x.textContent=t;x.style.display="block";clearTimeout(window.tt);window.tt=setTimeout(()=>x.style.display="none",1700)}
+function copyRate(p,rs,n){
+ let text=p.name+"\n"+rs.map(r=>(r.packing||r.name)+" : "+money(r.newRate??r.rate??r.price)).join("\n");
+ if(n.trim())text+="\n\n"+n.trim();
+ if(navigator.clipboard)navigator.clipboard.writeText(text).then(()=>toast("✓ RATE COPIED")).catch(()=>fallback(text));
+ else fallback(text);
 }
-
-
-// =================================================
-// SELECT PRODUCT
-// =================================================
-
-
-function selectProduct(
-    product,
-    button
-){
-
-    currentProduct =
-        product;
-
-
-    document
-    .querySelectorAll(
-        ".product-tabs button"
-    )
-    .forEach(
-        btn =>
-        btn.classList.remove(
-            "active"
-        )
-    );
-
-
-    button.classList.add(
-        "active"
-    );
-
-
-    loadProduct();
-
+function fallback(text){let a=document.createElement("textarea");a.value=text;document.body.appendChild(a);a.select();document.execCommand("copy");a.remove();toast("✓ RATE COPIED")}
+function render(){
+ const d=data(),root=document.getElementById("products");
+ if(!d){root.innerHTML='<div class="empty">No products/rates added yet.</div>';return}
+ const cd=d.cities?.[selectedCity]||{};
+ const list=(Array.isArray(d.products)?d.products:[]).filter(p=>String(p.name||"").trim()&&rows(p,cd).some(r=>String(r.packing||r.name||"").trim()));
+ if(!list.length){root.innerHTML='<div class="empty">No products/rates available for '+esc(selectedCity)+'.</div>';document.getElementById("notesBox").style.display="none";return}
+ root.innerHTML=list.map((p,i)=>{
+  const rs=rows(p,cd).filter(r=>String(r.packing||r.name||"").trim()),first=rs[0];
+  return `<article class="card"><div class="top">
+   <div>
+    <div class="name">
+      <span>${esc(p.name)}</span>
+      <button class="copy" data-i="${i}" title="Copy ${esc(p.name)} rate">⧉</button>
+    </div>
+    <div class="small">Updated rate</div>
+   </div>
+   <!-- Main product rate intentionally not shown beside product name -->
+  </div>
+  <table><thead><tr><th>PACKING</th><th>RATE</th></tr></thead><tbody>${rs.map(r=>`<tr><td>${esc(r.packing||r.name)}</td><td>${money(r.newRate??r.rate??r.price)}</td></tr>`).join("")}</tbody></table>
+  </article>`
+ }).join("");
+ root.querySelectorAll(".copy").forEach((b,i)=>{b.onclick=()=>{let p=list[i],rs=rows(p,cd).filter(r=>String(r.packing||r.name||"").trim());copyRate(p,rs,note(p,cd))}});
+ let ns=list.map(p=>note(p,cd).trim()).filter(Boolean);
+ document.getElementById("notesBox").style.display=ns.length?"block":"none";
+ if(ns.length)document.getElementById("notes").textContent=[...new Set(ns)].join("\n\n");
 }
-
-
-// =================================================
-// SELECT MONTH
-// =================================================
-
-
-function selectMonth(
-    month,
-    button
-){
-
-    currentMonth =
-        month;
-
-
-    document
-    .querySelectorAll(
-        ".month-box button"
-    )
-    .forEach(
-        btn =>
-        btn.classList.remove(
-            "active"
-        )
-    );
-
-
-    button.classList.add(
-        "active"
-    );
-
-
-    loadProduct();
-
-}
-
-
-// =================================================
-// COPY WHATSAPP
-// =================================================
-
-
-function copyWhatsApp(){
-
-    let text =
-        "JAY SIYARAM\n\n";
-
-
-    text +=
-        "VISHWAS REFOILS & CONSUMER LIMITED\n";
-
-
-    text +=
-        document
-        .getElementById(
-            "date"
-        )
-        .innerText
-        + "\n\n";
-
-
-    text +=
-        productNames[
-            currentProduct
-        ]
-        + "\n";
-
-
-    text +=
-        "-------------------------\n";
-
-
-    const data =
-        getProductData(
-            currentProduct
-        );
-
-
-    const savedRates =
-        getSavedRates();
-
-
-    const cityData =
-        savedRates
-        ?.
-        [CUSTOMER_CITY]
-        ?.
-        [currentProduct];
-
-
-    data.forEach(
-        (item,index) => {
-
-            let rate =
-                item[1];
-
-
-            if(
-                cityData &&
-                cityData[index]
-            ){
-
-                rate =
-                    cityData[index]
-                    .rate;
-
-            }
-
-
-            text +=
-                item[0]
-                +
-                " : ₹"
-                +
-                Number(rate)
-                .toFixed(2)
-                +
-                "\n";
-
-        }
-    );
-
-
-    text +=
-        "\nTERMS & CONDITIONS\n";
-
-
-    text +=
-        "(1) NEXT DAY PAYMENT\n";
-
-
-    text +=
-        "(2) GST EXTRA\n";
-
-
-    text +=
-        "(3) EX OUR PLANT\n";
-
-
-    text +=
-        "(4) UP TO 15 DAY DELIVERY CONDITION\n";
-
-
-    text +=
-        "*(5) ADVANCE PAYMENT ₹10 DISC TIN*\n";
-
-
-    text +=
-        "*(6) ADVANCE PAYMENT CP PACK 50 PAISA PER LITRE*\n";
-
-
-    text +=
-        "(7) LOADING CHARGES EXTRA";
-
-
-    navigator
-    .clipboard
-    .writeText(
-        text
-    )
-    .then(
-        () => {
-
-            alert(
-                "Rate list copied. Ab WhatsApp me paste kar sakte ho."
-            );
-
-        }
-    );
-
-}
-
-
-// =================================================
-// START
-// =================================================
-
-
-loadProduct();
-
-
+document.querySelectorAll(".city").forEach(b=>b.onclick=()=>{selectedCity=b.dataset.city;document.querySelectorAll(".city").forEach(x=>x.classList.remove("active"));b.classList.add("active");render()});
+document.getElementById("date").textContent=new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"long",year:"numeric"});
+render();
+window.addEventListener("storage",function(e){ if(STORAGE_KEYS.includes(e.key)) render(); });
 </script>
-
 </body>
 </html>
