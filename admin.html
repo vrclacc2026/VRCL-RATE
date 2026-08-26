@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -70,23 +71,27 @@ input:focus,select:focus,textarea:focus{
 }
 .lock.on{background:#101827;color:#fff}
 .preview{
-  display:flex;gap:8px;align-items:stretch;flex-wrap:wrap;margin-left:auto
+  display:flex;gap:6px;align-items:center;flex-wrap:nowrap;margin-left:4px
 }
-.previewBox{
-  min-width:125px;background:#fff;border:1px solid #d9dee5;border-radius:9px;padding:8px 12px
+.excelStrip{
+  display:grid;grid-template-columns:150px 82px 112px;gap:5px;
+  background:linear-gradient(180deg,#fff9ef,#fffdf8);border:1px solid #efc492;border-radius:9px;padding:5px;
+  box-shadow:inset 0 1px 0 #fff,0 5px 14px #b9772410
 }
-.previewLabel{font-size:11px;color:#667085;font-weight:800}
-.previewValue{font-size:18px;font-weight:900;margin-top:3px}
-.previewChange{color:#087f70}.previewNegative{color:#b42318}
-.previewSelect{min-width:150px}
-.excelCalc{display:grid;grid-template-columns:145px minmax(220px,1.5fr) 95px 110px 125px;gap:7px;align-items:end;flex:1 1 760px;min-width:700px}
-.calcBox{background:#fff;border:1px solid #d7dee5;border-radius:9px;padding:7px 10px}
-.calcBox label{display:block;font-size:10px;color:#667085;font-weight:900;margin-bottom:4px}
-.calcBox .calcValue{font-size:17px;font-weight:900;min-height:21px}
-.calcFormula{width:100%!important;min-width:0!important;font-weight:700}
-.calcDiff{color:#087f70}.calcNeg{color:#b42318}
-.calcHint{font-size:10px;color:#667085;margin-top:4px}
-@media(max-width:850px){.excelCalc{grid-template-columns:1fr 1fr;min-width:0;flex-basis:100%}.calcFormula{grid-column:span 2}}
+.excelBox{border:1px solid #d8dee7;border-radius:8px;overflow:hidden;background:#fff;min-width:0;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.excelBox:hover{transform:translateY(-2px);box-shadow:0 7px 16px #10182714;border-color:#f0a56f}
+.excelHead{background:#f5b27e;color:#171717;padding:4px 6px;font-size:9px;font-weight:950;letter-spacing:.3px}
+.excelValue{padding:5px 7px;font-size:14px;font-weight:950;min-height:30px;display:flex;align-items:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.excelValue.diffValue{color:#087f70}.formulaText{font-size:12px;font-family:Consolas,Monaco,monospace}
+.excelEdit{width:100%;border:0!important;border-radius:0!important;padding:5px 7px!important;min-height:30px;font-weight:950;background:#fff!important;box-shadow:none!important}
+.excelEdit:focus{background:#fffdf7!important;box-shadow:inset 0 0 0 2px #f0a56f!important}
+.excelEdit:disabled{background:#f1f3f5!important;color:#7b8490;cursor:not-allowed}
+#pvFormula{font-size:12px;font-family:Consolas,Monaco,monospace}
+#pvRound{text-align:left}
+.masterRow{position:relative;overflow:hidden}.masterRow:after{content:"";position:absolute;inset:-80% auto -80% -35%;width:24%;transform:rotate(18deg);background:linear-gradient(90deg,transparent,#ffffff99,transparent);animation:shine 5.5s ease-in-out infinite;pointer-events:none}
+@keyframes shine{0%,70%{left:-35%}100%{left:125%}}
+.card{transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}.card:hover{box-shadow:0 9px 28px #17203312;border-color:#d5dde5}
+tr{transition:background .16s ease}tbody tr:hover{background:#f8fbfb}
 .tableWrap{overflow:auto;border:1px solid #dde3e8;border-radius:11px}
 table{border-collapse:collapse;width:100%;min-width:1180px}
 th,td{padding:8px;border-bottom:1px solid #e7ebef;text-align:left;vertical-align:middle}
@@ -122,7 +127,7 @@ td input:disabled,td select:disabled{background:#edf0f2;color:#737b85}
 @keyframes pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
 @media(max-width:850px){
  .topbar{padding:12px}.brand{font-size:16px}.wrap{padding:0 8px}
- .preview{margin-left:0}.previewBox{min-width:105px}
+ .masterRow{align-items:flex-start}.preview{margin-left:0;flex-basis:100%;overflow:auto}.excelStrip{grid-template-columns:145px 80px 108px;min-width:343px}
 }
 </style>
 </head>
@@ -161,37 +166,27 @@ td input:disabled,td select:disabled{background:#edf0f2;color:#737b85}
       <div class="hint">Master rate per 10 KG</div>
     </div>
 
-    <input id="looseRate" class="masterInput" type="number" step="0.01" placeholder="Enter rate">
+<input id="looseRate" class="masterInput" type="number" step="0.01" placeholder="Enter rate">
 
-    <button id="masterLock" class="lock">🔓 MASTER LOCK</button>
+<button id="masterLock" class="lock">🔓 MASTER LOCK</button>
 
-    <div class="excelCalc" id="masterPreview">
-      <div class="calcBox">
-        <label>PACKING</label>
-        <select id="previewPacking" class="previewSelect"></select>
-      </div>
-      <div class="calcBox">
-        <label>FORMULA</label>
-        <input id="calcFormula" class="calcFormula" placeholder="MASTER RATE/10*1.365">
-        <div class="calcHint">Excel style: + − × * / ( )</div>
-      </div>
-      <div class="calcBox">
-        <label>R OFF</label>
-        <input id="calcRound" type="number" step="0.01" placeholder="0">
-      </div>
-      <div class="calcBox">
-        <label>DIFF</label>
-        <div class="calcValue calcDiff" id="pvChange">—</div>
-      </div>
-      <div class="calcBox">
-        <label>NEW RATE</label>
-        <div class="calcValue" id="pvNew">—</div>
-      </div>
-      <div class="calcBox">
-        <label>OLD RATE</label>
-        <div class="calcValue" id="pvOld">—</div>
-      </div>
+<div class="preview" id="masterPreview">
+  <div class="excelStrip" aria-label="Loose oil master formula calculator">
+    <div class="excelBox">
+      <div class="excelHead">FORMULA</div>
+      <input class="excelEdit formulaText" id="pvFormula" type="text" autocomplete="off" spellcheck="false" placeholder="/2 or *1.5">
     </div>
+    <div class="excelBox">
+      <div class="excelHead">R OFF</div>
+      <input class="excelEdit" id="pvRound" type="number" step="0.01" placeholder="0">
+    </div>
+    <div class="excelBox">
+      <div class="excelHead">DIFF</div>
+      <div class="excelValue diffValue" id="pvDiff">—</div>
+    </div>
+  </div>
+</div>
+
   </div>
 </section>
 
@@ -388,44 +383,58 @@ function toggleMaster(){
   renderMaster();notify(masterLocked()?"🔒 MASTER LOCKED":"🔓 MASTER UNLOCKED");
 }
 
-function normalizeFormula(formula){
-  return String(formula||"").trim()
-    .replace(/[×xX]/g,"*")
-    .replace(/[−–—]/g,"-")
-    .replace(/\bMASTER\s+RATE\b/gi,"MASTER")
-    .replace(/\bLOOSE\s+OIL\s+RATE\b/gi,"MASTER")
-    .replace(/\bMASTER\b/gi,"MASTER");
-}
 function calcFormula(formula,master){
-  let f=normalizeFormula(formula);
-  if(!f)return Number(master)||0;
-  f=f.replace(/\bMASTER\b/g,"("+Number(master||0)+")");
+  let f=String(formula||"").trim();
+  const m=Number(master)||0;
+  if(!f)return m;
+
+  /* Excel-style shortcut: /2, *1.365, +50, -10 all mean MASTER <operator> value. */
+  f=f.toUpperCase().replace(/MASTER\s*RATE/g,"MASTER");
+  if(/^[+\-*/]/.test(f))f="MASTER"+f;
+  f=f.replace(/MASTER/g,"("+m+")");
+
+  /* Only basic arithmetic is allowed. */
   if(!/^[0-9+\-*/().\s]+$/.test(f))return 0;
   try{
-    const n=Function('"use strict";return '+f)();
+    const n=Function('"use strict";return ('+f+')')();
     return Number.isFinite(Number(n))?Number(n):0;
   }catch(e){return 0}
 }
+
 function roundValue(v,r){
-  const n=Number(r);
-  if(!n)return Number(v)||0;
-  return Math.round(Number(v)/n)*n;
+  const step=Math.abs(Number(r));
+  const value=Number(v)||0;
+  if(!step)return value;
+  /* R-OFF is always towards the lower amount, matching the Excel rule. */
+  return Math.floor((value+1e-9)/step)*step;
 }
-function masterValue(d,link,seen=new Set()){
-  if(!link || link==="LOOSE OIL RATE" || link==="MASTER" || link==="MASTER RATE")return Number(d.looseRate)||0;
-  const r=d.packings.find(x=>x.packing===link);
-  if(!r)return 0;
-  const key=String(link);
-  if(seen.has(key))return 0;
-  seen.add(key);
-  return rowRate(d,r,seen);
+
+function findPackingIndex(d,name){
+  return d.packings.findIndex(x=>x.packing===name);
 }
-function rowRate(d,r,seen=new Set()){
-  const base=masterValue(d,r.master||"LOOSE OIL RATE",seen);
-  return roundValue(
-    calcFormula(r.formula||"MASTER*1",base)+Number(r.extra||0),
-    r.round
-  );
+
+function masterValue(d,link,visited){
+  if(!link||link==="LOOSE OIL RATE")return Number(d.looseRate)||0;
+  const idx=findPackingIndex(d,link);
+  if(idx<0)return 0;
+  return evaluateRow(d,idx,visited).rate;
+}
+
+function evaluateRow(d,index,visited=new Set()){
+  const r=d.packings[index];
+  if(!r)return {rate:0,master:0,raw:0,cycle:false};
+  if(visited.has(index))return {rate:0,master:0,raw:0,cycle:true};
+
+  const chain=new Set(visited);chain.add(index);
+  const mv=masterValue(d,r.master||"LOOSE OIL RATE",chain);
+  const raw=calcFormula(r.formula||"MASTER*1",mv)+Number(r.extra||0);
+  const rate=roundValue(raw,r.round);
+  return {rate,master:mv,raw,cycle:false};
+}
+
+function rowRate(d,r){
+  const index=d.packings.indexOf(r);
+  return index>=0?evaluateRow(d,index).rate:0;
 }
 
 function renderMaster(){
@@ -437,33 +446,34 @@ function renderMaster(){
   renderPreview();
 }
 
+function masterPreviewRate(d){
+  if(!d)return 0;
+  const master=Number(d.looseRate)||0;
+  const formula=(d.masterFormula===undefined||d.masterFormula===null||d.masterFormula==="")?"MASTER*1":d.masterFormula;
+  const rOff=(d.masterRound===undefined||d.masterRound===null||d.masterRound==="")?0:d.masterRound;
+  return roundValue(calcFormula(formula,master),rOff);
+}
+
+function updatePreviewResultOnly(){
+  const d=data();
+  $("pvDiff").textContent=d?masterPreviewRate(d).toFixed(2):"—";
+}
+
 function renderPreview(){
-  const d=data(),sel=$("previewPacking");
-  if(!d||!d.packings.length){
-    sel.innerHTML='<option value="">Select packing</option>';
-    $("calcFormula").value="";$("calcRound").value="";
-    $("pvOld").textContent="—";$("pvChange").textContent="—";$("pvNew").textContent="—";
+  const d=data();
+  const formulaEl=$("pvFormula"),roundEl=$("pvRound");
+  if(!d){
+    formulaEl.value="";roundEl.value="";$("pvDiff").textContent="—";
+    formulaEl.disabled=true;roundEl.disabled=true;
     return;
   }
-  const current=sel.value && d.packings.some(r=>r.packing===sel.value)?sel.value:d.packings[0].packing;
-  sel.innerHTML=d.packings.map(r=>
-    `<option value="${esc(r.packing)}">${esc(r.packing||"Unnamed packing")}</option>`
-  ).join("");
-  sel.value=current;
-  const r=d.packings.find(x=>x.packing===current);
-  if(!r)return;
-  $("calcFormula").value=r.formula||"";
-  $("calcRound").value=r.round??"";
-  const locks=getLocks();
-  $("calcFormula").disabled=!admin||!!locks.formula;
-  $("calcRound").disabled=!admin||!!locks.round;
-  const old=Number(r.oldRate)||0;
-  const nw=rowRate(d,r);
-  const ch=nw-old;
-  $("pvOld").textContent=old.toFixed(2);
-  $("pvChange").textContent=(ch>=0?"+":"")+ch.toFixed(2);
-  $("pvChange").className="calcValue "+(ch<0?"calcNeg":"calcDiff");
-  $("pvNew").textContent=nw.toFixed(2);
+  if(d.masterFormula===undefined)d.masterFormula="MASTER*1";
+  if(d.masterRound===undefined)d.masterRound=0;
+  formulaEl.value=d.masterFormula;
+  roundEl.value=d.masterRound;
+  formulaEl.disabled=!admin||masterLocked();
+  roundEl.disabled=!admin||masterLocked();
+  updatePreviewResultOnly();
 }
 
 function renderTable(){
@@ -488,7 +498,7 @@ function renderTable(){
         <option value="LOOSE OIL RATE" ${r.master==="LOOSE OIL RATE"?"selected":""}>LOOSE OIL RATE</option>${opts}
       </select></td>
       <td><input type="number" step="0.01" data-i="${i}" data-f="oldRate" value="${esc(r.oldRate)}" ${!admin||l.old?"disabled":""}></td>
-      <td><input data-i="${i}" data-f="formula" value="${esc(r.formula)}" placeholder="MASTER*3 / -100" ${!admin||l.formula?"disabled":""}></td>
+      <td><input data-i="${i}" data-f="formula" value="${esc(r.formula)}" placeholder="MASTER*1.365 or /2" ${!admin||l.formula?"disabled":""}></td>
       <td><input type="number" step="0.01" data-i="${i}" data-f="extra" value="${esc(r.extra)}" ${!admin||l.extra?"disabled":""}></td>
       <td><input type="number" step="0.01" data-i="${i}" data-f="round" value="${esc(r.round)}" placeholder="0.10" ${!admin||l.round?"disabled":""}></td>
       <td><input class="newRate" data-newrate="${i}" disabled value="${rowRate(d,r).toFixed(2)}"></td>
@@ -511,13 +521,14 @@ function syncRowFromElement(el){
   const i=Number(el.dataset.i),f=el.dataset.f;
   if(d.packings[i])d.packings[i][f]=el.value;
 }
-function refreshCalculatedRates(){
+function refreshCalculatedRates(refreshPreview=true){
   const d=data();if(!d)return;
   d.packings.forEach((r,i)=>{
     const el=document.querySelector(`[data-newrate="${i}"]`);
     if(el)el.value=rowRate(d,r).toFixed(2);
   });
-  renderPreview();
+  if(refreshPreview)renderPreview();
+  else updatePreviewResultOnly();
 }
 
 function renderNote(){
@@ -563,7 +574,7 @@ function saveAll(){
   });
 
   db.history.unshift({
-    time:new Date().toISOString(),
+    time:new Date().toLocaleString(),
     city,
     product:db.products.find(p=>p.id===productId)?.name||"",
     looseRate:d.looseRate,
@@ -581,7 +592,11 @@ function saveNote(){
 function renderHistory(){
   const a=db.history.slice(0,3);
   $("history").innerHTML=a.length?a.map(x=>
-    `<div class="historyRow"><b>${esc(x.product)}</b> — ${esc(x.city)} — ${new Date(x.time).toLocaleDateString("en-IN",{day:"2-digit",month:"long",year:"numeric"})}
+    `<div class="historyRow"><b>${esc(x.product)}</b> — ${esc(x.city)} — ${new Date(x.time).toLocaleDateString("en-IN", {
+  day: "2-digit",
+  month: "long",
+  year: "numeric"
+})}
      ${x.looseRate!==""?" — Loose ₹"+esc(x.looseRate):""}</div>`
   ).join(""):'<div class="empty">No rate update history yet.</div>';
 }
@@ -600,18 +615,19 @@ $("masterLock").onclick=toggleMaster;
 $("addPacking").onclick=addPacking;
 $("saveAll").onclick=saveAll;
 $("saveNote").onclick=saveNote;
-$("previewPacking").onchange=renderPreview;
-$("calcFormula").addEventListener("input",e=>{
-  if(!admin)return;
-  const d=data(),r=d&&d.packings.find(x=>x.packing===$("previewPacking").value);
-  if(!r)return;
-  r.formula=e.target.value;save();refreshCalculatedRates();renderPreview();
+
+/* Compact controls calculate directly from the LOOSE OIL MASTER RATE. */
+$("pvFormula").addEventListener("input",e=>{
+  const d=data();if(!d||!admin||masterLocked())return;
+  d.masterFormula=e.target.value;
+  save();
+  updatePreviewResultOnly();
 });
-$("calcRound").addEventListener("input",e=>{
-  if(!admin)return;
-  const d=data(),r=d&&d.packings.find(x=>x.packing===$("previewPacking").value);
-  if(!r)return;
-  r.round=e.target.value;save();refreshCalculatedRates();renderPreview();
+$("pvRound").addEventListener("input",e=>{
+  const d=data();if(!d||!admin||masterLocked())return;
+  d.masterRound=e.target.value;
+  save();
+  updatePreviewResultOnly();
 });
 
 /* Lock buttons are delegated so re-rendering cannot break them. */
@@ -648,5 +664,6 @@ render();
 
 })();
 </script>
+
 </body>
 </html>
