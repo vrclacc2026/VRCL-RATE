@@ -1,9 +1,11 @@
 -- VRCL secure wholesale rate portal
--- Run this in Supabase SQL Editor after creating the project.
 
 create extension if not exists pgcrypto;
 
-create type public.user_role as enum ('admin','wholesaler');
+do $$ begin
+  create type public.user_role as enum ('admin','wholesaler');
+exception when duplicate_object then null;
+end $$;
 
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -34,74 +36,97 @@ create table if not exists public.rates (
   unique(city, product_id, packing)
 );
 
-create or replace function public.is_admin(uid uuid)
-returns boolean language sql stable security definer set search_path = public as $$
+-- Authorization helper: checks only the current session user.
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
   select exists(
     select 1 from public.profiles
-    where id = uid and role = 'admin' and active = true
+    where id = (select auth.uid()) and role = 'admin' and active = true
   );
 $$;
+
+revoke all on function public.is_admin() from public;
+grant execute on function public.is_admin() to authenticated;
 
 alter table public.profiles enable row level security;
 alter table public.products enable row level security;
 alter table public.rates enable row level security;
 
--- A user may read only their own profile. Admins may read/manage all profiles.
+drop policy if exists "profiles_self_or_admin_read" on public.profiles;
 create policy "profiles_self_or_admin_read" on public.profiles
-for select using (id = auth.uid() or public.is_admin(auth.uid()));
+for select to authenticated
+using (id = (select auth.uid()) or public.is_admin());
 
+drop policy if exists "profiles_admin_write" on public.profiles;
 create policy "profiles_admin_write" on public.profiles
-for all using (public.is_admin(auth.uid())) with check (public.is_admin(auth.uid()));
+for all to authenticated
+using (public.is_admin()) with check (public.is_admin());
 
--- Products are visible only to authenticated active users.
+drop policy if exists "products_authenticated_read" on public.products;
 create policy "products_authenticated_read" on public.products
-for select using (
-  exists(select 1 from public.profiles p where p.id=auth.uid() and p.active=true)
+for select to authenticated
+using (
+  exists(select 1 from public.profiles p where p.id=(select auth.uid()) and p.active=true)
 );
 
+drop policy if exists "products_admin_write" on public.products;
 create policy "products_admin_write" on public.products
-for all using (public.is_admin(auth.uid())) with check (public.is_admin(auth.uid()));
+for all to authenticated
+using (public.is_admin()) with check (public.is_admin());
 
--- Critical rule: wholesaler can read rates ONLY for their assigned city.
--- Admin can read/write every city.
+drop policy if exists "rates_city_read" on public.rates;
 create policy "rates_city_read" on public.rates
-for select using (
-  public.is_admin(auth.uid())
+for select to authenticated
+using (
+  public.is_admin()
   or exists(
     select 1 from public.profiles p
-    where p.id=auth.uid()
+    where p.id=(select auth.uid())
       and p.active=true
       and p.role='wholesaler'
       and p.city = rates.city
   )
 );
 
+drop policy if exists "rates_admin_write" on public.rates;
 create policy "rates_admin_write" on public.rates
-for all using (public.is_admin(auth.uid())) with check (public.is_admin(auth.uid()));
+for all to authenticated
+using (public.is_admin()) with check (public.is_admin());
 
--- Keep updated_at current.
 create or replace function public.touch_updated_at()
-returns trigger language plpgsql as $$
+returns trigger
+language plpgsql
+set search_path = public
+as $$
 begin new.updated_at = now(); return new; end; $$;
+
+revoke all on function public.touch_updated_at() from public;
 
 drop trigger if exists rates_touch_updated_at on public.rates;
 create trigger rates_touch_updated_at before update on public.rates
 for each row execute function public.touch_updated_at();
 
--- Optional starter products.
+-- Explicit API privileges. RLS still controls row access.
+grant usage on schema public to authenticated;
+grant select on public.profiles, public.products, public.rates to authenticated;
+grant insert, update, delete on public.profiles, public.products, public.rates to authenticated;
+
 insert into public.products(code,name,sort_order) values
 ('palm','Palmolein',1),('visvita','Visvita',2),('sunflower','Sunflower',3),
 ('groundnut','Groundnut',4),('cotton','Cottonseed',5),('mustard','Mustard',6),('soya','Soya',7)
 on conflict (code) do nothing;
 
--- IMPORTANT FIRST ADMIN SETUP:
--- 1) Create the admin user in Supabase Authentication > Users.
--- 2) Copy that user's UUID and run:
+-- FIRST ADMIN SETUP:
+-- Create the admin user in Supabase Authentication > Users, then insert its UUID:
 -- insert into public.profiles(id,display_name,role,active)
 -- values ('USER_UUID','VRCL Admin','admin',true)
 -- on conflict(id) do update set role='admin',active=true;
 
--- WHOLESALER SETUP EXAMPLE:
--- Create user in Authentication, then:
+-- WHOLESALER EXAMPLE:
 -- insert into public.profiles(id,display_name,role,city,active)
 -- values ('USER_UUID','Shreeji Traders','wholesaler','Rajkot',true);
