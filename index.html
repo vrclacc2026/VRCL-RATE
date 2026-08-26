@@ -13,89 +13,21 @@ header{background:#101827;color:#fff;padding:14px 18px;box-shadow:0 4px 18px #00
 </head>
 <body>
 <header><div class="bar"><img src="logo.png" class="logo" alt="VRCL"><div><div class="brand">VISHWAS REFOILS &amp; CONSUMER LIMITED</div><div class="sub">PRIVATE WHOLESALE RATE PORTAL</div></div><div class="spacer"></div><a id="adminLink" class="btn adminLink hidden" href="admin.html">ADMIN</a><button id="logoutBtn" class="btn red hidden">LOGOUT</button></div></header>
-
 <main class="wrap">
-<section id="loginCard" class="card login">
-<h1>Authorized Login</h1><div class="muted">Wholesale rates are confidential. Only approved VRCL customers can access this portal.</div>
-<form id="loginForm"><div class="field"><label>EMAIL / USER ID</label><input id="email" type="text" autocomplete="username" required></div><div class="field"><label>PASSWORD</label><input id="password" type="password" autocomplete="current-password" required></div><button class="btn green" type="submit">LOGIN SECURELY</button><div id="loginError" class="error"></div></form>
-</section>
-
-<section id="portal" class="hidden">
-<div class="card hero"><div><div class="muted">WELCOME</div><div id="customerName" class="name">—</div></div><div class="spacer"></div><span id="cityBadge" class="cityBadge">—</span></div>
-<div class="card notice"><strong>Confidential wholesale rates.</strong> Your account can view only the city assigned by VRCL. Other city names and rates are not shown.</div>
-<div id="products" class="grid"></div>
-</section>
-</main>
-<div id="watermark" class="watermark hidden"></div>
-
+<section id="loginCard" class="card login"><h1>Authorized Login</h1><div class="muted">Wholesale rates are confidential. Use the User ID and password provided by VRCL.</div><form id="loginForm"><div class="field"><label>USER ID / ADMIN EMAIL</label><input id="loginId" type="text" autocomplete="username" required></div><div class="field"><label>PASSWORD</label><input id="password" type="password" autocomplete="current-password" required></div><button class="btn green" type="submit">LOGIN SECURELY</button><div id="loginError" class="error"></div></form></section>
+<section id="portal" class="hidden"><div class="card hero"><div><div class="muted">WELCOME</div><div id="customerName" class="name">—</div></div><div class="spacer"></div><span id="cityBadge" class="cityBadge">—</span></div><div class="card notice"><strong>Confidential wholesale rates.</strong> Your account can view only the city assigned by VRCL. Other city names and rates are not shown.</div><div id="products" class="grid"></div></section>
+</main><div id="watermark" class="watermark hidden"></div>
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase-config.js';
-
-const configured=!SUPABASE_URL.startsWith('YOUR_')&&!SUPABASE_ANON_KEY.startsWith('YOUR_');
-const supabase=configured?createClient(SUPABASE_URL,SUPABASE_ANON_KEY):null;
-const $=id=>document.getElementById(id);
-let sessionWatch=null;
-
-if(!configured){$('loginError').textContent='Portal security setup is not connected yet. Configure Supabase first.';}
-
-async function localSignOut(){
- if(!supabase)return;
- try{await supabase.auth.signOut({scope:'local'});}catch(_){ }
-}
-
-async function loadPortal(){
- if(!supabase)return;
- const {data:{session}}=await supabase.auth.getSession();
- if(!session){showLogin();return;}
- const {data:profile,error}=await supabase.from('profiles').select('display_name,role,city,active').eq('id',session.user.id).single();
- if(error||!profile){await localSignOut();showLogin('This account is active on another device. Please login again.');return;}
- if(!profile.active){await localSignOut();showLogin('Access not active. Contact VRCL.');return;}
- if(profile.role==='admin'){$('adminLink').classList.remove('hidden');$('cityBadge').textContent='ADMIN ACCESS';}
- else if(!profile.city){await localSignOut();showLogin('City permission not assigned. Contact VRCL.');return;}
- $('loginCard').classList.add('hidden');$('portal').classList.remove('hidden');$('logoutBtn').classList.remove('hidden');
- $('customerName').textContent=profile.display_name||session.user.email;
- if(profile.role!=='admin')$('cityBadge').textContent=profile.city+' ONLY';
- $('watermark').textContent=(profile.display_name||session.user.email)+' • '+(profile.city||'ADMIN')+' • VRCL CONFIDENTIAL';$('watermark').classList.remove('hidden');
- await renderRates(profile);
- startSessionWatch();
-}
-
-function startSessionWatch(){
- if(sessionWatch)clearInterval(sessionWatch);
- sessionWatch=setInterval(checkCurrentSession,10000);
-}
-
-async function checkCurrentSession(){
- if(!supabase||$('portal').classList.contains('hidden'))return;
- const {data:{session}}=await supabase.auth.getSession();
- if(!session){showLogin('Session ended. Please login again.');return;}
- const {data,error}=await supabase.from('profiles').select('id').eq('id',session.user.id).maybeSingle();
- if(error||!data){
-   if(sessionWatch){clearInterval(sessionWatch);sessionWatch=null;}
-   await localSignOut();
-   showLogin('This account was logged in on another device. Old device has been logged out.');
- }
-}
-
-async function renderRates(profile){
- $('products').innerHTML='<div class="card empty">Loading authorized rates…</div>';
- let q=supabase.from('rates').select('id,city,packing,rate,narration,sort_order,updated_at,products(name,sort_order)').order('sort_order');
- if(profile.role!=='admin')q=q.eq('city',profile.city);
- const {data,error}=await q;
- if(error){$('products').innerHTML='<div class="card empty">Unable to load rates.</div>';return;}
- const groups={};
- (data||[]).forEach(r=>{const n=r.products?.name||'Product';(groups[n]??=[]).push(r)});
- const names=Object.keys(groups);
- if(!names.length){$('products').innerHTML='<div class="card empty">No rates published for your authorized city.</div>';return;}
- $('products').innerHTML=names.map(name=>`<article class="card product"><h3>${esc(name)}</h3>${groups[name].map(r=>`<div class="rateRow"><span class="packing">${esc(r.packing)}</span><span class="price">₹ ${Number(r.rate).toFixed(2)}</span></div>`).join('')}<div class="narr">${esc(groups[name].find(x=>x.narration)?.narration||'')}</div></article>`).join('');
-}
+const configured=!SUPABASE_URL.startsWith('YOUR_')&&!SUPABASE_ANON_KEY.startsWith('YOUR_');const supabase=configured?createClient(SUPABASE_URL,SUPABASE_ANON_KEY):null;const $=id=>document.getElementById(id);let sessionWatch=null;if(!configured)$('loginError').textContent='Portal security setup is not connected yet.';
+async function localSignOut(){if(!supabase)return;try{await supabase.auth.signOut({scope:'local'});}catch(_){}}
+async function loadPortal(){if(!supabase)return;const {data:{session}}=await supabase.auth.getSession();if(!session){showLogin();return;}const {data:profile,error}=await supabase.from('profiles').select('display_name,login_id,role,city,active').eq('id',session.user.id).single();if(error||!profile){await localSignOut();showLogin('This account is active on another device. Please login again.');return;}if(!profile.active){await localSignOut();showLogin('Access not active. Contact VRCL.');return;}if(profile.role==='admin'){$('adminLink').classList.remove('hidden');$('cityBadge').textContent='ADMIN ACCESS';}else if(!profile.city){await localSignOut();showLogin('City permission not assigned. Contact VRCL.');return;}$('loginCard').classList.add('hidden');$('portal').classList.remove('hidden');$('logoutBtn').classList.remove('hidden');const shownName=profile.display_name||profile.login_id||session.user.email;$('customerName').textContent=shownName;if(profile.role!=='admin')$('cityBadge').textContent=profile.city+' ONLY';$('watermark').textContent=shownName+' • '+(profile.city||'ADMIN')+' • VRCL CONFIDENTIAL';$('watermark').classList.remove('hidden');await renderRates(profile);startSessionWatch();}
+function startSessionWatch(){if(sessionWatch)clearInterval(sessionWatch);sessionWatch=setInterval(checkCurrentSession,10000)}
+async function checkCurrentSession(){if(!supabase||$('portal').classList.contains('hidden'))return;const {data:{session}}=await supabase.auth.getSession();if(!session){showLogin('Session ended. Please login again.');return;}const {data,error}=await supabase.from('profiles').select('id').eq('id',session.user.id).maybeSingle();if(error||!data){if(sessionWatch){clearInterval(sessionWatch);sessionWatch=null;}await localSignOut();showLogin('This account was logged in on another device. Old device has been logged out.');}}
+async function renderRates(profile){$('products').innerHTML='<div class="card empty">Loading authorized rates…</div>';let q=supabase.from('rates').select('id,city,packing,rate,narration,sort_order,updated_at,products(name,sort_order)').order('sort_order');if(profile.role!=='admin')q=q.eq('city',profile.city);const {data,error}=await q;if(error){$('products').innerHTML='<div class="card empty">Unable to load rates.</div>';return;}const groups={};(data||[]).forEach(r=>{const n=r.products?.name||'Product';(groups[n]??=[]).push(r)});const names=Object.keys(groups);if(!names.length){$('products').innerHTML='<div class="card empty">No rates published for your authorized city.</div>';return;}$('products').innerHTML=names.map(name=>`<article class="card product"><h3>${esc(name)}</h3>${groups[name].map(r=>`<div class="rateRow"><span class="packing">${esc(r.packing)}</span><span class="price">₹ ${Number(r.rate).toFixed(2)}</span></div>`).join('')}<div class="narr">${esc(groups[name].find(x=>x.narration)?.narration||'')}</div></article>`).join('');}
 function esc(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
 function showLogin(msg=''){if(sessionWatch){clearInterval(sessionWatch);sessionWatch=null;}$('loginCard').classList.remove('hidden');$('portal').classList.add('hidden');$('logoutBtn').classList.add('hidden');$('adminLink').classList.add('hidden');$('watermark').classList.add('hidden');$('loginError').textContent=msg;}
-$('loginForm').addEventListener('submit',async e=>{e.preventDefault();if(!supabase)return;$('loginError').textContent='';const userId=$('email').value.trim();const {error}=await supabase.auth.signInWithPassword({email:userId,password:$('password').value});if(error){$('loginError').textContent='Invalid login or access not permitted.';return;}await loadPortal();});
-$('logoutBtn').addEventListener('click',async()=>{await localSignOut();showLogin();});
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkCurrentSession();});
-window.addEventListener('focus',checkCurrentSession);
-if(supabase){supabase.auth.onAuthStateChange(()=>{});loadPortal();}
-</script>
-</body></html>
+$('loginForm').addEventListener('submit',async e=>{e.preventDefault();if(!supabase)return;$('loginError').textContent='';let login=$('loginId').value.trim().toLowerCase();const email=login.includes('@')?login:`${login}@users.vrcl.in`;const {error}=await supabase.auth.signInWithPassword({email,password:$('password').value});if(error){$('loginError').textContent='Invalid User ID or password.';return;}await loadPortal();});
+$('logoutBtn').addEventListener('click',async()=>{await localSignOut();showLogin();});document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkCurrentSession();});window.addEventListener('focus',checkCurrentSession);if(supabase){supabase.auth.onAuthStateChange(()=>{});loadPortal();}
+</script></body></html>
