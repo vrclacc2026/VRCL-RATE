@@ -1,9 +1,25 @@
 {
   "version": 1,
   "updatedAt": "",
-  "products": [],
+  "products": [
+    {"id":"palm","name":"Palmolein"},
+    {"id":"visvita","name":"Visvita"},
+    {"id":"sunflower","name":"Sunflower"},
+    {"id":"groundnut","name":"Groundnut"},
+    {"id":"cotton","name":"Cottonseed"},
+    {"id":"mustard","name":"Mustard"},
+    {"id":"soya","name":"Soya"}
+  ],
   "cities": {
-    "Rajkot": {},
+    "Rajkot": {
+      "palm":{"looseRate":"","packings":[{"packing":"15 KG N TIN","newRate":2384},{"packing":"15 KG S T TIN","newRate":2339},{"packing":"15 LTR N TIN","newRate":2174},{"packing":"15 LTR S TIN","newRate":2129},{"packing":"5 LTR JAR","newRate":731},{"packing":"4.150 KG JAR","newRate":701},{"packing":"2 LTR JAR","newRate":299.46},{"packing":"1.6 KG JAR","newRate":274.46},{"packing":"1 LTR BOTTLE","newRate":146.2},{"packing":"1 LTR POUCH","newRate":141.2},{"packing":"790 GM BOTTLE","newRate":136.2},{"packing":"750 GM POUCH","newRate":124.7},{"packing":"500 ML BOTTLE","newRate":74.6},{"packing":"500 ML POUCH","newRate":72.1},{"packing":"395 GM BOTTLE","newRate":69.6}],"narration":""},
+      "visvita":{"looseRate":"","packings":[{"packing":"15 KG OLD TIN","newRate":0},{"packing":"15 KG NEW TIN","newRate":0}],"narration":""},
+      "sunflower":{"looseRate":"","packings":[{"packing":"15 KG","newRate":0},{"packing":"1 LTR","newRate":0}],"narration":""},
+      "groundnut":{"looseRate":"","packings":[{"packing":"15 KG","newRate":0},{"packing":"1 LTR","newRate":0}],"narration":""},
+      "cotton":{"looseRate":"","packings":[{"packing":"15 KG","newRate":0},{"packing":"1 LTR","newRate":0}],"narration":""},
+      "mustard":{"looseRate":"","packings":[{"packing":"15 KG","newRate":0},{"packing":"1 LTR","newRate":0}],"narration":""},
+      "soya":{"looseRate":"","packings":[{"packing":"15 KG","newRate":0},{"packing":"1 LTR","newRate":0}],"narration":""}
+    },
     "Ahmedabad": {},
     "Udaan": {}
   },
