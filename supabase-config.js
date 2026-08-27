@@ -3,3 +3,12 @@
 export const SUPABASE_URL = "https://rdmgzkxroydsuantzbwn.supabase.co";
 export const SUPABASE_ANON_KEY = "sb_publishable_hQTkAf0vHJsw618Y2wrCOw_R-c24HHQ";
 export const APP_NAME = "VRCL Wholesale Rate Portal";
+
+// One-time compatibility: preserve existing admin formula/rounding metadata from V2.
+try {
+  const oldKey = "VISHWAS_RATE_ADMIN_META_V2";
+  const newKey = "VISHWAS_RATE_ADMIN_META_V3";
+  if (!localStorage.getItem(newKey) && localStorage.getItem(oldKey)) {
+    localStorage.setItem(newKey, localStorage.getItem(oldKey));
+  }
+} catch {}
