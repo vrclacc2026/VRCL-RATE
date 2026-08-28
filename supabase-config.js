@@ -12,3 +12,8 @@ try {
     localStorage.setItem(newKey, localStorage.getItem(oldKey));
   }
 } catch {}
+
+// Admin-only extension. Customer/dashboard pages do not load this module.
+if (typeof window !== 'undefined' && /\/admin\.html$/.test(window.location.pathname)) {
+  import('./admin-products.js?v=20260828');
+}
