@@ -26,6 +26,16 @@ if (area) {
   bar.innerHTML = '<button class="pmAdd" id="pmAdd">＋ ADD PRODUCT</button><button id="pmEdit">✏️ EDIT PRODUCT</button><button class="pmDelete" id="pmDelete">🗑 DELETE PRODUCT</button>';
   title?.insertAdjacentElement('afterend', bar);
 
+  document.getElementById('cityArea')?.addEventListener('click',e=>{
+    if(!e.target.closest('[data-city]'))return;
+    const rateBody=document.getElementById('rateBody');
+    if(rateBody)rateBody.innerHTML='<tr><td colspan="8" class="empty">Select or add a product for this city.</td></tr>';
+    const narration=document.getElementById('narration');if(narration)narration.value='';
+    const loose=document.getElementById('looseRate');if(loose)loose.value='';
+    const photo=document.getElementById('photoPrev');if(photo)photo.innerHTML='<div class="noPhoto">INGREDIENT<br>PHOTO</div>';
+    const history=document.getElementById('history');if(history)history.innerHTML='<div class="empty">No history for selected city/product.</div>';
+  },true);
+
   function selectedId(){ return area.querySelector('.productBtn.active')?.dataset.product || ''; }
   function selectedCity(){ return document.querySelector('.city.active')?.dataset.city || 'Rajkot'; }
   function cleanCode(v){ return String(v||'').trim().toLowerCase().replace(/[^a-z0-9_-]+/g,'-').replace(/^-+|-+$/g,''); }
