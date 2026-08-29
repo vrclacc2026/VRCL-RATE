@@ -2,7 +2,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase-config.js';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: 'vrcl-admin-auth' }
 });
 
 const area = document.getElementById('productArea');
@@ -27,6 +27,7 @@ if (area) {
   title?.insertAdjacentElement('afterend', bar);
 
   function selectedId(){ return area.querySelector('.productBtn.active')?.dataset.product || ''; }
+  function selectedCity(){ return document.querySelector('.city.active')?.dataset.city || 'Rajkot'; }
   function cleanCode(v){ return String(v||'').trim().toLowerCase().replace(/[^a-z0-9_-]+/g,'-').replace(/^-+|-+$/g,''); }
   async function requireAdmin(){
     const {data:{session}} = await supabase.auth.getSession();
@@ -47,7 +48,7 @@ if (area) {
       const code=cleanCode(modal.querySelector('#pmCode').value);
       const sort_order=Number(modal.querySelector('#pmSort').value||0);
       if(!name||!code){alert('Product name and code required.');return;}
-      const payload={name,code,sort_order,active:true};
+      const payload={name,code,sort_order,active:true,city:selectedCity()};
       const q=mode==='add'?supabase.from('products').insert(payload):supabase.from('products').update(payload).eq('id',p.id);
       const {error}=await q;
       if(error){alert(error.message);return;}
@@ -57,7 +58,7 @@ if (area) {
 
   document.getElementById('pmAdd').onclick=async()=>{
     if(!await requireAdmin()){alert('Admin access required.');return;}
-    const {data}=await supabase.from('products').select('sort_order').order('sort_order',{ascending:false}).limit(1);
+    const {data}=await supabase.from('products').select('sort_order').eq('city',selectedCity()).order('sort_order',{ascending:false}).limit(1);
     openEditor('add',{sort_order:(Number(data?.[0]?.sort_order)||0)+1});
   };
   document.getElementById('pmEdit').onclick=async()=>{
