@@ -97,3 +97,16 @@ header,main,footer{-webkit-user-select:none!important;user-select:none!important
   }
 }
 
+
+/* Logout button: readable on desktop and never cropped on mobile */
+.profile{min-width:230px}
+.power{width:auto!important;min-width:94px!important;height:36px!important;padding:0 13px!important;border-radius:999px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;font-size:11px!important;line-height:1!important;white-space:nowrap!important}
+.power .powerIcon{font-size:17px;line-height:1}
+.power .powerText{font-size:10px;letter-spacing:.35px}
+@media(max-width:760px){
+  .right{grid-template-rows:auto 122px!important}
+  .mini{display:grid!important;grid-template-columns:1fr!important;gap:7px!important;overflow:visible!important}
+  .clock,.profile{width:100%!important;min-width:0!important}
+  .profile{justify-content:flex-start!important}
+  .power{margin-left:auto!important;min-width:94px!important;flex:0 0 auto!important}
+}
