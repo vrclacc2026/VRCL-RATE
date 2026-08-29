@@ -127,7 +127,7 @@ body.privacyShield::after{content:"SCREEN CAPTURE LOCKED";position:fixed;inset:0
 .wm{opacity:.13!important}
 @media(max-width:760px){.right{grid-template-rows:auto 122px!important}.clock{height:58px!important}.profile{height:62px!important}.power.logoutOrb{width:56px!important;min-width:56px!important;height:56px!important;flex-basis:56px!important;margin-left:auto!important}.stripProduct[data-product="corn"] img,.stripProduct[data-product="corn"]:hover img{width:116px!important;max-width:116px!important;height:100px!important;max-height:100px!important}}
 
-/* Compact header and five-minute refresh indicator */
+/* Compact header layout */
 .hdr{padding-top:3px!important;padding-bottom:2px!important}
 .right{grid-template-rows:50px 130px!important;gap:0!important}
 .mini{min-height:50px!important}
@@ -138,8 +138,6 @@ body.privacyShield::after{content:"SCREEN CAPTURE LOCKED";position:fixed;inset:0
 .logoutOrb .logoutText{font-size:6.5px!important;letter-spacing:.25px!important}
 .productStrip{height:130px!important}
 .stripProduct{height:128px!important;min-height:128px!important}
-.refreshPill{display:inline-flex;align-items:center;gap:5px;padding:6px 9px;border-radius:999px;background:#eaf3ff;border:1px solid #c7dcf7;color:#14528a;font-size:8px;font-weight:900;white-space:nowrap}
-.refreshPill strong{min-width:31px;font-family:"Courier New",monospace;font-size:9px;color:#8e0000;text-align:center}
 @media(max-width:760px){
   .hdr{padding:3px 8px 2px!important}
   .right{grid-template-rows:50px 116px!important}
@@ -149,5 +147,4 @@ body.privacyShield::after{content:"SCREEN CAPTURE LOCKED";position:fixed;inset:0
   .power.logoutOrb{width:42px!important;min-width:42px!important;height:42px!important;flex-basis:42px!important;margin-left:auto!important}
   .productStrip{height:116px!important}
   .stripProduct{height:114px!important;min-height:114px!important}
-  .refreshPill{padding:5px 7px;font-size:7px}
 }
