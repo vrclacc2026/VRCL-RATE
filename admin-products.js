@@ -6,7 +6,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 });
 
 const area = document.getElementById('productArea');
-if (area) {
+if (area && !document.querySelector('.productManageBar')) {
   const card = area.closest('.card');
   const title = card?.querySelector('.title');
   const style = document.createElement('style');
@@ -22,6 +22,7 @@ if (area) {
   document.head.appendChild(style);
 
   const bar = document.createElement('div');
+  bar.id = 'productManageBar';
   bar.className = 'productManageBar';
   bar.innerHTML = '<button class="pmAdd" id="pmAdd">＋ ADD PRODUCT</button><button id="pmEdit">✏️ EDIT PRODUCT</button><button class="pmDelete" id="pmDelete">🗑 DELETE PRODUCT</button>';
   title?.insertAdjacentElement('afterend', bar);
