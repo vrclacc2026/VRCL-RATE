@@ -110,3 +110,19 @@ header,main,footer{-webkit-user-select:none!important;user-select:none!important
   .profile{justify-content:flex-start!important}
   .power{margin-left:auto!important;min-width:94px!important;flex:0 0 auto!important}
 }
+
+/* Red glossy logout orb, privacy shield, and Corn-deep optical sizing */
+.right{grid-template-rows:64px 142px}
+.clock,.profile{height:60px!important}
+.profile{min-width:235px!important;padding:3px 6px!important}
+.power.logoutOrb{position:relative!important;width:58px!important;min-width:58px!important;height:58px!important;flex:0 0 58px!important;padding:5px 4px 3px!important;border:2px solid #ff9a9a!important;border-radius:50%!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:0!important;overflow:hidden!important;color:#fff!important;background:radial-gradient(circle at 35% 22%,rgba(255,255,255,.72),transparent 19%),linear-gradient(145deg,#ff5b5b 0%,#e3182d 52%,#990014 100%)!important;box-shadow:inset 0 2px 5px rgba(255,255,255,.8),inset 0 -8px 12px rgba(86,0,10,.38),0 4px 0 #850012,0 8px 13px rgba(94,0,13,.28)!important}
+.logoutOrb .logoutIcon{width:31px;height:29px;overflow:visible;filter:drop-shadow(0 1px 1px rgba(80,0,0,.45))}
+.logoutOrb .logoutDoor,.logoutOrb .logoutArrow{fill:none;stroke:#fff;stroke-width:6;stroke-linecap:round;stroke-linejoin:round}
+.logoutOrb .logoutText{font-size:8px!important;font-weight:950;line-height:1;letter-spacing:.4px;text-shadow:0 1px 2px rgba(80,0,0,.7)}
+.power.logoutOrb:hover{filter:brightness(1.08)!important;transform:translateY(-1px)}
+.power.logoutOrb:active{transform:translateY(3px)!important;box-shadow:inset 0 2px 5px rgba(70,0,8,.45),0 1px 0 #850012!important}
+.stripProduct[data-product="corn"] img,.stripProduct[data-product="corn"]:hover img{width:90%!important;max-width:134px!important;height:116px!important;max-height:116px!important}
+body.privacyShield header,body.privacyShield main,body.privacyShield footer{filter:blur(28px)!important;opacity:.05!important;pointer-events:none!important}
+body.privacyShield::after{content:"SCREEN CAPTURE LOCKED";position:fixed;inset:0;z-index:10000;display:grid;place-items:center;background:#101827;color:#fff;font-size:clamp(18px,4vw,38px);font-weight:950;letter-spacing:1px}
+.wm{opacity:.13!important}
+@media(max-width:760px){.right{grid-template-rows:auto 122px!important}.clock{height:58px!important}.profile{height:62px!important}.power.logoutOrb{width:56px!important;min-width:56px!important;height:56px!important;flex-basis:56px!important;margin-left:auto!important}.stripProduct[data-product="corn"] img,.stripProduct[data-product="corn"]:hover img{width:116px!important;max-width:116px!important;height:100px!important;max-height:100px!important}}
