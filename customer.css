@@ -126,3 +126,25 @@ body.privacyShield header,body.privacyShield main,body.privacyShield footer{filt
 body.privacyShield::after{content:"SCREEN CAPTURE LOCKED";position:fixed;inset:0;z-index:10000;display:grid;place-items:center;background:#101827;color:#fff;font-size:clamp(18px,4vw,38px);font-weight:950;letter-spacing:1px}
 .wm{opacity:.13!important}
 @media(max-width:760px){.right{grid-template-rows:auto 122px!important}.clock{height:58px!important}.profile{height:62px!important}.power.logoutOrb{width:56px!important;min-width:56px!important;height:56px!important;flex-basis:56px!important;margin-left:auto!important}.stripProduct[data-product="corn"] img,.stripProduct[data-product="corn"]:hover img{width:116px!important;max-width:116px!important;height:100px!important;max-height:100px!important}}
+
+/* Compact header layout */
+.hdr{padding-top:3px!important;padding-bottom:2px!important}
+.right{grid-template-rows:50px 130px!important;gap:0!important}
+.mini{min-height:50px!important}
+.clock,.profile{height:46px!important}
+.profile{min-width:220px!important;padding:3px 6px!important}
+.power.logoutOrb{width:44px!important;min-width:44px!important;height:44px!important;flex:0 0 44px!important;padding:3px 3px 2px!important}
+.logoutOrb .logoutIcon{width:24px!important;height:22px!important}
+.logoutOrb .logoutText{font-size:6.5px!important;letter-spacing:.25px!important}
+.productStrip{height:130px!important}
+.stripProduct{height:128px!important;min-height:128px!important}
+@media(max-width:760px){
+  .hdr{padding:3px 8px 2px!important}
+  .right{grid-template-rows:50px 116px!important}
+  .mini{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:6px!important;min-height:50px!important}
+  .clock,.profile{height:48px!important;width:100%!important;min-width:0!important}
+  .profile{padding:3px 5px!important;gap:4px!important}
+  .power.logoutOrb{width:42px!important;min-width:42px!important;height:42px!important;flex-basis:42px!important;margin-left:auto!important}
+  .productStrip{height:116px!important}
+  .stripProduct{height:114px!important;min-height:114px!important}
+}
