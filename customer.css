@@ -10,6 +10,7 @@ header,main,footer{-webkit-user-select:none!important;user-select:none!important
 .productStrip:hover .stripProduct:not(:hover){
   filter:drop-shadow(0 15px 10px rgba(23,32,51,.32)) drop-shadow(0 4px 3px rgba(0,0,0,.22))!important;
 }
+.terms{padding:9px;font-size:11px;line-height:1.55;white-space:pre-line;overflow-wrap:anywhere}.terms strong{margin-bottom:4px}
 .stripProduct img,
 .stripProduct:hover img{
   filter:drop-shadow(0 13px 8px rgba(23,32,51,.34)) drop-shadow(0 3px 2px rgba(0,0,0,.24))!important;
