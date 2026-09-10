@@ -16,8 +16,8 @@ try {
 // Admin-only extension. Customer pages do not load these modules.
 if (typeof window !== 'undefined' && /\/admin(?:\.html)?\/?$/.test(window.location.pathname)) {
   import('./admin-products.js?v=20260909');
-  import('./backup-manager.js?v=20260909');
+  import('./backup-manager.js?v=20260910');
 }
 if (typeof window !== 'undefined' && /\/dashboard(?:\.html)?\/?$/.test(window.location.pathname)) {
-  import('./backup-manager.js?v=20260909');
+  import('./backup-manager.js?v=20260910');
 }
