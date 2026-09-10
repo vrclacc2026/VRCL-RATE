@@ -127,11 +127,11 @@ async function restoreProductBackup(backup) {
   const stamp = Date.now();
   if (backup.images?.ingredient?.base64) p.ingredient_image_url = await uploadEmbeddedImage(backup.images.ingredient, `restored/ingredients/${p.code || p.id}-${stamp}.webp`);
   if (backup.images?.header?.base64) p.header_image_url = await uploadEmbeddedImage(backup.images.header, `restored/headers/${p.code || p.id}-${stamp}.webp`);
-  const { error: pErr } = await supabase.from('products').upsert(p, { onConflict: 'id' }); if (pErr) throw pErr;
-  const { error: delErr } = await supabase.from('rates').delete().eq('product_id', p.id); if (delErr) throw delErr;
-  if (Array.isArray(backup.rates) && backup.rates.length) {
-    const { error } = await supabase.from('rates').insert(backup.rates); if (error) throw error;
-  }
+  const { error } = await supabase.rpc('restore_vrcl_product_backup', {
+    product_payload: p,
+    rates_payload: Array.isArray(backup.rates) ? backup.rates : []
+  });
+  if (error) throw error;
   const local = currentLocalState();
   if (backup.formula_state?.meta) local.meta = { ...(local.meta || {}), ...backup.formula_state.meta };
   if (backup.formula_state?.locks) local.locks = backup.formula_state.locks;
