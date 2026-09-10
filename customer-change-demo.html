@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Vishwas Customer Change Amount Demo</title>
+  <link rel="stylesheet" href="./customer.css?v=20260829h">
+  <style>
+    .demoBadge{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;background:#fff3cd;border:1px solid #f1d58a;color:#7a5700;font-size:9px;font-weight:950;margin-left:7px}
+    .demoNote{max-width:1450px;margin:10px auto 0;padding:0 12px;font-size:11px;font-weight:850;color:#675e56}
+    .rateValue{display:flex;justify-content:flex-end;align-items:center;gap:7px;white-space:nowrap}
+    .rateMain{font-size:14px;font-weight:950;color:var(--pc)}
+    .changeAmt{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:950;line-height:1;padding:3px 5px;border-radius:999px}
+    .changeAmt.up{color:#078543;background:#eaf8ef}
+    .changeAmt.down{color:#d32222;background:#fff0f0}
+    .changeAmt .arrow{font-size:8px}
+    @media(max-width:570px){.rateValue{gap:5px}.rateMain{font-size:13px}.changeAmt{font-size:9px;padding:3px 4px}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="hdr">
+      <div>
+        <div class="brandRow">
+          <img alt="Vishwas Logo" class="mainLogo" src="logo.png?v=20260828">
+          <div>
+            <div class="company">VISHWAS REFOILS &amp; CONSUMER LIMITED</div>
+            <div class="sub">WHOLESALE CUSTOMER RATE PORTAL <span class="demoBadge">CHANGE AMOUNT DEMO</span></div>
+          </div>
+        </div>
+        <div class="status">
+          <span class="city">RAJKOT ONLY</span>
+          <span class="live">LIVE RATE</span>
+          <span class="updated">LAST UPDATED: DEMO</span>
+        </div>
+      </div>
+      <div class="right">
+        <div class="mini"></div>
+        <div class="productStrip">
+          <div class="stripProduct" style="--pc:#2c8d2a"><img alt="Corn Oil" src="./assets/header/corn.png"><span class="stripLabel">Corn Oil</span></div>
+          <div class="stripProduct" style="--pc:#1167c7"><img alt="Cotton Oil" src="./assets/header/cotton.png"><span class="stripLabel">Cotton Oil</span></div>
+          <div class="stripProduct" style="--pc:#ef6c00"><img alt="Groundnut Oil" src="./assets/header/groundnut.png"><span class="stripLabel">Groundnut Oil</span></div>
+          <div class="stripProduct" style="--pc:#0b6b43"><img alt="Mustard Oil" src="./assets/header/mustard.png"><span class="stripLabel">Mustard Oil</span></div>
+          <div class="stripProduct" style="--pc:#6d43c1"><img alt="Palm Oil" src="./assets/header/palm.png"><span class="stripLabel">Palm Oil</span></div>
+          <div class="stripProduct" style="--pc:#d32f2f"><img alt="Soya Oil" src="./assets/header/soya.png"><span class="stripLabel">Soya Oil</span></div>
+          <div class="stripProduct" style="--pc:#dc8a00"><img alt="Sunflower Oil" src="./assets/header/sunflower.png"><span class="stripLabel">Sunflower Oil</span></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="demoNote">Demo only — current customer panel has not been changed. ₹0 change is intentionally not shown.</div>
+
+  <main>
+    <h1 class="sectionTitle">Wholesale Rate Cards</h1>
+    <div class="grid">
+      <article class="card" style="--pc:#ef6c00">
+        <div class="cardHead">
+          <div class="ingredient"><img src="./assets/header/groundnut.png" alt="Groundnut Oil"></div>
+          <div><div class="rateName">Groundnut Oil</div><div class="rateSub">LATEST PUBLISHED RATE</div></div>
+        </div>
+        <table>
+          <thead><tr><th>PACKING</th><th>RATE</th></tr></thead>
+          <tbody>
+            <tr><td>15 KG</td><td><div class="rateValue"><span class="rateMain">₹ 2,550.00</span><span class="changeAmt up"><span class="arrow">▲</span>₹20</span></div></td></tr>
+            <tr><td>15 LTR</td><td><div class="rateValue"><span class="rateMain">₹ 2,420.00</span></div></td></tr>
+            <tr><td>5 LTR</td><td><div class="rateValue"><span class="rateMain">₹ 815.00</span><span class="changeAmt down"><span class="arrow">▼</span>₹10</span></div></td></tr>
+          </tbody>
+        </table>
+        <div class="terms"><strong>TERMS &amp; CONDITIONS</strong>Rates are subject to change. Confirm latest rate before order.</div>
+      </article>
+
+      <article class="card" style="--pc:#dc8a00">
+        <div class="cardHead">
+          <div class="ingredient"><img src="./assets/header/sunflower.png" alt="Sunflower Oil"></div>
+          <div><div class="rateName">Sun-deep Oil</div><div class="rateSub">LATEST PUBLISHED RATE</div></div>
+        </div>
+        <table>
+          <thead><tr><th>PACKING</th><th>RATE</th></tr></thead>
+          <tbody>
+            <tr><td>15 KG</td><td><div class="rateValue"><span class="rateMain">₹ 2,310.00</span><span class="changeAmt down"><span class="arrow">▼</span>₹25</span></div></td></tr>
+            <tr><td>15 LTR</td><td><div class="rateValue"><span class="rateMain">₹ 2,185.00</span><span class="changeAmt up"><span class="arrow">▲</span>₹15</span></div></td></tr>
+            <tr><td>5 LTR</td><td><div class="rateValue"><span class="rateMain">₹ 735.00</span></div></td></tr>
+          </tbody>
+        </table>
+        <div class="terms"><strong>TERMS &amp; CONDITIONS</strong>Rates are subject to change. Confirm latest rate before order.</div>
+      </article>
+
+      <article class="card" style="--pc:#1167c7">
+        <div class="cardHead">
+          <div class="ingredient"><img src="./assets/header/cotton.png" alt="Cotton Oil"></div>
+          <div><div class="rateName">Cotton-deep Oil</div><div class="rateSub">LATEST PUBLISHED RATE</div></div>
+        </div>
+        <table>
+          <thead><tr><th>PACKING</th><th>RATE</th></tr></thead>
+          <tbody>
+            <tr><td>15 KG</td><td><div class="rateValue"><span class="rateMain">₹ 2,020.00</span></div></td></tr>
+            <tr><td>15 LTR</td><td><div class="rateValue"><span class="rateMain">₹ 1,915.00</span><span class="changeAmt up"><span class="arrow">▲</span>₹10</span></div></td></tr>
+            <tr><td>5 LTR</td><td><div class="rateValue"><span class="rateMain">₹ 645.00</span></div></td></tr>
+          </tbody>
+        </table>
+        <div class="terms"><strong>TERMS &amp; CONDITIONS</strong>Rates are subject to change. Confirm latest rate before order.</div>
+      </article>
+    </div>
+  </main>
+
+  <footer>VISHWAS REFOILS &amp; CONSUMER LIMITED</footer>
+</body>
+</html>
