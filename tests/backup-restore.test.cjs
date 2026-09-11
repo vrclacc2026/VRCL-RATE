@@ -198,6 +198,62 @@ test('an admin logging in on a fresh browser loads cloud formulas before renderi
   assert.equal(a.db.cloudWrites, 0, 'login must not overwrite cloud formulas with empty browser state');
 });
 
+test('saved cloud formulas replace an old browser cache that contains a loose rate but no packing formulas', async () => {
+  const a = app();
+  const cached = metadata();
+  cached[keyA].rows = {};
+  a.local.setItem(META, JSON.stringify(cached));
+  a.db.admin_state = [{ key: CLOUD, value: { meta: metadata(), locks: {}, master_lock: false }, updated_at: '2026-09-11T12:37:05Z' }];
+  assert.equal(await a.editor.check(), true);
+  assert.equal(a.editor.rows()[0].formula, 'MASTER*1.5');
+  assert.equal(a.editor.rows()[0].master, 'LOOSE OIL RATE');
+  assert.equal(a.db.cloudWrites, 0);
+});
+
+test('a browser clock ahead of the server cannot hide restored formulas', async () => {
+  const a = app();
+  const cached = metadata();
+  cached[keyA].rows['15 KG'].formula = 'MASTER*1';
+  a.local.setItem(META, JSON.stringify(cached));
+  a.local.setItem('VRCL_ADMIN_STATE_UPDATED_AT', '2099-01-01T00:00:00Z');
+  a.db.admin_state = [{ key: CLOUD, value: { meta: metadata(), locks: {}, master_lock: false }, updated_at: '2026-09-11T12:37:05Z' }];
+  assert.equal(await a.editor.check(), true);
+  assert.equal(a.editor.rows()[0].formula, 'MASTER*1.5');
+  assert.equal(a.db.cloudWrites, 0);
+  assert.equal(JSON.parse(a.local.getItem('VRCL_ADMIN_FORMULA_RECOVERY_V1')).meta[keyA].rows['15 KG'].formula, 'MASTER*1');
+});
+
+test('an unsynced edit to another product is retained while restored server formulas are loaded', async () => {
+  const a = app();
+  const previous = metadata();
+  previous[keyA].rows = {};
+  const synced = { meta: previous, locks: {}, master_lock: false };
+  a.local.setItem('VRCL_ADMIN_SYNCED_FORMULA_STATE_V1', JSON.stringify(synced));
+  const local = clone(previous);
+  local[keyB].looseRate = '1250';
+  a.local.setItem(META, JSON.stringify(local));
+  a.local.setItem('VRCL_ADMIN_STATE_UPDATED_AT', '2026-09-11T12:40:00Z');
+  a.db.admin_state = [{ key: CLOUD, value: { meta: metadata(), locks: {}, master_lock: false }, updated_at: '2026-09-11T12:37:05Z' }];
+  assert.equal(await a.editor.check(), true);
+  assert.equal(a.editor.rows()[0].formula, 'MASTER*1.5');
+  assert.equal(JSON.parse(a.local.getItem(META))[keyB].looseRate, '1250');
+  await a.backup.syncStateToCloud();
+  assert.equal(a.db.admin_state[0].value.meta[keyA].rows['15 KG'].formula, 'MASTER*1.5');
+  assert.equal(a.db.admin_state[0].value.meta[keyB].looseRate, '1250');
+});
+
+test('a confirmed local formula edit survives reload before the next cloud save', async () => {
+  const a = app();
+  a.db.admin_state = [{ key: CLOUD, value: { meta: metadata(), locks: {}, master_lock: false }, updated_at: '2026-09-11T12:37:05Z' }];
+  assert.equal(await a.editor.check(), true);
+  const local = JSON.parse(a.local.getItem(META));
+  local[keyA].rows['15 KG'].formula = 'MASTER*1.75';
+  a.local.setItem(META, JSON.stringify(local));
+  const reload = app({ db: a.db, local: a.local, session: a.session });
+  assert.equal(await reload.editor.check(), true);
+  assert.equal(reload.editor.rows()[0].formula, 'MASTER*1.75');
+});
+
 test('complete older V1 product backups remain compatible and cannot replace another product formula', async () => {
   const a = app();
   a.local.setItem(META, JSON.stringify(metadata()));

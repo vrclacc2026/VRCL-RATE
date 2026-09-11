@@ -30,8 +30,8 @@
 </main><div id="toast" class="toast"></div>
 <script type="module">
 import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import{SUPABASE_URL,SUPABASE_ANON_KEY}from'./supabase-config.js';
-import{hydrateStateFromCloud}from'./backup-manager.js?v=20260911-formula-packing';
+import{SUPABASE_URL,SUPABASE_ANON_KEY}from'./supabase-config.js?v=20260911-formula-cloud';
+import{hydrateStateFromCloud}from'./backup-manager.js?v=20260911-formula-cloud';
 const supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'vrcl-admin-auth'}}),$=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let city='Rajkot',products=[],productId='',rows=[];const META='VISHWAS_RATE_ADMIN_META_V3',LOCKKEY='VRCL_ADMIN_COLUMN_LOCKS',MASTERKEY='VRCL_MASTER_LOCK';let meta={};try{meta=JSON.parse(localStorage.getItem(META)||'{}')}catch{}
@@ -112,4 +112,4 @@ async function compress(file){const bmp=await createImageBitmap(file),max=800,sc
 $('photoInput').onchange=async e=>{const file=e.target.files[0];if(!file||!productId||masterLocked())return;try{toast('Optimizing photo…');const blob=await compress(file),p=currentProduct(),path=`ingredients/${p.code}-${Date.now()}.webp`;const{error:u}=await supabase.storage.from('product-images').upload(path,blob,{contentType:'image/webp',cacheControl:'31536000'});if(u)throw u;const{data:pub}=supabase.storage.from('product-images').getPublicUrl(path);const{error:up}=await supabase.from('products').update({ingredient_image_url:pub.publicUrl}).eq('id',productId);if(up)throw up;p.ingredient_image_url=pub.publicUrl;showPhoto();toast('✅ INGREDIENT PHOTO SAVED')}catch(err){toast(err.message||'Photo upload failed')}};
 $('loginBtn').onclick=async()=>{const{error}=await supabase.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){$('loginMsg').textContent='Invalid admin login.';return}if(!await check())$('loginMsg').textContent='Admin access denied.'};$('logout').onclick=async()=>{await supabase.auth.signOut({scope:'local'});location.reload()};await check();
 </script>
-<script type="module" src="./admin-products.js?v=20260829c"></script></body></html>
+</body></html>

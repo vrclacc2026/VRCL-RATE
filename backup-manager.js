@@ -1,5 +1,5 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase-config.js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase-config.js?v=20260911-formula-cloud';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: 'vrcl-admin-auth' }
@@ -9,6 +9,8 @@ const META = 'VISHWAS_RATE_ADMIN_META_V3';
 const LOCKKEY = 'VRCL_ADMIN_COLUMN_LOCKS';
 const MASTERKEY = 'VRCL_MASTER_LOCK';
 const STATE_UPDATED = 'VRCL_ADMIN_STATE_UPDATED_AT';
+const SYNCED_STATE = 'VRCL_ADMIN_SYNCED_FORMULA_STATE_V1';
+const LOCAL_RECOVERY = 'VRCL_ADMIN_FORMULA_RECOVERY_V1';
 const RESTORE_SELECTION = 'VRCL_RESTORED_PRODUCT';
 const CLOUDKEY = 'admin_formula_state_v1';
 const FULL_FORMAT = 'VRCL_FULL_BACKUP_V2';
@@ -28,6 +30,33 @@ function currentLocalState() {
   };
 }
 function stateSignature(v) { return JSON.stringify([v.meta, v.locks, v.master_lock]); }
+function sameValue(a, b) {
+  if (a === b) return true;
+  if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return false;
+  const keys = Object.keys(a);
+  return keys.length === Object.keys(b).length && keys.every(k => Object.prototype.hasOwnProperty.call(b, k) && sameValue(a[k], b[k]));
+}
+function mergeFormulaState(cloud, local, synced) {
+  const merged = { ...cloud, meta: { ...(local.meta || {}), ...(cloud.meta || {}) } };
+  for (const [key, value] of Object.entries(local.meta || {})) {
+    // Preserve an unsynced edit only when that product has not changed on the server.
+    // A timestamp for a different product (or a fast device clock) cannot hide a restore.
+    if (synced && !sameValue(value, synced.meta?.[key]) && sameValue(cloud.meta?.[key], synced.meta?.[key])) merged.meta[key] = value;
+  }
+  for (const key of ['locks', 'master_lock']) {
+    if (cloud[key] === undefined || (synced && !sameValue(local[key], synced[key]) && sameValue(cloud[key], synced[key]))) merged[key] = local[key];
+  }
+  return merged;
+}
+function preserveLocalFormulaCopy(local, merged) {
+  const recovery = safeJson(localStorage.getItem(LOCAL_RECOVERY), { meta: {} });
+  if (!recovery.meta || typeof recovery.meta !== 'object') recovery.meta = {};
+  let changed = false;
+  for (const [key, value] of Object.entries(local.meta || {})) {
+    if (!sameValue(value, merged.meta?.[key])) { recovery.meta[key] = value; changed = true; }
+  }
+  if (changed) localStorage.setItem(LOCAL_RECOVERY, JSON.stringify({ ...recovery, captured_at: new Date().toISOString() }));
+}
 function applyLocalState(v, updatedAt = new Date().toISOString()) {
   if (!v || typeof v !== 'object') return;
   if (v.meta && typeof v.meta === 'object') localStorage.setItem(META, JSON.stringify(v.meta));
@@ -51,6 +80,7 @@ function syncStateToCloud(value = currentLocalState()) {
     const { data, error } = await supabase.from('admin_state').upsert({ key: CLOUDKEY, value: snapshot, updated_by: session.user.id, updated_at: new Date().toISOString() }, { onConflict: 'key' }).select('key').single();
     if (error) throw error;
     if (data?.key !== CLOUDKEY) throw new Error('Formulas could not be saved. Please try again.');
+    localStorage.setItem(SYNCED_STATE, JSON.stringify(snapshot));
   });
   syncQueue = task;
   return task;
@@ -65,11 +95,11 @@ async function loadStateFromCloud() {
   const { data, error } = await supabase.from('admin_state').select('value,updated_at').eq('key', CLOUDKEY).maybeSingle();
   if (error) throw error;
   if (!data?.value || restoreInProgress || stateSignature(local) !== stateSignature(currentLocalState())) return;
-  const cloudTime = Date.parse(data.updated_at || data.value.captured_at || 0) || 0;
-  const localTime = Date.parse(local.captured_at || 0) || 0;
-  const localHasMeta = Object.values(local.meta || {}).some(s => Object.keys(s?.rows || {}).length || (s?.looseRate !== '' && s?.looseRate != null) || (s?.masterFormula && s.masterFormula !== 'MASTER*1') || Number(s?.masterRound));
-  // Retain legacy local formulas without a timestamp; blank defaults are not data.
-  if (!localHasMeta || (localTime > 0 && cloudTime > localTime)) applyLocalState(data.value, data.updated_at || data.value.captured_at || new Date().toISOString());
+  const synced = safeJson(localStorage.getItem(SYNCED_STATE), null);
+  const merged = mergeFormulaState(data.value, local, synced);
+  preserveLocalFormulaCopy(local, merged);
+  localStorage.setItem(SYNCED_STATE, JSON.stringify(data.value));
+  applyLocalState(merged, data.updated_at || data.value.captured_at || new Date().toISOString());
 }
 function downloadJson(obj, name) {
   const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
