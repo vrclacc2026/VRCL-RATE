@@ -1,5 +1,5 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase-config.js?v=20260911-formula-cloud';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase-config.js?v=20260911-selected-restore';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: 'vrcl-admin-auth' }
@@ -141,6 +141,10 @@ async function uploadEmbeddedImage(image, path) {
 }
 function selectedProductId() { return document.querySelector('#productArea .productBtn.active')?.dataset.product || ''; }
 function selectedCity() { return document.querySelector('#cityArea .city.active')?.dataset.city || 'Rajkot'; }
+function selectedRestoreTarget() {
+  const product_id = selectedProductId();
+  return product_id ? { product_id, city: selectedCity() } : null;
+}
 function iconStyle() {
   return 'width:30px;height:30px;padding:0;border:1px solid #cbd5e1;border-radius:8px;background:#fff;display:inline-grid;place-items:center;cursor:pointer;box-shadow:0 2px 0 #d5dbe2;font-size:14px';
 }
@@ -189,24 +193,34 @@ function prepareProductRestore(backup) {
   if (!rates.length && Object.keys(formula?.rows || {}).length) throw new Error('This backup contains formulas but no saved packaging/rates. A complete backup is needed.');
   return { product: p, rates, formula };
 }
-async function restoreProductBackup(backup) {
+async function restoreProductBackup(backup, target = selectedRestoreTarget(), { confirmRestore = false } = {}) {
   const prepared = prepareProductRestore(backup);
   if (!await isAdmin()) throw new Error('Admin access required.');
+  let p = prepared.product;
+  if (target) {
+    if (!target.product_id || !['Rajkot','Ahmedabad','Udaan'].includes(target.city)) throw new Error('Select a valid destination product before restoring.');
+    const { data, error } = await supabase.from('products').select('*').eq('id', target.product_id).eq('city', target.city).eq('active', true).single();
+    if (error) throw error;
+    if (!data) throw new Error('The selected product is no longer available. Select it again before restoring.');
+    p = { ...data };
+  }
+  const copyingProduct = p.id !== prepared.product.id;
+  const rates = prepared.rates.map(r => ({ ...r, id: copyingProduct ? crypto.randomUUID() : r.id, product_id: p.id, city: p.city }));
+  if (confirmRestore && !confirm('Restore "'+prepared.product.name+'" backup into "'+p.name+'" ('+p.city+')? Packaging, rates, formulas and narration for "'+p.name+'" will be replaced. The product name will stay "'+p.name+'".')) return null;
   restoreInProgress = true;
   try {
   await syncQueue.catch(() => {});
-  const p = prepared.product;
   const stamp = Date.now();
-  if (backup.images?.ingredient?.base64) p.ingredient_image_url = await uploadEmbeddedImage(backup.images.ingredient, `restored/ingredients/${p.code || p.id}-${stamp}.webp`);
-  if (backup.images?.header?.base64) p.header_image_url = await uploadEmbeddedImage(backup.images.header, `restored/headers/${p.code || p.id}-${stamp}.webp`);
+  if (!copyingProduct && backup.images?.ingredient?.base64) p.ingredient_image_url = await uploadEmbeddedImage(backup.images.ingredient, `restored/ingredients/${p.code || p.id}-${stamp}.webp`);
+  if (!copyingProduct && backup.images?.header?.base64) p.header_image_url = await uploadEmbeddedImage(backup.images.header, `restored/headers/${p.code || p.id}-${stamp}.webp`);
   const { data: restored, error } = await supabase.rpc('restore_vrcl_product_backup', {
     product_payload: p,
-    rates_payload: prepared.rates
+    rates_payload: rates
   });
   if (error) throw error;
-  if (!restored?.ok || restored.rates !== prepared.rates.length) throw new Error('The server did not confirm all packaging rows. Please retry the restore.');
+  if (!restored?.ok || restored.product_id !== p.id || restored.rates !== rates.length) throw new Error('The server did not confirm all packaging rows for the selected product. Please retry the restore.');
   const local = currentLocalState();
-  // A product backup may only replace the formulas for its own city/product.
+  // Read formulas under the backup's original key, then save them under the destination key.
   if (prepared.formula) local.meta = { ...(local.meta || {}), [p.city + '|' + p.id]: prepared.formula };
   if (backup.formula_state?.locks) local.locks = backup.formula_state.locks;
   if (typeof backup.formula_state?.master_lock === 'boolean') local.master_lock = backup.formula_state.master_lock;
@@ -215,7 +229,7 @@ async function restoreProductBackup(backup) {
   catch (error) { throw new Error('Packaging restored, but formulas could not be saved: '+(error.message || error)+'. Please retry this backup.'); }
   sessionStorage.setItem(RESTORE_SELECTION, JSON.stringify({city:p.city,product_id:p.id}));
   const formulasIncluded = !!prepared.formula && prepared.rates.every(r => typeof prepared.formula.rows?.[r.packing]?.formula === 'string');
-  return { ...restored, formulas_included: formulasIncluded, product_name: p.name };
+  return { ...restored, formulas_included: formulasIncluded, product_name: p.name, source_product_name: prepared.product.name };
   } finally { restoreInProgress = false; }
 }
 
@@ -305,16 +319,16 @@ function addProductControls() {
   const backup = document.createElement('button'); backup.type='button'; backup.title='Backup selected product'; backup.setAttribute('aria-label','Backup selected product'); backup.style.cssText=iconStyle(); backup.innerHTML='↓';
   const restore = document.createElement('button'); restore.type='button'; restore.title='Restore product backup'; restore.setAttribute('aria-label','Restore product backup'); restore.style.cssText=iconStyle(); restore.innerHTML='↺';
   const input = document.createElement('input'); input.type='file'; input.accept='.json,application/json'; input.hidden=true;
+  let restoreTarget;
   tools.append(backup, restore, input); photo.insertAdjacentElement('afterend', tools);
   backup.onclick = async () => { backup.disabled=true; try { await makeProductBackup(); } catch(e){ alert('Product backup failed: '+(e.message||e)); } finally { backup.disabled=false; } };
-  restore.onclick = () => input.click();
+  restore.onclick = () => { restoreTarget = selectedRestoreTarget(); input.click(); };
   input.onchange = async () => {
     const file=input.files?.[0]; if(!file)return;
-    if(!confirm('Restore this product backup? Current data for that product will be replaced.')){ input.value=''; return; }
     restore.disabled=true;
-    try { const result = await restoreProductBackup(await readFileJson(file)); alert('Product restored: '+result.product_name+'. Packaging rows: '+result.rates+'.'+(result.formulas_included?'':' This backup does not contain all formula settings.')); location.reload(); }
+    try { const result = await restoreProductBackup(await readFileJson(file), restoreTarget, { confirmRestore: true }); if(result){ alert('Backup applied to '+result.product_name+'. Packaging rows: '+result.rates+'.'+(result.formulas_included?'':' This backup does not contain all formula settings.')); location.reload(); } }
     catch(e){ alert('Product restore failed: '+(e.message||e)); }
-    finally { restore.disabled=false; input.value=''; }
+    finally { restore.disabled=false; input.value=''; restoreTarget=undefined; }
   };
 }
 

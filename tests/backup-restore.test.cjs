@@ -100,6 +100,9 @@ function app({ db = fixture(), local = storage(), session = storage() } = {}) {
       }
       assert.equal(name, 'restore_vrcl_product_backup');
       const { product_payload: product, rates_payload: rates } = clone(args);
+      const retained = db.rates.filter(r => r.product_id !== product.id);
+      const allIds = [...retained, ...rates].map(r => r.id);
+      assert.equal(new Set(allIds).size, allIds.length, 'restored rates cannot reuse another product\'s primary keys');
       db.products = [...db.products.filter(p => p.id !== product.id), product];
       db.rates = [...db.rates.filter(r => r.product_id !== product.id), ...rates];
       return { data: { ok: true, product_id: product.id, rates: rates.length }, error: null };
@@ -161,7 +164,7 @@ test('backup captures unsaved packaging and formulas; restore and reload show th
   assert.equal(snapshot.formula_state.meta[keyB].rows['15 L'].master, '5 L');
 
   a.db.rates = a.db.rates.filter(r => r.product_id !== B);
-  await a.editor.select('Rajkot', A);
+  await a.editor.select('Ahmedabad', B);
   const otherMeta = clone(JSON.parse(a.local.getItem(META))[keyA]);
   const result = await a.backup.restoreProductBackup(snapshot);
   assert.equal(result.rates, 3);
@@ -313,4 +316,81 @@ test('a queued older cloud save finishes before restored formulas are saved', as
   assert.equal(a.db.admin_state[0].value.meta[keyB].rows['5 L'].formula, 'MASTER*5');
   assert.equal(a.db.cloudWrites, 2);
   await settle();
+});
+
+test('a backup restores into the selected product and keeps its name, city and source data', async () => {
+  const a = app();
+  a.db.products[0].name = 'Palm - SPOT';
+  Object.assign(a.db.products[1], { name: 'Palm - September', code: 'palm-september', customer_visible: false, ingredient_image_url: 'september.webp', header_image_url: 'september-header.webp' });
+  a.local.setItem(META, JSON.stringify(metadata()));
+  a.window.dispatchEvent(new Event('vrcl:admin-state-applied'));
+  const targetBefore = clone(a.db.products[1]);
+  const sourceBefore = clone(a.db.products[0]);
+  const sourceRates = clone(a.db.rates.filter(r => r.product_id === A));
+  const sourceFormula = clone(metadata()[keyA]);
+  const backup = { format: 'VRCL_PRODUCT_BACKUP_V1', product: sourceBefore, rates: sourceRates, formula_state: { meta: metadata() } };
+  const fileBefore = clone(backup);
+  await a.editor.select('Ahmedabad', B);
+  const result = await a.backup.restoreProductBackup(backup);
+  assert.equal(result.product_id, B);
+  assert.equal(result.product_name, 'Palm - September');
+  assert.equal(result.formulas_included, true);
+  assert.deepEqual(a.db.products.find(p => p.id === B), targetBefore);
+  assert.deepEqual(a.db.products.find(p => p.id === A), sourceBefore);
+  assert.deepEqual(a.db.rates.filter(r => r.product_id === A), sourceRates);
+  const copied = a.db.rates.filter(r => r.product_id === B);
+  assert.equal(copied.length, sourceRates.length);
+  assert.equal(copied[0].city, 'Ahmedabad');
+  assert.equal(copied[0].packing, sourceRates[0].packing);
+  assert.equal(copied[0].rate, sourceRates[0].rate);
+  assert.equal(copied[0].narration, sourceRates[0].narration);
+  assert.notEqual(copied[0].id, sourceRates[0].id);
+  assert.deepEqual(a.db.admin_state[0].value.meta[keyB], sourceFormula);
+  assert.deepEqual(JSON.parse(a.local.getItem(META))[keyA], sourceFormula);
+  assert.deepEqual(backup, fileBefore);
+  const reload = app({ db: a.db, local: a.local, session: a.session });
+  assert.equal(await reload.editor.check(), true);
+  assert.equal(reload.editor.selection().product_id, B);
+  assert.equal(reload.editor.rows()[0].formula, 'MASTER*1.5');
+  assert.equal(reload.document.getElementById('looseRate').value, '1000');
+});
+
+test('restoring a product after renaming it keeps the current name and code', async () => {
+  const a = app();
+  const backup = { format: 'VRCL_PRODUCT_BACKUP_V1', product: clone(a.db.products[0]), rates: clone(a.db.rates.filter(r => r.product_id === A)), formula_state: { meta: metadata() } };
+  a.db.products[0].name = 'Palm - September';
+  a.db.products[0].code = 'palm-september';
+  await a.editor.select('Rajkot', A);
+  const result = await a.backup.restoreProductBackup(backup);
+  assert.equal(result.product_name, 'Palm - September');
+  assert.equal(a.db.products.find(p => p.id === A).code, 'palm-september');
+  assert.equal(a.db.rates.find(r => r.product_id === A).id, backup.rates[0].id);
+  assert.equal(a.db.admin_state[0].value.meta[keyA].rows['15 KG'].formula, 'MASTER*1.5');
+});
+
+test('the confirmation identifies the frozen destination and cancellation does not restore anything', async () => {
+  const a = app();
+  const backup = { format: 'VRCL_PRODUCT_BACKUP_V1', product: clone(a.db.products[0]), rates: clone(a.db.rates.filter(r => r.product_id === A)), formula_state: { meta: metadata() } };
+  await a.editor.select('Ahmedabad', B);
+  const target = clone(a.editor.selection());
+  await a.editor.select('Rajkot', A);
+  let prompt;
+  a.manager.confirm = message => { prompt = message; return false; };
+  const before = clone(a.db.rates);
+  const result = await a.backup.restoreProductBackup(backup, target, { confirmRestore: true });
+  assert.equal(result, null);
+  assert.match(prompt, /"Groundnut" backup into "Cotton" \(Ahmedabad\)/);
+  assert.equal(a.db.rpcCalls, 0);
+  assert.equal(a.db.cloudWrites, 0);
+  assert.deepEqual(a.db.rates, before);
+});
+
+test('a removed destination never falls back to overwriting the backup source product', async () => {
+  const a = app();
+  const backup = { format: 'VRCL_PRODUCT_BACKUP_V1', product: clone(a.db.products[0]), rates: clone(a.db.rates.filter(r => r.product_id === A)), formula_state: { meta: metadata() } };
+  await a.editor.select('Ahmedabad', B);
+  const target = clone(a.editor.selection());
+  a.db.products[1].active = false;
+  await assert.rejects(a.backup.restoreProductBackup(backup, target), /no longer available/);
+  assert.equal(a.db.rpcCalls, 0);
 });

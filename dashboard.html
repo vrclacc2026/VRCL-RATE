@@ -12,7 +12,7 @@
 <iframe id="customerProbe" class="probe" title="customer runtime health probe"></iframe>
 <script type="module">
 import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import{SUPABASE_URL,SUPABASE_ANON_KEY}from'./supabase-config.js?v=20260911-formula-cloud';
+import{SUPABASE_URL,SUPABASE_ANON_KEY}from'./supabase-config.js?v=20260911-selected-restore';
 const supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'vrcl-admin-auth'}});const $=id=>document.getElementById(id);const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function badge(id,ok,text){const e=$(id);e.textContent=text||(ok?'PASS':'FAIL');e.className='badge '+(ok?'ok':'bad')}
 $('eye').onclick=()=>{$('password').type=$('password').type==='password'?'text':'password';$('eye').textContent=$('password').type==='password'?'👁':'🙈'};
