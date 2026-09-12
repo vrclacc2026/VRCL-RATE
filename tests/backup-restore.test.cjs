@@ -141,9 +141,15 @@ function app({ db = fixture(), local = storage(), session = storage() } = {}) {
   `, manager);
   const referenceModule = vm.createContext({});
   vm.runInContext(fs.readFileSync(path.join(root,'loose-rate-reference.js'),'utf8').replace(/^export /gm,''),referenceModule);
+  const calculatorModule = vm.createContext({});
+  vm.runInContext(fs.readFileSync(path.join(root,'rate-calculator.js'),'utf8').replace(/^export const /gm,'const ').replace(/^export /gm,'')+
+    '\nthis.calculatorTest={calcFormula,applyExtraCost,roundPackingValue,roundLooseValue};',calculatorModule);
+  const calculator = calculatorModule.calculatorTest;
   const editor = vm.createContext({ ...shared, hydrateStateFromCloud: manager.backupTest.hydrateStateFromCloud, syncStateToCloud:manager.backupTest.syncStateToCloud,
     resolveLooseRate:referenceModule.resolveLooseRate,canReferenceLooseRate:referenceModule.canReferenceLooseRate,
-    looseRateDependants:referenceModule.looseRateDependants,calculateReferencedRates:referenceModule.calculateReferencedRates });
+    looseRateDependants:referenceModule.looseRateDependants,calculateReferencedRates:referenceModule.calculateReferencedRates,
+    calcFormula:calculator.calcFormula,applyExtraCost:calculator.applyExtraCost,
+    roundPackingValue:calculator.roundPackingValue,roundLooseValue:calculator.roundLooseValue });
   const adminSource = fs.readFileSync(path.join(root, 'admin.html'), 'utf8')
     .match(/<script type="module">([\s\S]*?)<\/script>/)[1]
     .replace(/^import.*\n/gm, '').replace(/;await check\(\);\s*$/, ';');

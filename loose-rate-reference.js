@@ -47,7 +47,7 @@ export function looseRateDependants(meta, sourceKey, products) {
 }
 
 // Both calculation callbacks are the unchanged functions from the existing admin page.
-export function calculateReferencedRates({ meta, product, rates, products, calcFormula, roundPackingValue }) {
+export function calculateReferencedRates({ meta, product, rates, products, calcFormula, applyExtraCost, roundPackingValue }) {
   const productKey = product.city + '|' + product.id;
   const loose = resolveLooseRate(meta, productKey, products);
   if (loose.error) throw new Error(product.name + ': ' + loose.error);
@@ -69,7 +69,8 @@ export function calculateReferencedRates({ meta, product, rates, products, calcF
       if (!names.has(setting.master)) throw new Error(product.name + ': packing master is missing for ' + row.packing);
       master = evaluateRow(names.get(setting.master), chain);
     }
-    const value = roundPackingValue(calcFormula(setting.formula || 'MASTER*1', master) + Number(setting.extra || 0), setting.round || 0);
+    const subtotal = calcFormula(setting.formula || 'MASTER*1', master);
+    const value = roundPackingValue(applyExtraCost ? applyExtraCost(subtotal, setting.extra) : subtotal + Number(setting.extra || 0), setting.round || 0);
     if (!Number.isFinite(value)) throw new Error(product.name + ': invalid calculated rate');
     cached.set(index, value);
     return value;

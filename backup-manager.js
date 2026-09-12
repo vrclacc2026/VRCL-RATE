@@ -1,5 +1,5 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase-config.js?v=20260912-loose-reference';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase-config.js?v=20260912-rate-tools';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: 'vrcl-admin-auth' }
@@ -234,7 +234,7 @@ async function restoreProductBackup(backup, target = selectedRestoreTarget(), { 
 }
 
 async function collectCodeSnapshot() {
-  const files = ['index.html','admin.html','dashboard.html','customer-check.html','users.html','customer.js','customer.css','admin-products.js','backup-manager.js','supabase-config.js','loose-rate-reference.js'];
+  const files = ['index.html','admin.html','dashboard.html','customer-check.html','users.html','customer.js','customer.css','admin-products.js','backup-manager.js','supabase-config.js','loose-rate-reference.js','rate-calculator.js'];
   const out = {};
   await Promise.all(files.map(async f => {
     try { const r = await fetch('./' + f + '?backup=' + Date.now(), { cache: 'no-store' }); if (r.ok) out[f] = await r.text(); }
