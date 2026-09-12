@@ -15,9 +15,9 @@ try {
 
 // Admin-only extension. Customer pages do not load these modules.
 if (typeof window !== 'undefined' && /\/admin(?:\.html)?\/?$/.test(window.location.pathname)) {
-  import('./admin-products.js?v=20260911-selected-restore');
-  import('./backup-manager.js?v=20260911-selected-restore');
+  import('./admin-products.js?v=20260912-loose-reference');
+  import('./backup-manager.js?v=20260912-loose-reference');
 }
 if (typeof window !== 'undefined' && /\/dashboard(?:\.html)?\/?$/.test(window.location.pathname)) {
-  import('./backup-manager.js?v=20260911-selected-restore');
+  import('./backup-manager.js?v=20260912-loose-reference');
 }

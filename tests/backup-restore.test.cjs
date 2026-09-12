@@ -72,8 +72,25 @@ function app({ db = fixture(), local = storage(), session = storage() } = {}) {
     order(column) { this.sorts.push(column); return this; }
     limit() { return this; }
     upsert(payload) { this.payload = clone(payload); return this; }
+    insert(payload) { this.payload = clone(payload); this.insertOnly = true; return this; }
     async execute(single) {
       if (this.payload) {
+        if (this.table === 'rates') {
+          if (db.failRates) return { data: null, error: new Error('Rate storage unavailable') };
+          const values = Array.isArray(this.payload) ? this.payload : [this.payload];
+          const next = clone(db.rates);
+          for (const row of values) {
+            const index = next.findIndex(old => old.city === row.city && old.product_id === row.product_id && old.packing === row.packing);
+            if (index >= 0) Object.assign(next[index], row); else next.push({id: webcrypto.randomUUID(), ...row});
+          }
+          db.rates = next; db.rateWrites = (db.rateWrites || 0) + 1;
+          return { data: clone(values), error: null };
+        }
+        if (this.table === 'rate_history') {
+          const values = Array.isArray(this.payload) ? this.payload : [this.payload];
+          db.rate_history.push(...values.map(row => ({...row, changed_at:new Date().toISOString()})));
+          return {data:clone(values),error:null};
+        }
         if (db.failCloud) return { data: null, error: new Error('Formula storage unavailable') };
         if (db.beforeCloudWrite) await db.beforeCloudWrite();
         db.cloudWrites++;
@@ -122,7 +139,11 @@ function app({ db = fixture(), local = storage(), session = storage() } = {}) {
     this.backupTest = { makeProductBackup, restoreProductBackup, restoreFullBackup, buildFullBackup, hydrateStateFromCloud, syncStateToCloud };
     downloadJson = value => { this.downloadedBackup = value; };
   `, manager);
-  const editor = vm.createContext({ ...shared, hydrateStateFromCloud: manager.backupTest.hydrateStateFromCloud });
+  const referenceModule = vm.createContext({});
+  vm.runInContext(fs.readFileSync(path.join(root,'loose-rate-reference.js'),'utf8').replace(/^export /gm,''),referenceModule);
+  const editor = vm.createContext({ ...shared, hydrateStateFromCloud: manager.backupTest.hydrateStateFromCloud, syncStateToCloud:manager.backupTest.syncStateToCloud,
+    resolveLooseRate:referenceModule.resolveLooseRate,canReferenceLooseRate:referenceModule.canReferenceLooseRate,
+    looseRateDependants:referenceModule.looseRateDependants,calculateReferencedRates:referenceModule.calculateReferencedRates });
   const adminSource = fs.readFileSync(path.join(root, 'admin.html'), 'utf8')
     .match(/<script type="module">([\s\S]*?)<\/script>/)[1]
     .replace(/^import.*\n/gm, '').replace(/;await check\(\);\s*$/, ';');
@@ -393,4 +414,150 @@ test('a removed destination never falls back to overwriting the backup source pr
   a.db.products[1].active = false;
   await assert.rejects(a.backup.restoreProductBackup(backup, target), /no longer available/);
   assert.equal(a.db.rpcCalls, 0);
+});
+
+async function referenceApp(state = metadata(), db = fixture()) {
+  db.admin_state = [{ key:CLOUD, value:{meta:clone(state),locks:{},master_lock:false}, updated_at:'2026-09-12T08:00:00Z' }];
+  const a=app({db});
+  assert.equal(await a.editor.check(),true);
+  return a;
+}
+async function linkTo(a, city, productId, sourceCity, sourceId) {
+  await a.editor.select(city,productId);
+  a.document.getElementById('looseRefMode').value='reference';
+  await a.document.getElementById('looseRefMode').onchange();
+  a.document.getElementById('looseRefCity').value=sourceCity;
+  await a.document.getElementById('looseRefCity').onchange();
+  a.document.getElementById('looseRefProduct').value=sourceId;
+  await a.document.getElementById('looseRefProduct').onchange();
+}
+
+test('reference selection waits for an explicit product and preserves both products formulas', async () => {
+  const a=await referenceApp();
+  await a.editor.select('Ahmedabad',B);
+  const before=clone(a.db.admin_state[0].value.meta);
+  a.document.getElementById('looseRefMode').value='reference';
+  await a.document.getElementById('looseRefMode').onchange();
+  assert.equal(a.db.cloudWrites,0);
+  assert.equal(a.db.admin_state[0].value.meta[keyB].looseReference,undefined);
+  await a.document.getElementById('saveAll').onclick();
+  assert.equal(a.db.rateWrites||0,0,'an incomplete source selection cannot publish rates');
+  a.document.getElementById('looseRefProduct').value=A;
+  await a.document.getElementById('looseRefProduct').onchange();
+  assert.deepEqual(a.db.admin_state[0].value.meta[keyB].looseReference,{city:'Rajkot',productId:A});
+  assert.deepEqual(a.db.admin_state[0].value.meta[keyA],before[keyA]);
+  assert.deepEqual(a.db.admin_state[0].value.meta[keyB].rows,before[keyB].rows);
+  assert.equal(Number(a.document.getElementById('looseRate').value),1000);
+  assert.equal(a.document.getElementById('looseRate').disabled,true);
+  assert.equal(a.db.rateWrites||0,0,'configuring a reference does not publish customer prices');
+});
+
+test('the reference lock persists while source rates keep flowing through unchanged formulas', async () => {
+  const a=await referenceApp();
+  await linkTo(a,'Ahmedabad',B,'Rajkot',A);
+  await a.document.getElementById('looseRefLock').onclick();
+  assert.equal(a.db.admin_state[0].value.meta[keyB].looseReferenceLocked,true);
+  assert.equal(a.document.getElementById('looseRefMode').disabled,true);
+  const reload=app({db:a.db,local:a.local});
+  assert.equal(await reload.editor.check(),true);
+  await reload.editor.select('Ahmedabad',B);
+  assert.equal(reload.document.getElementById('looseRefLock').textContent,'🔒 REFERENCE LOCKED');
+  reload.document.getElementById('looseRefMode').value='manual';
+  await reload.document.getElementById('looseRefMode').onchange();
+  assert.deepEqual(JSON.parse(reload.local.getItem(META))[keyB].looseReference,{city:'Rajkot',productId:A});
+  await reload.editor.select('Rajkot',A);
+  reload.document.getElementById('looseRate').oninput({target:{value:'1100'}});
+  reload.db.products[0].name='Renamed source';
+  await reload.editor.select('Ahmedabad',B);
+  assert.equal(Number(reload.document.getElementById('looseRate').value),1100);
+  assert.match(reload.document.getElementById('looseRefStatus').textContent,/Renamed source/);
+  assert.equal(reload.document.getElementById('looseRefMode').disabled,true);
+  assert.deepEqual(clone(reload.editor.rows().map(r=>r.formula)),['MASTER/10','MASTER*5']);
+});
+
+test('unlocking and removing a reference keeps the resolved loose value as a manual rate', async () => {
+  const a=await referenceApp();
+  await linkTo(a,'Ahmedabad',B,'Rajkot',A);
+  await a.document.getElementById('looseRefLock').onclick();
+  await a.document.getElementById('looseRefLock').onclick();
+  a.document.getElementById('looseRefMode').value='manual';
+  await a.document.getElementById('looseRefMode').onchange();
+  const value=a.db.admin_state[0].value.meta[keyB];
+  assert.equal(value.looseReference,undefined);
+  assert.equal(value.looseRate,'1000');
+  assert.deepEqual(value.rows,metadata()[keyB].rows);
+  assert.equal(a.document.getElementById('looseRate').disabled,false);
+});
+
+test('failed reference saves roll back the reference without losing formulas or the old manual rate', async () => {
+  const a=await referenceApp();
+  await linkTo(a,'Ahmedabad',B,'Rajkot',A);
+  const before=clone(a.db.admin_state[0].value.meta[keyB]);
+  a.db.failCloud=true;
+  a.document.getElementById('looseRefMode').value='manual';
+  await a.document.getElementById('looseRefMode').onchange();
+  assert.deepEqual(JSON.parse(a.local.getItem(META))[keyB],before);
+  assert.match(a.document.getElementById('toast').textContent,/Reference not saved/);
+});
+
+test('SAVE ALL atomically recalculates same-city and cross-city dependants with their own formulas', async () => {
+  const C='33333333-3333-4333-8333-333333333333',keyC='Rajkot|'+C,db=fixture(),state=metadata();
+  db.products.push({id:C,code:'visvita',name:'VISVITA',city:'Rajkot',active:true,sort_order:3});
+  db.rates.push({id:'dddddddd-dddd-4ddd-8ddd-dddddddddddd',city:'Rajkot',product_id:C,packing:'15 KG',rate:1800,narration:'Visvita own terms',sort_order:1});
+  state[keyC]={looseRate:'1300',looseReference:{city:'Rajkot',productId:A},looseReferenceLocked:true,rows:{'15 KG':{master:'LOOSE OIL RATE',formula:'MASTER*1.5',extra:15,round:1}}};
+  state[keyB].looseReference={city:'Rajkot',productId:C};
+  const a=await referenceApp(state,db);
+  const before=clone(db.rates);
+  a.document.getElementById('looseRate').oninput({target:{value:'1100'}});
+  await a.document.getElementById('saveAll').onclick();
+  assert.equal(a.db.rateWrites,1,'all product rate rows use one atomic upsert');
+  assert.equal(a.db.rates.find(r=>r.product_id===A).rate,1650);
+  assert.equal(a.db.rates.find(r=>r.product_id===C).rate,1665,'Visvita retains its own extra costing');
+  assert.equal(a.db.rates.find(r=>r.product_id===B&&r.packing==='1 L').rate,110);
+  assert.equal(a.db.rates.find(r=>r.product_id===B&&r.packing==='5 L').rate,550);
+  for(const original of before){const saved=a.db.rates.find(r=>r.id===original.id);assert.equal(saved.narration,original.narration);assert.equal(saved.packing,original.packing)}
+  for(const key of [keyA,keyB,keyC])assert.deepEqual(a.db.admin_state[0].value.meta[key].rows,state[key].rows);
+  assert.equal(a.db.admin_state[0].value.meta[keyC].looseReferenceLocked,true);
+  assert.equal(a.db.rate_history.length,3);
+  assert.match(a.document.getElementById('toast').textContent,/2 LINKED PRODUCTS/);
+});
+
+test('a missing formula in a dependant stops publication before any source or linked rate is written', async () => {
+  const state=metadata();state[keyB].looseReference={city:'Rajkot',productId:A};delete state[keyB].rows['5 L'];
+  const a=await referenceApp(state),before=clone(a.db.rates);
+  a.document.getElementById('looseRate').oninput({target:{value:'1100'}});
+  await a.document.getElementById('saveAll').onclick();
+  assert.equal(a.db.rateWrites||0,0);
+  assert.deepEqual(a.db.rates,before);
+  assert.match(a.document.getElementById('toast').textContent,/saved formula missing for 5 L/);
+});
+
+test('a database rate error leaves every source and linked published rate unchanged', async () => {
+  const state=metadata();state[keyB].looseReference={city:'Rajkot',productId:A};
+  const a=await referenceApp(state),before=clone(a.db.rates);a.db.failRates=true;
+  a.document.getElementById('looseRate').oninput({target:{value:'1100'}});
+  await a.document.getElementById('saveAll').onclick();
+  assert.deepEqual(a.db.rates,before);
+  assert.match(a.document.getElementById('toast').textContent,/Rates not saved/);
+});
+
+test('missing sources and reference cycles show a source error and cannot publish zero prices', async () => {
+  for(const source of [{city:'Rajkot',productId:A},{city:'Ahmedabad',productId:B}]){
+    const state=metadata(),db=fixture();state[keyB].looseReference=source;
+    if(source.productId===A)db.products[0].active=false;
+    const a=await referenceApp(state,db);await a.editor.select('Ahmedabad',B);
+    assert.equal(a.document.getElementById('pvDiff').textContent,'SOURCE ERROR');
+    assert.match(a.document.getElementById('rateBody').innerHTML,/SOURCE ERROR/);
+    await a.document.getElementById('saveAll').onclick();
+    assert.equal(a.db.rateWrites||0,0);
+  }
+});
+
+test('full backup and restore retain loose reference configuration and its lock', async () => {
+  const a=await referenceApp();await linkTo(a,'Ahmedabad',B,'Rajkot',A);await a.document.getElementById('looseRefLock').onclick();
+  const snapshot=clone(await a.backup.buildFullBackup());
+  assert.deepEqual(snapshot.local_admin_state.meta[keyB].looseReference,{city:'Rajkot',productId:A});
+  assert.equal(snapshot.local_admin_state.meta[keyB].looseReferenceLocked,true);
+  await a.backup.restoreFullBackup(snapshot);
+  assert.deepEqual(a.db.admin_state[0].value.meta[keyB],snapshot.local_admin_state.meta[keyB]);
 });

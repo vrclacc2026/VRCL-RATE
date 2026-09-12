@@ -1,5 +1,5 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase-config.js?v=20260911-selected-restore';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase-config.js?v=20260912-loose-reference';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: 'vrcl-admin-auth' }
@@ -71,7 +71,7 @@ async function isAdmin() {
   const { data } = await supabase.from('profiles').select('role,active').eq('id', session.user.id).single();
   return !!data && data.role === 'admin' && data.active === true;
 }
-function syncStateToCloud(value = currentLocalState()) {
+export function syncStateToCloud(value = currentLocalState()) {
   const snapshot = JSON.parse(JSON.stringify(value));
   const task = syncQueue.catch(() => {}).then(async () => {
     if (!await isAdmin()) throw new Error('Active admin login required to save formulas.');
@@ -234,7 +234,7 @@ async function restoreProductBackup(backup, target = selectedRestoreTarget(), { 
 }
 
 async function collectCodeSnapshot() {
-  const files = ['index.html','admin.html','dashboard.html','customer-check.html','users.html','customer.js','customer.css','admin-products.js','backup-manager.js','supabase-config.js'];
+  const files = ['index.html','admin.html','dashboard.html','customer-check.html','users.html','customer.js','customer.css','admin-products.js','backup-manager.js','supabase-config.js','loose-rate-reference.js'];
   const out = {};
   await Promise.all(files.map(async f => {
     try { const r = await fetch('./' + f + '?backup=' + Date.now(), { cache: 'no-store' }); if (r.ok) out[f] = await r.text(); }
