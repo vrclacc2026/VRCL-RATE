@@ -23,7 +23,7 @@ function storage() {
 function fixture() {
   return {
     signedIn: true, rpcCalls: 0, cloudWrites: 0,
-    profiles: [{ id: 'admin-test', role: 'admin', active: true }],
+    profiles: [{ id: 'admin-test', display_name: 'Admin One', role: 'admin', active: true }],
     products: [
       { id: A, code: 'groundnut', name: 'Groundnut', city: 'Rajkot', active: true, sort_order: 1 },
       { id: B, code: 'cotton', name: 'Cotton', city: 'Ahmedabad', active: true, sort_order: 2 }
@@ -68,6 +68,7 @@ function app({ db = fixture(), local = storage(), session = storage() } = {}) {
     constructor(table) { this.table = table; this.filters = []; this.sorts = []; }
     select() { return this; }
     eq(column, value) { this.filters.push(row => row[column] === value); return this; }
+    in(column, values) { this.filters.push(row => values.includes(row[column])); return this; }
     gte() { return this; }
     order(column) { this.sorts.push(column); return this; }
     limit() { return this; }
@@ -525,6 +526,9 @@ test('SAVE ALL atomically recalculates same-city and cross-city dependants with 
   for(const key of [keyA,keyB,keyC])assert.deepEqual(a.db.admin_state[0].value.meta[key].rows,state[key].rows);
   assert.equal(a.db.admin_state[0].value.meta[keyC].looseReferenceLocked,true);
   assert.equal(a.db.rate_history.length,3);
+  for(const entry of a.db.rate_history){assert.equal(entry.snapshot.loose_rate,1100);assert.equal(entry.snapshot.changed_by_name,'Admin One')}
+  assert.match(a.document.getElementById('history').innerHTML,/Admin One/);
+  assert.match(a.document.getElementById('history').innerHTML,/LOOSE \/ 10 KG: ₹ 1100.00/);
   assert.match(a.document.getElementById('toast').textContent,/2 LINKED PRODUCTS/);
 });
 
@@ -566,4 +570,19 @@ test('full backup and restore retain loose reference configuration and its lock'
   assert.equal(snapshot.local_admin_state.meta[keyB].looseReferenceLocked,true);
   await a.backup.restoreFullBackup(snapshot);
   assert.deepEqual(a.db.admin_state[0].value.meta[keyB],snapshot.local_admin_state.meta[keyB]);
+});
+
+
+test('history resolves old actor IDs and preserves new snapshot names for both admins', async () => {
+  const db=fixture();
+  db.profiles.push({id:'admin-two',display_name:'Admin Two',role:'admin',active:true});
+  db.rate_history=[
+    {product_id:A,city:'Rajkot',changed_by:'admin-test',changed_at:new Date().toISOString(),snapshot:{product_name:'Groundnut',rates:[]}},
+    {product_id:A,city:'Rajkot',changed_by:'admin-two',changed_at:new Date().toISOString(),snapshot:{product_name:'Groundnut',changed_by_name:'Admin Two',loose_rate:0,rates:[]}}
+  ];
+  const a=await referenceApp(metadata(),db);
+  const html=a.document.getElementById('history').innerHTML;
+  assert.match(html,/Admin One/);assert.match(html,/Admin Two/);
+  assert.match(html,/LOOSE \/ 10 KG: ₹ 0.00/);
+  assert.match(html,/Loose rate was not recorded/);
 });

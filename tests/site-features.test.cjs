@@ -43,8 +43,8 @@ test('rate check copies a WhatsApp-bold product title and both panels respect re
   assert.match(check, /date,'',`\*\$\{p\.name\}\*`/);
   assert.match(check, /@keyframes checkCardEnter/);
   assert.match(check, /prefers-reduced-motion/);
-  assert.match(css, /@keyframes rateCardEnter/);
-  assert.match(css, /\.marketMotion/);
+  assert.doesNotMatch(read('index.html'), /marketMotion/);
+  assert.match(css, /animation:none!important/);
   assert.match(css, /prefers-reduced-motion/);
 });
 

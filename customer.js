@@ -2,7 +2,8 @@ import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+e
 import{SUPABASE_URL,SUPABASE_ANON_KEY}from'./supabase-config.js?v=20260912-rate-tools';
 const supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'vrcl-customer-auth'}}),$=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const CITIES=['Rajkot','Ahmedabad','Udaan'];
-let profile=null,currentCity='',refreshBusy=false,nextRefreshAt=Date.now()+300000;
+const REFRESH_INTERVAL=180000;
+let profile=null,currentCity='',refreshBusy=false,nextRefreshAt=Date.now()+REFRESH_INTERVAL;
 const colors={palm:'#6d43c1',visvita:'#b71c1c',sunflower:'#dc8a00',groundnut:'#ef6c00',cotton:'#1167c7',mustard:'#0b6b43',soya:'#d32f2f'};
 
 try{if(window.parent!==window)window.parent.postMessage({type:'vrcl-runtime',page:'customer',ok:true,ts:Date.now()},location.origin)}catch{}
@@ -50,8 +51,12 @@ async function load(){
   ]);
   if(productError)throw productError;if(rateError)throw rateError;
   const by={};(rates||[]).forEach(rate=>(by[rate.product_id]||(by[rate.product_id]=[])).push(rate));
-  $('grid').innerHTML=(products||[]).map((product,index)=>rateCard(product,by[product.id]||[],index)).join('')||'<div class="noRates">No rates available for this city.</div>';
-  requestAnimationFrame(()=>requestAnimationFrame(()=>$('grid').classList.remove('citySwitching')));
+  const content=(products||[]).map((product,index)=>rateCard(product,by[product.id]||[],index)).join('')||'<div class="noRates">No rates available for this city.</div>';
+  if($('grid').innerHTML!==content)$('grid').innerHTML=content;
+  $('grid').classList.remove('citySwitching');
+  $('live').classList.remove('stale');
+  $('refreshStatus').classList.remove('error');
+  $('refreshStatus').textContent='Checked '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})+' · Auto refresh every 3 minutes';
   const latest=(rates||[]).map(rate=>rate.updated_at).filter(Boolean).sort().at(-1);
   $('updated').textContent='LAST UPDATED: '+(latest?new Date(latest).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true}):'—');
 }
@@ -59,20 +64,24 @@ async function beat(){if(!profile||!currentCity)return;await supabase.from('user
 async function refreshProfile(){
   if(!profile)return;
   const{data,error}=await supabase.from('profiles').select('id,display_name,login_id,role,city,allowed_cities,active').eq('id',profile.id).single();
-  if(error||!data||!data.active||data.role!=='wholesaler')throw new Error('City permission is no longer active.');
+  if(error&&error.code!=='PGRST116')throw error;
+  if(!data||!data.active||data.role!=='wholesaler'){const denied=new Error('City permission is no longer active.');denied.permissionDenied=true;throw denied;}
+  if(!permittedCities(data).includes(currentCity))$('grid').innerHTML='<div class="noRates">City permission changed. Loading permitted rates…</div>';
+  if(!permittedCities(data).length){const denied=new Error('No city permission is available.');denied.permissionDenied=true;throw denied;}
   profile=data;renderCityChooser();updateCustomerIdentity();
 }
 async function refreshRates({permissions=false}={}){
   if(!profile||refreshBusy)return;
   refreshBusy=true;
-  try{if(permissions)await refreshProfile();await load();await beat();nextRefreshAt=Date.now()+300000}
-  catch(error){console.error('Rate refresh failed',error);$('grid').classList.remove('citySwitching');$('grid').innerHTML='<div class="noRates">Rates could not be refreshed. Please try again.</div>';nextRefreshAt=Date.now()+60000}
+  try{if(permissions)await refreshProfile();await load();await beat();nextRefreshAt=Date.now()+REFRESH_INTERVAL}
+  catch(error){console.error('Rate refresh failed',error);$('grid').classList.remove('citySwitching');if(error.permissionDenied)$('grid').innerHTML='<div class="noRates">City access is no longer active. Please contact your administrator.</div>';
+    $('live').classList.add('stale');$('refreshStatus').classList.add('error');$('refreshStatus').textContent=error.permissionDenied?'City access needs administrator attention.':'Refresh delayed · Last loaded rates shown. Retrying in 1 minute.';nextRefreshAt=Date.now()+60000}
   finally{refreshBusy=false}
 }
 async function selectCity(next){
   if(refreshBusy||next===currentCity||!permittedCities(profile).includes(next))return;
   const previous=currentCity;currentCity=next;renderCityChooser();updateCustomerIdentity();refreshBusy=true;
-  try{await load();await beat();nextRefreshAt=Date.now()+300000}
+  try{await load();await beat();nextRefreshAt=Date.now()+REFRESH_INTERVAL}
   catch(error){console.error('City switch failed',error);currentCity=previous;renderCityChooser();updateCustomerIdentity();$('grid').classList.remove('citySwitching')}
   finally{refreshBusy=false}
 }
@@ -82,9 +91,12 @@ async function check(){
   const{data:userProfile,error}=await supabase.from('profiles').select('id,display_name,login_id,role,city,allowed_cities,active').eq('id',session.user.id).single();
   if(error||!userProfile||!userProfile.active||userProfile.role!=='wholesaler'){$('loginMsg').textContent=userProfile?.role==='admin'?'Customer account required on this page.':'Login required.';return false}
   profile=userProfile;currentCity=permittedCities(profile).includes(profile.city)?profile.city:permittedCities(profile)[0]||'';
-  $('login').classList.add('hidden');renderCityChooser();updateCustomerIdentity();await load();await beat();nextRefreshAt=Date.now()+300000;refreshClock();return true
+  $('login').classList.add('hidden');renderCityChooser();updateCustomerIdentity();await load();await beat();nextRefreshAt=Date.now()+REFRESH_INTERVAL;refreshClock();return true
 }
 $('loginBtn').onclick=async()=>{$('loginMsg').textContent='';const uid=$('uid').value.trim().toLowerCase();if(!uid||!$('pass').value){$('loginMsg').textContent='User ID and password required.';return}const{error}=await supabase.auth.signInWithPassword({email:uid+'@users.vrcl.in',password:$('pass').value});if(error){$('loginMsg').textContent='Invalid user ID or password.';return}if(!await check())$('loginMsg').textContent='Access denied.'};
 $('pass').addEventListener('keydown',event=>{if(event.key==='Enter')$('loginBtn').click()});
 $('power').onclick=async()=>{await supabase.auth.signOut({scope:'local'});location.reload()};
-await check();refreshClock();setInterval(refreshClock,1000);setInterval(beat,60000);window.addEventListener('focus',()=>{beat();if(profile&&Date.now()>=nextRefreshAt)refreshRates({permissions:true})});
+try{await check()}catch(error){$('loginMsg').textContent='Could not load rates. Please check your connection and try again.';nextRefreshAt=Date.now()+60000}refreshClock();setInterval(refreshClock,1000);setInterval(beat,60000);window.addEventListener('focus',()=>{beat();if(profile&&Date.now()>=nextRefreshAt)refreshRates({permissions:true})});
+
+window.addEventListener('online',()=>{if(profile)refreshRates({permissions:true})});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshClock()});
