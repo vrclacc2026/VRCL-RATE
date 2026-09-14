@@ -142,6 +142,8 @@ function app({ db = fixture(), local = storage(), session = storage() } = {}) {
   `, manager);
   const referenceModule = vm.createContext({});
   vm.runInContext(fs.readFileSync(path.join(root,'loose-rate-reference.js'),'utf8').replace(/^export /gm,''),referenceModule);
+  const packingReferenceModule = vm.createContext({});
+  vm.runInContext(fs.readFileSync(path.join(root,'packing-rate-reference.js'),'utf8').replace(/^export /gm,''),packingReferenceModule);
   const calculatorModule = vm.createContext({});
   vm.runInContext(fs.readFileSync(path.join(root,'rate-calculator.js'),'utf8').replace(/^export const /gm,'const ').replace(/^export /gm,'')+
     '\nthis.calculatorTest={calcFormula,applyExtraCost,roundPackingValue,roundLooseValue};',calculatorModule);
@@ -149,6 +151,9 @@ function app({ db = fixture(), local = storage(), session = storage() } = {}) {
   const editor = vm.createContext({ ...shared, hydrateStateFromCloud: manager.backupTest.hydrateStateFromCloud, syncStateToCloud:manager.backupTest.syncStateToCloud,
     resolveLooseRate:referenceModule.resolveLooseRate,canReferenceLooseRate:referenceModule.canReferenceLooseRate,
     looseRateDependants:referenceModule.looseRateDependants,calculateReferencedRates:referenceModule.calculateReferencedRates,
+    packingReferenceKey:packingReferenceModule.packingReferenceKey,resolvePackingReference:packingReferenceModule.resolvePackingReference,
+    canReferencePackingRates:packingReferenceModule.canReferencePackingRates,packingRateDependants:packingReferenceModule.packingRateDependants,
+    calculatePackingReferencedRates:packingReferenceModule.calculatePackingReferencedRates,
     calcFormula:calculator.calcFormula,applyExtraCost:calculator.applyExtraCost,
     roundPackingValue:calculator.roundPackingValue,roundLooseValue:calculator.roundLooseValue });
   const adminSource = fs.readFileSync(path.join(root, 'admin.html'), 'utf8')
@@ -438,6 +443,15 @@ async function linkTo(a, city, productId, sourceCity, sourceId) {
   a.document.getElementById('looseRefProduct').value=sourceId;
   await a.document.getElementById('looseRefProduct').onchange();
 }
+async function linkPackingTo(a, city, productId, sourceCity, sourceId) {
+  await a.editor.select(city,productId);
+  a.document.getElementById('packingRefMode').value='reference';
+  await a.document.getElementById('packingRefMode').onchange();
+  a.document.getElementById('packingRefCity').value=sourceCity;
+  a.document.getElementById('packingRefCity').onchange();
+  a.document.getElementById('packingRefProduct').value=sourceId;
+  await a.document.getElementById('packingRefProduct').onchange();
+}
 
 test('reference selection waits for an explicit product and preserves both products formulas', async () => {
   const a=await referenceApp();
@@ -570,6 +584,31 @@ test('full backup and restore retain loose reference configuration and its lock'
   assert.equal(snapshot.local_admin_state.meta[keyB].looseReferenceLocked,true);
   await a.backup.restoreFullBackup(snapshot);
   assert.deepEqual(a.db.admin_state[0].value.meta[keyB],snapshot.local_admin_state.meta[keyB]);
+});
+
+test('Udaan packing master uses Rajkot same-packing rate and source saves propagate +5%', async () => {
+  const db=fixture(),keyU='Udaan|'+B,state=metadata();
+  db.products[0].code='palm';db.products[0].name='Palm Rajkot';
+  db.products[1].city='Udaan';db.products[1].code='palm';db.products[1].name='Palm Udaan';
+  db.rates=db.rates.filter(r=>r.product_id!==B);
+  db.rates.push({id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',city:'Udaan',product_id:B,packing:'15 KG',rate:1575,narration:'Udaan terms',sort_order:1});
+  delete state[keyB];state[keyU]={looseRate:'1200',masterFormula:'MASTER/10',masterRound:0,rows:{'15 KG':{master:'LOOSE OIL RATE',formula:'+5%',extra:0,round:0}}};
+  const a=await referenceApp(state,db);
+  const formulasBefore=clone(a.db.admin_state[0].value.meta[keyU].rows);
+  await linkPackingTo(a,'Udaan',B,'Rajkot',A);
+  assert.deepEqual(a.db.admin_state[0].value.meta[keyU].packingRateReference,{city:'Rajkot',productId:A});
+  assert.deepEqual(a.db.admin_state[0].value.meta[keyU].rows,formulasBefore,'configuring the master does not rewrite formulas, extras or round-off');
+  assert.match(a.document.getElementById('packingRefStatus').textContent,/SAME PACKING = MASTER/);
+  assert.match(a.document.getElementById('rateBody').innerHTML,/Rajkot \/ Palm Rajkot \/ 15 KG/);
+  await a.document.getElementById('saveAll').onclick();
+  assert.equal(a.db.rates.find(r=>r.product_id===B).rate,1575);
+
+  await a.editor.select('Rajkot',A);
+  a.document.getElementById('looseRate').oninput({target:{value:'1100'}});
+  await a.document.getElementById('saveAll').onclick();
+  assert.equal(a.db.rates.find(r=>r.product_id===A).rate,1650);
+  assert.equal(a.db.rates.find(r=>r.product_id===B).rate,1732.5,'Udaan stays exactly 5% above Rajkot');
+  assert.match(a.document.getElementById('toast').textContent,/1 LINKED PRODUCTS/);
 });
 
 

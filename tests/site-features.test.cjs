@@ -15,6 +15,7 @@ test('all changed browser modules have valid module syntax', () => {
   }
   new vm.SourceTextModule(read('customer.js'));
   new vm.SourceTextModule(read('rate-calculator.js'));
+  new vm.SourceTextModule(read('packing-rate-reference.js'));
 });
 
 test('admin exposes percentage and operator costing without changing stored field names', () => {
@@ -43,9 +44,12 @@ test('rate check copies a WhatsApp-bold title and customer motion remains access
   assert.match(check, /date,'',`\*\$\{p\.name\}\*`/);
   assert.match(check, /@keyframes checkCardEnter/);
   assert.match(check, /prefers-reduced-motion/);
-  assert.match(read('index.html'), /marketMotion/);
+  assert.doesNotMatch(read('index.html'), /marketMotion|headingRight/);
+  assert.match(read('index.html'), /class="srOnly" id="refreshStatus"/);
   assert.match(css, /@keyframes shelfRise/);
   assert.match(css, /@keyframes rateCardEnter/);
+  assert.match(css, /@keyframes headerGleam/);
+  assert.match(css, /Premium customer finish/);
   assert.match(css, /drop-shadow/);
   assert.match(css, /prefers-reduced-motion/);
 });
