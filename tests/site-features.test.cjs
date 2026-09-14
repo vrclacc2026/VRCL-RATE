@@ -38,13 +38,15 @@ test('customer permission is selectable per city and enforced in database polici
   assert.match(migration, /profiles_wholesaler_city_permission/);
 });
 
-test('rate check copies a WhatsApp-bold product title and both panels respect reduced motion', () => {
-  const check = read('customer-check.html'), css = read('customer.css');
+test('rate check copies a WhatsApp-bold title and customer motion remains accessible', () => {
+  const check = read('customer-check.html'), css = read('customer.css') + read('customer-restored.css');
   assert.match(check, /date,'',`\*\$\{p\.name\}\*`/);
   assert.match(check, /@keyframes checkCardEnter/);
   assert.match(check, /prefers-reduced-motion/);
-  assert.doesNotMatch(read('index.html'), /marketMotion/);
-  assert.match(css, /animation:none!important/);
+  assert.match(read('index.html'), /marketMotion/);
+  assert.match(css, /@keyframes shelfRise/);
+  assert.match(css, /@keyframes rateCardEnter/);
+  assert.match(css, /drop-shadow/);
   assert.match(css, /prefers-reduced-motion/);
 });
 
