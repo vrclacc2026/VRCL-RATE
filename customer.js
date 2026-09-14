@@ -25,12 +25,10 @@ login.addEventListener('pointermove',event=>{if(login.classList.contains('hidden
 login.addEventListener('pointerleave',()=>box.style.transform='');
 
 function permittedCities(value){const allowed=Array.isArray(value?.allowed_cities)?value.allowed_cities.filter(city=>CITIES.includes(city)):[];return allowed.length?CITIES.filter(city=>allowed.includes(city)):(CITIES.includes(value?.city)?[value.city]:[])}
-function watermarks(name){$('wm').innerHTML=[[4,15],[34,12],[66,15],[11,43],[45,40],[78,45],[3,72],[35,69],[68,72]].map(([x,y])=>`<span style="left:${x}%;top:${y}%">${esc(name)}</span>`).join('')}
 function updateCustomerIdentity(){
   if(!profile)return;
   $('pname').textContent=profile.display_name||profile.login_id||'Customer';
   $('pcity').textContent=currentCity||'';
-  watermarks((profile.display_name||profile.login_id||'Customer')+' • '+(profile.login_id||'')+' • '+(currentCity||''));
 }
 function renderCityChooser(){
   const cities=permittedCities(profile);
