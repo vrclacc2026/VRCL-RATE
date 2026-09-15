@@ -586,29 +586,43 @@ test('full backup and restore retain loose reference configuration and its lock'
   assert.deepEqual(a.db.admin_state[0].value.meta[keyB],snapshot.local_admin_state.meta[keyB]);
 });
 
-test('Udaan packing master uses Rajkot same-packing rate and source saves propagate +5%', async () => {
-  const db=fixture(),keyU='Udaan|'+B,state=metadata();
-  db.products[0].code='palm';db.products[0].name='Palm Rajkot';
+test('Udaan Palm uses Ahmedabad same-packing rates and source saves propagate exactly +5%', async () => {
+  const db=fixture(),keyU='Udaan|'+B,keySource='Ahmedabad|'+A,state=metadata();
+  db.products[0].city='Ahmedabad';db.products[0].code='palm';db.products[0].name='Palm Ahmedabad';
   db.products[1].city='Udaan';db.products[1].code='palm';db.products[1].name='Palm Udaan';
+  db.rates.find(r=>r.product_id===A).city='Ahmedabad';
   db.rates=db.rates.filter(r=>r.product_id!==B);
   db.rates.push({id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',city:'Udaan',product_id:B,packing:'15 KG',rate:1575,narration:'Udaan terms',sort_order:1});
-  delete state[keyB];state[keyU]={looseRate:'1200',masterFormula:'MASTER/10',masterRound:0,rows:{'15 KG':{master:'LOOSE OIL RATE',formula:'+5%',extra:0,round:0}}};
+  state[keySource]=state[keyA];delete state[keyA];delete state[keyB];
+  state[keyU]={looseRate:'1200',masterFormula:'MASTER/10',masterRound:0,packingRateReference:{city:'Ahmedabad',productId:A},packingRateReferenceLocked:true,rows:{'15 KG':{master:'LOOSE OIL RATE',formula:'MASTER*1.5',extra:'+99',round:0}}};
   const a=await referenceApp(state,db);
+  await a.editor.select('Udaan',B);
   const formulasBefore=clone(a.db.admin_state[0].value.meta[keyU].rows);
-  await linkPackingTo(a,'Udaan',B,'Rajkot',A);
-  assert.deepEqual(a.db.admin_state[0].value.meta[keyU].packingRateReference,{city:'Rajkot',productId:A});
-  assert.deepEqual(a.db.admin_state[0].value.meta[keyU].rows,formulasBefore,'configuring the master does not rewrite formulas, extras or round-off');
-  assert.match(a.document.getElementById('packingRefStatus').textContent,/SAME PACKING = MASTER/);
-  assert.match(a.document.getElementById('rateBody').innerHTML,/Rajkot \/ Palm Rajkot \/ 15 KG/);
+  assert.deepEqual(a.db.admin_state[0].value.meta[keyU].packingRateReference,{city:'Ahmedabad',productId:A});
+  assert.deepEqual(a.db.admin_state[0].value.meta[keyU].rows,formulasBefore,'fixed +5% does not rewrite formulas, extras or round-off');
+  assert.match(a.document.getElementById('packingRefStatus').textContent,/Ahmedabad \/ Palm Ahmedabad same packing \+5%/);
+  assert.match(a.document.getElementById('rateBody').innerHTML,/Ahmedabad \/ Palm Ahmedabad \/ 15 KG/);
   await a.document.getElementById('saveAll').onclick();
   assert.equal(a.db.rates.find(r=>r.product_id===B).rate,1575);
 
-  await a.editor.select('Rajkot',A);
+  await a.editor.select('Ahmedabad',A);
   a.document.getElementById('looseRate').oninput({target:{value:'1100'}});
   await a.document.getElementById('saveAll').onclick();
   assert.equal(a.db.rates.find(r=>r.product_id===A).rate,1650);
   assert.equal(a.db.rates.find(r=>r.product_id===B).rate,1732.5,'Udaan stays exactly 5% above Rajkot');
   assert.match(a.document.getElementById('toast').textContent,/1 LINKED PRODUCTS/);
+});
+
+test('formula-only packaging rows reappear in the admin and are published on SAVE ALL', async () => {
+  const state=metadata();
+  state[keyB].rows['10 L']={master:'LOOSE OIL RATE',formula:'MASTER*1',extra:'+5',round:0};
+  const a=await referenceApp(state);
+  await a.editor.select('Ahmedabad',B);
+  const recovered=a.editor.rows().find(row=>row.packing==='10 L');
+  assert.ok(recovered);assert.equal(recovered.master,'LOOSE OIL RATE');assert.equal(recovered.formula,'MASTER*1');assert.equal(recovered.extra,'+5');
+  await a.document.getElementById('saveAll').onclick();
+  assert.equal(a.db.rates.find(row=>row.product_id===B&&row.packing==='10 L').rate,1205);
+  assert.equal(a.db.admin_state[0].value.meta[keyB].rows['10 L'].formula,'MASTER*1');
 });
 
 

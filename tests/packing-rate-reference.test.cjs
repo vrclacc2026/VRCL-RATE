@@ -16,17 +16,17 @@ const calculator = load('rate-calculator.js', '\nthis.exports={calcFormula,apply
 const A = '11111111-1111-4111-8111-111111111111';
 const B = '22222222-2222-4222-8222-222222222222';
 const C = '33333333-3333-4333-8333-333333333333';
-const keyA = 'Rajkot|' + A, keyB = 'Udaan|' + B, keyC = 'Ahmedabad|' + C;
+const keyA = 'Ahmedabad|' + A, keyB = 'Udaan|' + B, keyC = 'Rajkot|' + C;
 const products = [
-  { id:A, city:'Rajkot', code:'palm', name:'Palm Rajkot', active:true },
+  { id:A, city:'Ahmedabad', code:'palm', name:'Palm Ahmedabad', active:true },
   { id:B, city:'Udaan', code:'palm', name:'Palm Udaan', active:true },
-  { id:C, city:'Ahmedabad', code:'palm', name:'Palm Ahmedabad', active:true }
+  { id:C, city:'Rajkot', code:'palm', name:'Palm Rajkot', active:true }
 ];
 
-test('same packing from Rajkot becomes Udaan MASTER and +5% returns final rate', () => {
+test('Udaan Palm stays exactly 5% above Ahmedabad same-packing rates without rewriting saved formulas', () => {
   const meta = {
     [keyA]: { rows:{} },
-    [keyB]: { packingRateReference:{city:'Rajkot',productId:A}, rows:{
+    [keyB]: { packingRateReference:{city:'Ahmedabad',productId:A}, rows:{
       '15 KG': { master:'LOOSE OIL RATE', formula:'+5%', extra:0, round:0 },
       '5 L': { master:'15 KG', formula:'MASTER*1.05', extra:'+10', round:1 }
     } }
@@ -36,18 +36,18 @@ test('same packing from Rajkot becomes Udaan MASTER and +5% returns final rate',
     { city:'Udaan', product_id:B, packing:'5 L', rate:0, narration:'Udaan terms', sort_order:2 }
   ];
   const sourceRates = [
-    { city:'Rajkot', product_id:A, packing:'15 kg', rate:1000 },
-    { city:'Rajkot', product_id:A, packing:'5 L', rate:500 }
+    { city:'Ahmedabad', product_id:A, packing:'15 kg', rate:1000 },
+    { city:'Ahmedabad', product_id:A, packing:'5 L', rate:500 }
   ];
   const result = reference.calculatePackingReferencedRates({meta,product:products[1],rates,sourceRates,...calculator});
-  assert.deepEqual(JSON.parse(JSON.stringify(result.map(r=>r.rate))),[1050,535]);
+  assert.deepEqual(JSON.parse(JSON.stringify(result.map(r=>r.rate))),[1050,525]);
   assert.equal(result[0].narration,'Udaan terms');
 });
 
 test('packing dependants are returned in source-to-target calculation order', () => {
   const meta = {
     [keyA]: {},
-    [keyB]: { packingRateReference:{city:'Rajkot',productId:A} },
+    [keyB]: { packingRateReference:{city:'Ahmedabad',productId:A} },
     [keyC]: { packingRateReference:{city:'Udaan',productId:B} }
   };
   assert.deepEqual(JSON.parse(JSON.stringify(reference.packingRateDependants(meta,keyA,products).map(p=>p.id))),[B,C]);
@@ -55,7 +55,7 @@ test('packing dependants are returned in source-to-target calculation order', ()
 });
 
 test('missing same-packing source rate fails instead of publishing zero', () => {
-  const meta = {[keyB]:{packingRateReference:{city:'Rajkot',productId:A},rows:{'15 KG':{formula:'+5%',extra:0,round:0}}}};
+  const meta = {[keyB]:{packingRateReference:{city:'Ahmedabad',productId:A},rows:{'15 KG':{formula:'+5%',extra:0,round:0}}}};
   assert.throws(()=>reference.calculatePackingReferencedRates({
     meta,product:products[1],rates:[{city:'Udaan',product_id:B,packing:'15 KG',rate:0}],sourceRates:[{packing:'5 L',rate:500}],...calculator
   }),/source has no matching rate for 15 KG/);
