@@ -53,8 +53,10 @@ export function packingRateDependants(meta, changedKeys, products) {
   return result;
 }
 
-// The referenced product supplies same-packing source rates. Udaan can still choose
-// another Udaan packing as MASTER and can edit FORMULA / EXTRA / ROUND independently.
+// Referenced products normally keep their own packing rows. Udaan is different:
+// Ahmedabad is the packing master, so Udaan must use exactly the Ahmedabad packing
+// list. This prevents stale Udaan-only rows from breaking Ahmedabad saves when a
+// packing was removed upstream (for example 15 KG OLD TIN on Cottonseed Oil).
 export function calculatePackingReferencedRates({ meta, product, rates, sourceRates, calcFormula, applyExtraCost, roundPackingValue }) {
   const targetKey = productKey(product), settings = meta[targetKey]?.rows || {}, udaan = product?.city === 'Udaan';
   const sourceByPacking = new Map();
@@ -64,17 +66,39 @@ export function calculatePackingReferencedRates({ meta, product, rates, sourceRa
     sourceByPacking.set(key, value);
   }
 
+  const existingByPacking = new Map();
+  for (const row of rates || []) {
+    const key = packingKey(row.packing);
+    if (!key || existingByPacking.has(key)) throw new Error(product.name + ': invalid packing data');
+    existingByPacking.set(key, row);
+  }
+
+  const targetRows = udaan
+    ? (sourceRates || []).map((sourceRow, index) => {
+        const existing = existingByPacking.get(packingKey(sourceRow.packing));
+        return {
+          city: product.city,
+          product_id: product.id,
+          packing: sourceRow.packing,
+          rate: Number(existing?.rate || 0),
+          narration: existing?.narration ?? (rates?.[0]?.narration || ''),
+          sort_order: sourceRow.sort_order ?? index + 1
+        };
+      })
+    : (rates || []);
+
   const names = new Map();
-  for (const [index,row] of (rates || []).entries()) {
+  for (const [index,row] of targetRows.entries()) {
     const key = packingKey(row.packing);
     if (row.city !== product.city || row.product_id !== product.id || !key || names.has(row.packing)) throw new Error(product.name + ': invalid packing data');
     names.set(row.packing,index);
   }
+
   const cache = new Map();
   function evaluate(index, seen = new Set()) {
     if (cache.has(index)) return cache.get(index);
     if (seen.has(index)) throw new Error(product.name + ': packing master link cycle');
-    const row = rates[index], setting = settings[row.packing] || {};
+    const row = targetRows[index], setting = settings[row.packing] || {};
     const chain = new Set(seen); chain.add(index);
     let master;
     const masterName = setting.master;
@@ -86,12 +110,21 @@ export function calculatePackingReferencedRates({ meta, product, rates, sourceRa
       if (!sourceByPacking.has(key)) throw new Error(product.name + ': source has no matching rate for ' + row.packing);
       master = sourceByPacking.get(key);
     }
-    if (typeof setting.formula !== 'string') throw new Error(product.name + ': saved formula missing for ' + row.packing);
-    const subtotal = calcFormula(setting.formula || 'MASTER*1', master);
+    const formula = typeof setting.formula === 'string' ? setting.formula : 'MASTER*1';
+    if (!udaan && typeof setting.formula !== 'string') throw new Error(product.name + ': saved formula missing for ' + row.packing);
+    const subtotal = calcFormula(formula || 'MASTER*1', master);
     const calculated = applyExtraCost ? applyExtraCost(subtotal, setting.extra) : subtotal + Number(setting.extra || 0);
     const value = roundPackingValue(calculated, setting.round ?? 0);
     if (!Number.isFinite(value)) throw new Error(product.name + ': invalid calculated rate');
     cache.set(index,value); return value;
   }
-  return (rates || []).map((row,index)=>({city:row.city,product_id:row.product_id,packing:row.packing,rate:evaluate(index),narration:row.narration,sort_order:row.sort_order}));
+
+  return targetRows.map((row,index)=>({
+    city:row.city,
+    product_id:row.product_id,
+    packing:row.packing,
+    rate:evaluate(index),
+    narration:row.narration,
+    sort_order:row.sort_order
+  }));
 }
