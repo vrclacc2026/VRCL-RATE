@@ -18,6 +18,19 @@ try {
 // and source editing for Rajkot/Ahmedabad before the older inline handlers can run.
 if (isAdminPage) {
   await import('./udaan-rate-system.js?v=20260915-udaan-master-formula-v2');
+
+  // Udaan does not use loose-rate controls, but the ingredient photo uploader and
+  // customer rate-card visibility switch are still product controls and must remain.
+  const udaanPhotoStyle = document.createElement('style');
+  udaanPhotoStyle.id = 'vrclUdaanPhotoControls';
+  udaanPhotoStyle.textContent = `
+    .vrcl-udaan-mode .masterRow{display:flex!important;justify-content:flex-end;align-items:center;min-height:88px}
+    .vrcl-udaan-mode .masterRow>:not(.photoCtl){display:none!important}
+    .vrcl-udaan-mode .masterRow>.photoCtl{display:flex!important;border-left:0!important;padding-left:0!important;margin-left:auto!important}
+    .vrcl-udaan-mode #looseRefRow{display:none!important}
+  `;
+  document.head.appendChild(udaanPhotoStyle);
+
   await import('./loose-reference-control.js?v=20260915-loose-ref-control-v2');
   await import('./admin-products.js?v=20260915-exact-selected-product-v3');
 }
