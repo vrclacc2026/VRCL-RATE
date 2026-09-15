@@ -1,3 +1,8 @@
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+const SUPABASE_URL='https://rdmgzkxroydsuantzbwn.supabase.co';
+const SUPABASE_ANON_KEY='sb_publishable_hQTkAf0vHJsw618Y2wrCOw_R-c24HHQ';
+const supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'vrcl-admin-auth'}});
 const companyName='VISHWAS REFOILS & CONSUMER LIMITED';
 
 function legacyCopy(text){
@@ -23,18 +28,23 @@ async function copyText(text){
   return legacyCopy(text);
 }
 
-function buildText(button){
+async function buildText(button){
   const card=button.closest('.card');
   if(!card)return'';
+  const productId=button.dataset.copy||'';
+  const city=document.querySelector('.city.active')?.dataset.c||'Rajkot';
   const name=card.querySelector('.name')?.textContent?.trim()||'PRODUCT';
-  const rows=[...card.querySelectorAll('tbody tr')].map(tr=>{
-    const cells=tr.querySelectorAll('td');
-    const packing=cells[0]?.textContent?.trim()||'';
-    const rate=(cells[1]?.textContent||'').replace('₹','').trim();
-    return packing?`${packing}  ${rate}`:'';
-  }).filter(Boolean);
+  let rows=[];
+  let narration='Rates are subject to change. Confirm latest rate before order.';
+  if(productId){
+    const{data,error}=await supabase.from('rates').select('packing,rate,narration,sort_order').eq('city',city).eq('product_id',productId).order('sort_order');
+    if(!error&&data?.length){rows=data;narration=data[0]?.narration?.trim()||narration}
+  }
+  if(!rows.length){
+    rows=[...card.querySelectorAll('tbody tr')].map((tr,index)=>{const cells=tr.querySelectorAll('td');return{packing:cells[0]?.textContent?.trim()||'',rate:(cells[1]?.textContent||'').replace('₹','').trim(),sort_order:index+1}}).filter(r=>r.packing);
+  }
   const date=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
-  return ['JAY SIYARAM',`*${companyName}*`,date,'',`*${name}*`,...rows,'','TERMS & CONDITIONS','Rates are subject to change. Confirm latest rate before order.'].join('\n');
+  return ['JAY SIYARAM',`*${companyName}*`,date,'',`*${name}*`,...rows.map(r=>`${r.packing}  ${r.rate}`),'','TERMS & CONDITIONS',narration].join('\n');
 }
 
 document.addEventListener('click',async event=>{
@@ -42,11 +52,14 @@ document.addEventListener('click',async event=>{
   if(!button)return;
   event.preventDefault();
   event.stopImmediatePropagation();
-  const text=buildText(button);
-  if(!text)return;
   const old=button.textContent;
   button.disabled=true;
-  const ok=await copyText(text);
-  button.textContent=ok?'COPIED ✓':'COPY FAILED';
+  try{
+    const text=await buildText(button);
+    const ok=!!text&&await copyText(text);
+    button.textContent=ok?'COPIED ✓':'COPY FAILED';
+  }catch{
+    button.textContent='COPY FAILED';
+  }
   setTimeout(()=>{button.textContent=old;button.disabled=false},1200);
 },true);
