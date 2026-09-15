@@ -5,6 +5,7 @@ export const SUPABASE_ANON_KEY = "sb_publishable_hQTkAf0vHJsw618Y2wrCOw_R-c24HHQ
 export const APP_NAME = "VRCL Wholesale Rate Portal";
 
 const isAdminPage = typeof window !== 'undefined' && /\/admin(?:\.html)?\/?$/.test(window.location.pathname);
+const isAdminRateCheck = typeof window !== 'undefined' && /\/customer-check(?:\.html)?\/?$/.test(window.location.pathname);
 
 try {
   const oldKey = "VISHWAS_RATE_ADMIN_META_V2";
@@ -15,9 +16,12 @@ try {
 } catch {}
 
 if (isAdminPage) {
-  // Load the authoritative delete handler before the older product helper so a
-  // removed product is verified inactive on the server and cannot reappear.
-  await import('./product-delete-control.js?v=20260915-product-delete-v1');
+  // Product removal is server-verified so inactive products cannot reappear.
+  await import('./product-delete-control.js?v=20260915-product-delete-v2');
+
+  // Prevent deletion of any packing row that is still used as another row's MASTER.
+  // This avoids broken master chains and recurring SOURCE ERROR rows in every product.
+  await import('./packing-delete-guard.js?v=20260915-master-delete-guard-v1');
 
   // Udaan owns its Ahmedabad packing-reference editor.
   await import('./udaan-rate-system.js?v=20260915-udaan-load-race-v3');
@@ -35,11 +39,15 @@ if (isAdminPage) {
   document.head.appendChild(udaanPhotoStyle);
 
   await import('./loose-reference-control.js?v=20260915-loose-ref-control-v2');
-
-  // Fresh URL intentionally invalidates the stale admin helper that was leaving
-  // the rate tbody empty even though the selected product had saved DB rows.
   await import('./admin-products.js?v=20260915-rate-table-rescue-v4');
 }
+
+if (isAdminRateCheck) {
+  // Reliable copy works with Clipboard API and a legacy browser fallback, while
+  // preserving the saved narration/terms from the selected product.
+  await import('./admin-rate-check-copy.js?v=20260915-copy-fix-v2');
+}
+
 if (typeof window !== 'undefined' && /\/dashboard(?:\.html)?\/?$/.test(window.location.pathname)) {
   import('./backup-manager.js?v=20260915-rate-table-rescue-v4');
 }
