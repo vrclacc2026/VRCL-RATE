@@ -17,7 +17,7 @@ try {
 // Udaan controller owns Udaan. Loose-reference control owns the loose reference lock
 // and source editing for Rajkot/Ahmedabad before the older inline handlers can run.
 if (isAdminPage) {
-  await import('./udaan-rate-system.js?v=20260915-udaan-master-formula-v1');
+  await import('./udaan-rate-system.js?v=20260915-udaan-master-formula-v2');
   await import('./loose-reference-control.js?v=20260915-loose-ref-control-v2');
   await import('./admin-products.js?v=20260915-exact-selected-product-v3');
 }
