@@ -55,11 +55,12 @@ export function packingRateDependants(meta, changedKeys, products) {
 }
 
 // In packing-reference mode the source product's published rate for the same
-// packing becomes MASTER. The target keeps its own formula, extra and round-off.
+// packing becomes MASTER. Udaan uses that MASTER directly and applies only the
+// target row's EXTRA COSTING, so blank/0 extra = exactly the Ahmedabad rate and
+// entries such as +5% or +2% work naturally. Other cities keep formula+extra logic.
 export function calculatePackingReferencedRates({ meta, product, rates, sourceRates, calcFormula, applyExtraCost, roundPackingValue }) {
   const targetKey = productKey(product), settings = meta[targetKey]?.rows || {};
-  const familyText = ((product?.code || '') + ' ' + (product?.name || '')).toLowerCase();
-  const fixedUdaanPalm = product?.city === 'Udaan' && familyText.includes('palm');
+  const udaan = product?.city === 'Udaan';
   const sourceByPacking = new Map();
   for (const row of sourceRates || []) {
     const key = packingKey(row.packing), value = Number(row.rate);
@@ -68,14 +69,14 @@ export function calculatePackingReferencedRates({ meta, product, rates, sourceRa
   }
   const seen = new Set();
   return (rates || []).map(row => {
-    const key = packingKey(row.packing), setting = settings[row.packing];
+    const key = packingKey(row.packing), setting = settings[row.packing] || {};
     if (row.city !== product.city || row.product_id !== product.id || !key || seen.has(key)) throw new Error(product.name + ': invalid packing data');
     seen.add(key);
-    if (!setting || typeof setting.formula !== 'string') throw new Error(product.name + ': saved formula missing for ' + row.packing);
+    if (!udaan && typeof setting.formula !== 'string') throw new Error(product.name + ': saved formula missing for ' + row.packing);
     if (!sourceByPacking.has(key)) throw new Error(product.name + ': source has no matching rate for ' + row.packing);
     const master = sourceByPacking.get(key);
-    const subtotal = fixedUdaanPalm ? master * 1.05 : calcFormula(setting.formula || 'MASTER*1', master);
-    const calculated = fixedUdaanPalm ? subtotal : (applyExtraCost ? applyExtraCost(subtotal, setting.extra) : subtotal + Number(setting.extra || 0));
+    const subtotal = udaan ? master : calcFormula(setting.formula || 'MASTER*1', master);
+    const calculated = applyExtraCost ? applyExtraCost(subtotal, setting.extra) : subtotal + Number(setting.extra || 0);
     const value = roundPackingValue(calculated, setting.round ?? 0);
     if (!Number.isFinite(value)) throw new Error(product.name + ': invalid calculated rate');
     return { city: row.city, product_id: row.product_id, packing: row.packing, rate: value, narration: row.narration, sort_order: row.sort_order };
