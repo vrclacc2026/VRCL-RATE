@@ -14,10 +14,11 @@ try {
   }
 } catch {}
 
-// Udaan controller loads first so its save/input handlers own Udaan before the generic
-// admin fallback. Rajkot/Ahmedabad behaviour stays unchanged.
+// Udaan controller owns Udaan. Loose-reference control owns the loose reference lock
+// for Rajkot/Ahmedabad so unlocking reliably enables source editing.
 if (isAdminPage) {
   await import('./udaan-rate-system.js?v=20260915-udaan-lock-v1');
+  await import('./loose-reference-control.js?v=20260915-loose-ref-lock-v1');
   await import('./admin-products.js?v=20260915-exact-selected-product-v3');
 }
 if (typeof window !== 'undefined' && /\/dashboard(?:\.html)?\/?$/.test(window.location.pathname)) {
