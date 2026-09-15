@@ -36,6 +36,43 @@ if (area && !document.querySelector('.productManageBar')) {
     const {data:p} = await supabase.from('profiles').select('role,active').eq('id',session.user.id).single();
     return !!(p && p.role === 'admin' && p.active);
   }
+
+  // The main admin module owns all rate state, calculations and saving. In some
+  // browsers an older cached product helper could leave only the tbody blank even
+  // though the main module had already loaded the selected product into memory.
+  // This watchdog never writes rates or formulas. It asks the main module to reload
+  // the active product, then forces its own renderTable() path by toggling one column
+  // lock twice (ending with the exact same lock state).
+  let healBusy=false, lastHeal='';
+  async function healBlankRateTable(force=false){
+    if(healBusy)return;
+    const id=selectedId(),city=selectedCity(),body=document.getElementById('rateBody');
+    if(!id||!body||body.querySelector('[data-i]'))return;
+    const key=city+'|'+id;
+    if(!force&&lastHeal===key)return;
+    healBusy=true;
+    try{
+      const {data,error}=await supabase.from('rates').select('id').eq('city',city).eq('product_id',id).limit(1);
+      if(error||!data?.length)return;
+      if(selectedId()!==id||selectedCity()!==city||body.querySelector('[data-i]'))return;
+
+      // First rerun the official selected-product loader.
+      const active=area.querySelector('.productBtn.active');
+      if(active){ active.click(); await new Promise(r=>setTimeout(r,450)); }
+      if(selectedId()!==id||selectedCity()!==city||body.querySelector('[data-i]')){lastHeal=key;return;}
+
+      // If data is in the main editor state but the tbody alone was lost, this calls
+      // the existing renderTable() closure without creating a second rate controller.
+      const lock=document.querySelector('[data-lock="old"]')||document.querySelector('[data-lock]');
+      if(lock){ lock.click(); lock.click(); await new Promise(r=>setTimeout(r,80)); }
+      if(body.querySelector('[data-i]'))lastHeal=key;
+    } finally { healBusy=false; }
+  }
+  setTimeout(()=>void healBlankRateTable(true),900);
+  setTimeout(()=>void healBlankRateTable(true),2200);
+  area.addEventListener('click',e=>{if(e.target.closest('.productBtn'))setTimeout(()=>void healBlankRateTable(true),650);});
+  document.getElementById('cityArea')?.addEventListener('click',e=>{if(e.target.closest('.city'))setTimeout(()=>void healBlankRateTable(true),900);});
+
   function openEditor(mode, p={}){
     document.getElementById('pmModal')?.remove();
     const modal=document.createElement('div');
