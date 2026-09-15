@@ -1,5 +1,5 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase-config.js?v=20260915-admin-stable';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase-config.js?v=20260912-rate-tools';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: 'vrcl-admin-auth' }
@@ -30,6 +30,67 @@ if (area && !document.querySelector('.productManageBar')) {
   function selectedId(){ return area.querySelector('.productBtn.active')?.dataset.product || ''; }
   function selectedCity(){ return document.querySelector('.city.active')?.dataset.city || 'Rajkot'; }
   function cleanCode(v){ return String(v||'').trim().toLowerCase().replace(/[^a-z0-9_-]+/g,'-').replace(/^-+|-+$/g,''); }
+  function norm(v){ return String(v||'').trim().toLocaleUpperCase('en-IN'); }
+  function toast(message){
+    const el=document.getElementById('toast');
+    if(!el)return;
+    el.textContent=message;el.style.display='block';
+    clearTimeout(window.__vrclProductGuardToast);
+    window.__vrclProductGuardToast=setTimeout(()=>el.style.display='none',2600);
+  }
+  function markRateLoading(){
+    const body=document.getElementById('rateBody'),save=document.getElementById('saveAll');
+    if(save)save.disabled=true;
+    if(body)body.innerHTML='<tr><td colspan="8" class="empty">Loading selected product rates…</td></tr>';
+  }
+  function displayedPackings(){
+    return [...document.querySelectorAll('#rateBody [data-f="packing"]')].map(el=>norm(el.value)).filter(Boolean);
+  }
+  async function verifySelectedRates(expectedId='',expectedCity=''){
+    const id=expectedId||selectedId(),cityName=expectedCity||selectedCity();
+    if(!id)return;
+    const {data,error}=await supabase.from('rates').select('packing').eq('city',cityName).eq('product_id',id).order('sort_order');
+    if(error)return;
+    const expected=(data||[]).map(r=>norm(r.packing)).filter(Boolean);
+    const started=Date.now();
+    while(Date.now()-started<3500){
+      if(selectedId()!==id||selectedCity()!==cityName)return;
+      const shown=displayedPackings();
+      if(shown.length===expected.length&&shown.every((p,i)=>p===expected[i])){
+        const save=document.getElementById('saveAll');if(save)save.disabled=false;
+        sessionStorage.removeItem('VRCL_ADMIN_SELECTION_GUARD');
+        return;
+      }
+      await new Promise(resolve=>setTimeout(resolve,180));
+    }
+    if(selectedId()!==id||selectedCity()!==cityName)return;
+    const key=cityName+'|'+id,guard=sessionStorage.getItem('VRCL_ADMIN_SELECTION_GUARD');
+    if(guard!==key){
+      sessionStorage.setItem('VRCL_ADMIN_SELECTION_GUARD',key);
+      sessionStorage.setItem('VRCL_RESTORED_PRODUCT',JSON.stringify({city:cityName,product_id:id}));
+      location.reload();
+      return;
+    }
+    const save=document.getElementById('saveAll');if(save)save.disabled=true;
+    toast('Selected product rates did not load correctly. Refresh once before saving.');
+  }
+
+  // Never leave the previous product's rows visible while another product is loading.
+  // The main admin module still owns calculation and saving; this only verifies that
+  // the visible rows belong to the active product and self-recovers once if they do not.
+  area.addEventListener('click',event=>{
+    const button=event.target.closest('.productBtn');if(!button)return;
+    const id=button.dataset.product,cityName=selectedCity();
+    markRateLoading();
+    setTimeout(()=>void verifySelectedRates(id,cityName),0);
+  },true);
+  document.getElementById('cityArea')?.addEventListener('click',event=>{
+    if(!event.target.closest('[data-city]'))return;
+    markRateLoading();
+    setTimeout(()=>void verifySelectedRates(),700);
+  },true);
+  setTimeout(()=>void verifySelectedRates(),1200);
+
   async function requireAdmin(){
     const {data:{session}} = await supabase.auth.getSession();
     if(!session) return false;
