@@ -1,5 +1,6 @@
 const productKey = product => product && product.city + '|' + product.id;
 const packingKey = value => String(value ?? '').trim().toLocaleUpperCase('en-IN');
+const UDAAN_AHD_MASTER = 'AHMEDABAD SAME PACKING';
 
 export function packingReferenceKey(reference) {
   return reference && typeof reference.city === 'string' && typeof reference.productId === 'string'
@@ -36,8 +37,6 @@ export function canReferencePackingRates(meta, targetKey, sourceKey, products) {
   return !resolution.error && !resolution.chain.includes(targetKey);
 }
 
-// Returns dependants in calculation order. The input can contain more than one
-// changed product because a loose-rate update may first recalculate other products.
 export function packingRateDependants(meta, changedKeys, products) {
   const reached = new Set(Array.isArray(changedKeys) ? changedKeys : [changedKeys]);
   const result = [], pending = (products || []).filter(p => p.active !== false && !reached.has(productKey(p)));
@@ -54,31 +53,45 @@ export function packingRateDependants(meta, changedKeys, products) {
   return result;
 }
 
-// In packing-reference mode the source product's published rate for the same
-// packing becomes MASTER. Udaan uses that MASTER directly and applies only the
-// target row's EXTRA COSTING, so blank/0 extra = exactly the Ahmedabad rate and
-// entries such as +5% or +2% work naturally. Other cities keep formula+extra logic.
+// The referenced product supplies same-packing source rates. Udaan can still choose
+// another Udaan packing as MASTER and can edit FORMULA / EXTRA / ROUND independently.
 export function calculatePackingReferencedRates({ meta, product, rates, sourceRates, calcFormula, applyExtraCost, roundPackingValue }) {
-  const targetKey = productKey(product), settings = meta[targetKey]?.rows || {};
-  const udaan = product?.city === 'Udaan';
+  const targetKey = productKey(product), settings = meta[targetKey]?.rows || {}, udaan = product?.city === 'Udaan';
   const sourceByPacking = new Map();
   for (const row of sourceRates || []) {
     const key = packingKey(row.packing), value = Number(row.rate);
     if (!key || sourceByPacking.has(key) || !Number.isFinite(value)) throw new Error(product.name + ': invalid source packing data');
     sourceByPacking.set(key, value);
   }
-  const seen = new Set();
-  return (rates || []).map(row => {
-    const key = packingKey(row.packing), setting = settings[row.packing] || {};
-    if (row.city !== product.city || row.product_id !== product.id || !key || seen.has(key)) throw new Error(product.name + ': invalid packing data');
-    seen.add(key);
-    if (!udaan && typeof setting.formula !== 'string') throw new Error(product.name + ': saved formula missing for ' + row.packing);
-    if (!sourceByPacking.has(key)) throw new Error(product.name + ': source has no matching rate for ' + row.packing);
-    const master = sourceByPacking.get(key);
-    const subtotal = udaan ? master : calcFormula(setting.formula || 'MASTER*1', master);
+
+  const names = new Map();
+  for (const [index,row] of (rates || []).entries()) {
+    const key = packingKey(row.packing);
+    if (row.city !== product.city || row.product_id !== product.id || !key || names.has(row.packing)) throw new Error(product.name + ': invalid packing data');
+    names.set(row.packing,index);
+  }
+  const cache = new Map();
+  function evaluate(index, seen = new Set()) {
+    if (cache.has(index)) return cache.get(index);
+    if (seen.has(index)) throw new Error(product.name + ': packing master link cycle');
+    const row = rates[index], setting = settings[row.packing] || {};
+    const chain = new Set(seen); chain.add(index);
+    let master;
+    const masterName = setting.master;
+    if (udaan && masterName && masterName !== 'LOOSE OIL RATE' && masterName !== UDAAN_AHD_MASTER) {
+      if (!names.has(masterName)) throw new Error(product.name + ': packing master is missing for ' + row.packing);
+      master = evaluate(names.get(masterName), chain);
+    } else {
+      const key = packingKey(row.packing);
+      if (!sourceByPacking.has(key)) throw new Error(product.name + ': source has no matching rate for ' + row.packing);
+      master = sourceByPacking.get(key);
+    }
+    if (typeof setting.formula !== 'string') throw new Error(product.name + ': saved formula missing for ' + row.packing);
+    const subtotal = calcFormula(setting.formula || 'MASTER*1', master);
     const calculated = applyExtraCost ? applyExtraCost(subtotal, setting.extra) : subtotal + Number(setting.extra || 0);
     const value = roundPackingValue(calculated, setting.round ?? 0);
     if (!Number.isFinite(value)) throw new Error(product.name + ': invalid calculated rate');
-    return { city: row.city, product_id: row.product_id, packing: row.packing, rate: value, narration: row.narration, sort_order: row.sort_order };
-  });
+    cache.set(index,value); return value;
+  }
+  return (rates || []).map((row,index)=>({city:row.city,product_id:row.product_id,packing:row.packing,rate:evaluate(index),narration:row.narration,sort_order:row.sort_order}));
 }
