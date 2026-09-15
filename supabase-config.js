@@ -13,12 +13,12 @@ try {
   }
 } catch {}
 
-// Admin-only extensions. Rate rendering/saving stays exclusively in admin.html
-// so product selection cannot be overwritten by a second recovery editor.
+// On the admin page, admin.html already imports backup-manager.js directly.
+// Import it only once: duplicate module URLs create two hydration/sync runtimes
+// and can race the selected product's rate table. Product management stays separate.
 if (typeof window !== 'undefined' && /\/admin(?:\.html)?\/?$/.test(window.location.pathname)) {
-  import('./admin-products.js?v=20260915-admin-stable');
-  import('./backup-manager.js?v=20260915-admin-stable');
+  import('./admin-products.js?v=20260915-admin-single-runtime');
 }
 if (typeof window !== 'undefined' && /\/dashboard(?:\.html)?\/?$/.test(window.location.pathname)) {
-  import('./backup-manager.js?v=20260915-admin-stable');
+  import('./backup-manager.js?v=20260915-admin-single-runtime');
 }
