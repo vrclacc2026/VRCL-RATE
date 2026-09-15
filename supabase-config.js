@@ -13,12 +13,10 @@ try {
   }
 } catch {}
 
-// On the admin page, admin.html already imports backup-manager.js directly.
-// Import it only once: duplicate module URLs create two hydration/sync runtimes
-// and can race the selected product's rate table. Product management stays separate.
+// admin.html owns all rate rendering/saving. This module only adds product management.
 if (typeof window !== 'undefined' && /\/admin(?:\.html)?\/?$/.test(window.location.pathname)) {
-  import('./admin-products.js?v=20260915-admin-selection-guard');
+  import('./admin-products.js?v=20260915-stable-admin-rollback');
 }
 if (typeof window !== 'undefined' && /\/dashboard(?:\.html)?\/?$/.test(window.location.pathname)) {
-  import('./backup-manager.js?v=20260915-admin-single-runtime');
+  import('./backup-manager.js?v=20260915-stable-admin-rollback');
 }
