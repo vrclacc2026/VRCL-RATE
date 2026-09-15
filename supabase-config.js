@@ -14,11 +14,13 @@ try {
   }
 } catch {}
 
-// admin.html owns the normal rate editor; admin-products provides product management
-// plus an exact DB-backed fallback only when that normal editor leaves the table blank.
+// admin.html owns the normal editor. admin-products keeps product management/fallback,
+// and udaan-rate-system makes every Udaan product use its Ahmedabad same-packing rate
+// as MASTER with editable EXTRA COSTING (0, +5%, +2%, etc.).
 if (isAdminPage) {
-  import('./admin-products.js?v=20260915-exact-selected-product-v1');
+  import('./admin-products.js?v=20260915-exact-selected-product-v2');
+  import('./udaan-rate-system.js?v=20260915-udaan-all-products-v1');
 }
 if (typeof window !== 'undefined' && /\/dashboard(?:\.html)?\/?$/.test(window.location.pathname)) {
-  import('./backup-manager.js?v=20260915-exact-selected-product-v1');
+  import('./backup-manager.js?v=20260915-exact-selected-product-v2');
 }
