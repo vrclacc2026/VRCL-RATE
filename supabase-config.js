@@ -14,13 +14,12 @@ try {
   }
 } catch {}
 
-// admin.html owns the normal editor. admin-products keeps product management/fallback,
-// and udaan-rate-system makes every Udaan product use its Ahmedabad same-packing rate
-// as MASTER with editable EXTRA COSTING (0, +5%, +2%, etc.).
+// Udaan controller loads first so its save/input handlers own Udaan before the generic
+// admin fallback. Rajkot/Ahmedabad behaviour stays unchanged.
 if (isAdminPage) {
-  import('./admin-products.js?v=20260915-exact-selected-product-v2');
-  import('./udaan-rate-system.js?v=20260915-udaan-all-products-v1');
+  await import('./udaan-rate-system.js?v=20260915-udaan-all-products-v2');
+  await import('./admin-products.js?v=20260915-exact-selected-product-v3');
 }
 if (typeof window !== 'undefined' && /\/dashboard(?:\.html)?\/?$/.test(window.location.pathname)) {
-  import('./backup-manager.js?v=20260915-exact-selected-product-v2');
+  import('./backup-manager.js?v=20260915-exact-selected-product-v3');
 }
