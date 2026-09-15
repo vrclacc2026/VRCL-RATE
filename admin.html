@@ -18,7 +18,7 @@
 @media(max-width:1080px){.masterRow{grid-template-columns:1fr 150px 130px}.preview,.photoCtl{grid-column:1/-1}.photoCtl{border-left:0;border-top:1px solid #ead49a;padding:9px 0 0}}@media(max-width:700px){.topbar{padding:11px}.brand{font-size:15px}.wrap{padding:0 7px}.masterRow{grid-template-columns:1fr}.preview,.photoCtl{grid-column:auto}.excelStrip{grid-template-columns:1fr 75px 95px}}
 
 .looseRefRow,.packingRefRow{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:10px;padding:10px 12px;border:1px solid #ead49a;border-radius:10px;background:#fff9ec}
-.packingRefRow{border-color:#a8cbe4;background:linear-gradient(135deg,#f3f9ff,#eaf5ff)}.packingRefRow[hidden]{display:none!important}
+.packingRefRow{border-color:#a8cbe4;background:linear-gradient(135deg,#f3f9ff,#eaf5ff)}
 .looseRefRow [hidden],.packingRefRow [hidden]{display:none!important}.looseRefRow label,.packingRefRow label{display:grid;gap:5px;font-size:9px;font-weight:950}.looseRefRow select,.packingRefRow select{min-width:145px;max-width:100%;font-size:12px;font-weight:700}.looseRefRow #looseRefProduct,.packingRefRow #packingRefProduct{min-width:195px}.looseRefRow .btn,.packingRefRow .btn{font-size:10px;min-height:33px}.looseRefRow .hint,.packingRefRow .hint{align-self:center;font-size:10px;color:#087f70;overflow-wrap:anywhere}.looseRefRow .hint.refError,.packingRefRow .hint.refError{color:#b42318}.looseRefRow select:disabled,.packingRefRow select:disabled{opacity:.7;cursor:not-allowed}#looseRate[data-referenced="true"]{background:#e7f7ee;color:#087f70}
 #looseRefLock{padding:0 10px;min-width:154px;background:linear-gradient(145deg,#ede6ff,#ded0fa);border-color:#b5a0d4;color:#543885;box-shadow:0 3px 0 #b5a0d4}#looseRefLock.on{background:linear-gradient(145deg,#674699,#49316f);color:#fff;border-color:#49316f;box-shadow:0 3px 0 #31214d}
 #saveAll{background:linear-gradient(145deg,#3478df,#245dc0);color:#fff;box-shadow:0 3px 0 #19438c}#addPacking,#pmAdd{background:linear-gradient(145deg,#109782,#087566);color:#fff;box-shadow:0 3px 0 #045d52}#saveNote{background:linear-gradient(145deg,#fff0cc,#ffdea0);color:#774a06;border-color:#e7bc6d;box-shadow:0 3px 0 #d5b077}#pmEdit{background:linear-gradient(145deg,#e5efff,#c7dfff);color:#234f95;border-color:#98b9e8;box-shadow:0 3px 0 #97b3da}#pmDelete{background:linear-gradient(145deg,#fff1ee,#ffd8d2);color:#a52b20;border-color:#e7aaa3;box-shadow:0 3px 0 #d59891}
@@ -46,8 +46,8 @@
   <button id="looseRefLock" class="masterLock" type="button" aria-pressed="false">🔓 REFERENCE LOCK</button>
   <span id="looseRefStatus" class="hint" role="status" aria-live="polite"></span>
 </div>
-<div class="packingRefRow" id="packingRefRow" hidden>
-  <label id="packingRefModeField">PACKING RATE MASTER<select id="packingRefMode"><option value="own">Own product masters</option><option value="reference">Other city product</option></select></label>
+<div class="packingRefRow" id="packingRefRow">
+  <label>PACKING RATE MASTER<select id="packingRefMode"><option value="own">Own product masters</option><option value="reference">Other city product</option></select></label>
   <label id="packingRefCityField" hidden>SOURCE CITY<select id="packingRefCity"></select></label>
   <label id="packingRefProductField" hidden>SOURCE PRODUCT<select id="packingRefProduct"></select></label>
   <button id="packingRefOpen" class="btn light" type="button" hidden>↗ OPEN SOURCE</button>
@@ -63,7 +63,7 @@ import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+e
 import{SUPABASE_URL,SUPABASE_ANON_KEY}from'./supabase-config.js?v=20260912-rate-tools';
 import{hydrateStateFromCloud,syncStateToCloud}from'./backup-manager.js?v=20260912-rate-tools';
 import{resolveLooseRate,canReferenceLooseRate,looseRateDependants,calculateReferencedRates}from'./loose-rate-reference.js?v=20260912-rate-tools';
-import{packingReferenceKey,resolvePackingReference,canReferencePackingRates,packingRateDependants,calculatePackingReferencedRates}from'./packing-rate-reference.js?v=20260915-udaan-palm';
+import{packingReferenceKey,resolvePackingReference,canReferencePackingRates,packingRateDependants,calculatePackingReferencedRates}from'./packing-rate-reference.js?v=20260914-cross-city-master';
 import{calcFormula,applyExtraCost,roundPackingValue,roundLooseValue}from'./rate-calculator.js?v=20260912-rate-tools';
 const supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'vrcl-admin-auth'}}),$=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -92,8 +92,8 @@ function evaluate(i,visited=new Set()){
   const chain=new Set(visited);chain.add(i),master=masterValue(r,chain);
   if(master.error)return{rate:0,cycle:false,sourceError:master.error};if(master.cycle)return{rate:0,cycle:true};
   if(!st().packingRateReference&&r.master!=='LOOSE OIL RATE'){const idx=findPacking(r.master);if(idx>=0&&evaluate(idx,chain).cycle)return{rate:0,cycle:true}}
-  const raw=isUdaanPalm()?master.value*1.05:applyExtraCost(calcFormula(r.formula||'MASTER*1',master.value),r.extra);
-  return{rate:roundPackingValue(raw,r.round??0),cycle:false,master:master.value};
+  const raw=applyExtraCost(calcFormula(r.formula||'MASTER*1',master.value),r.extra);
+  return{rate:roundPackingValue(raw,r.round||0),cycle:false,master:master.value};
 }
 function preview(){const s=st(),resolved=looseResolution();$('pvDiff').textContent=resolved.error?'SOURCE ERROR':roundLooseValue(calcFormula(s.masterFormula||'MASTER*1',resolved.value),s.masterRound||0).toFixed(2)}
 function looseResolution(){return resolveLooseRate(meta,key(),allProducts)}
@@ -159,7 +159,6 @@ $('looseRefLock').onclick=()=>{if(activeLooseDraft()){toast('Select the source p
 $('looseRefOpen').onclick=async()=>{const ref=st().looseReference;if(!ref)return;city=ref.city;productId=ref.productId;await loadProducts()};
 
 function productFamily(product){const text=((product?.code||'')+' '+(product?.name||'')).toLowerCase();return['palm','groundnut','cotton','mustard','soya','sun','corn','visvita'].find(name=>text.includes(name))||product?.code||''}
-function isUdaanPalm(product=currentProduct()){return product?.city==='Udaan'&&productFamily(product)==='palm'}
 function packingSources(sourceCity){
   const selected=currentProduct();
   return allProducts.filter(p=>p.city===sourceCity&&canReferencePackingRates(meta,key(),p.city+'|'+p.id,allProducts)).sort((a,b)=>{
@@ -167,17 +166,15 @@ function packingSources(sourceCity){
     return aMatch-bMatch||Number(a.sort_order||0)-Number(b.sort_order||0)||a.name.localeCompare(b.name);
   });
 }
-function packingReferenceLocked(){return isUdaanPalm()||masterLocked()||st().packingRateReferenceLocked===true||referenceSaving||rateSaving}
+function packingReferenceLocked(){return masterLocked()||st().packingRateReferenceLocked===true||referenceSaving||rateSaving}
 function activePackingDraft(){return packingReferenceDraft?.key===key()?packingReferenceDraft:null}
 function renderPackingReference(){
   const available=!!currentProduct(),state=available?st():{},draft=activePackingDraft(),ref=draft||state.packingRateReference,locked=state.packingRateReferenceLocked===true;
-  const fixed=isUdaanPalm();$('packingRefRow').hidden=!fixed;
-  if(!fixed){$('packingRefStatus').textContent='';return}
-  $('packingRefModeField').hidden=true;$('packingRefCityField').hidden=true;$('packingRefProductField').hidden=true;$('packingRefOpen').hidden=true;
   $('packingRefMode').disabled=!available||packingReferenceLocked();$('packingRefLock').disabled=!available||masterLocked()||referenceSaving||rateSaving;
-  $('packingRefMode').value=ref?'reference':'own';$('packingRefLock').textContent='🔒 UDAAN +5% LOCKED';
-  $('packingRefLock').classList.add('on');$('packingRefLock').setAttribute('aria-pressed','true');
-  if(!available||!ref){$('packingRefStatus').textContent='Ahmedabad / PALMOLINE source is not configured.';$('packingRefStatus').classList.add('refError');return}
+  $('packingRefMode').value=ref?'reference':'own';$('packingRefLock').textContent=locked?'🔒 PACKING REF LOCKED':'🔓 PACKING REF LOCK';
+  $('packingRefLock').classList.toggle('on',locked);$('packingRefLock').setAttribute('aria-pressed',String(locked));
+  $('packingRefCityField').hidden=!ref;$('packingRefProductField').hidden=!ref;$('packingRefOpen').hidden=!state.packingRateReference||!!draft;
+  if(!available||!ref){$('packingRefStatus').textContent=available?'Each row uses this product’s own master link.':'';$('packingRefStatus').classList.remove('refError');return}
   const source=allProducts.find(p=>p.id===ref.productId&&p.city===ref.city),resolution=packingResolution();
   $('packingRefCity').innerHTML=['Rajkot','Ahmedabad','Udaan'].map(c=>'<option value="'+c+'"'+(packingSources(c).length?'':' disabled')+'>'+c+'</option>').join('');
   $('packingRefCity').value=ref.city;
@@ -185,7 +182,7 @@ function renderPackingReference(){
   if(!draft&&(!source||!packingSources(ref.city).some(p=>p.id===ref.productId)))$('packingRefProduct').innerHTML='<option value="'+esc(ref.productId)+'">Source unavailable — select another</option>'+$('packingRefProduct').innerHTML;
   $('packingRefProduct').value=ref.productId||'';$('packingRefCity').disabled=packingReferenceLocked();$('packingRefProduct').disabled=packingReferenceLocked();$('packingRefOpen').disabled=!source;
   const error=!draft&&(resolution.error||packingReferenceLoadError);
-  $('packingRefStatus').textContent=error?error:'UDAAN PALMOLINE = Ahmedabad / '+source.name+' same packing +5%';
+  $('packingRefStatus').textContent=draft?'Select the source product. Same packing rate will become MASTER.':error?error:ref.city+' / '+source.name+' → SAME PACKING = MASTER (formula +5% works)';
   $('packingRefStatus').classList.toggle('refError',!!error);
 }
 async function loadPackingSourceRates(requestedKey=key()){
@@ -256,20 +253,7 @@ async function toggleCustomerVisibility(id){
   finally{visibilitySaving.delete(id);renderCustomerVisibility()}
 }
 function currentProduct(){return products.find(p=>p.id===productId)}function showPhoto(){const p=currentProduct();$('photoPrev').innerHTML=p?.ingredient_image_url?`<img src="${esc(p.ingredient_image_url)}" alt="Ingredient">`:'<div class="noPhoto">INGREDIENT<br>PHOTO</div>'}
-async function loadRates(){
-  loadedRateKey='';packingSourceRates=new Map();packingReferenceLoadError='';if(!productId)return;
-  const requestedKey=key(),{data,error}=await supabase.from('rates').select('*').eq('city',city).eq('product_id',productId).order('sort_order');
-  if(requestedKey!==key())return;if(error){toast('Rate load failed');return}
-  const s=st(),published=data||[];
-  rows=published.map((r,i)=>{const m=s.rows?.[r.packing]||{};return{id:r.id,packing:r.packing,oldRate:r.rate,master:m.master||'LOOSE OIL RATE',formula:m.formula||'MASTER*1',extra:m.extra??0,round:m.round??0,sort_order:r.sort_order??i}});
-  const seen=new Set(rows.map(r=>normalizedPacking(r.packing)));
-  for(const[packing,m]of Object.entries(s.rows||{})){
-    const normalized=normalizedPacking(packing);if(!normalized||seen.has(normalized))continue;
-    rows.push({id:null,packing,oldRate:0,master:m?.master||'LOOSE OIL RATE',formula:m?.formula||'MASTER*1',extra:m?.extra??0,round:m?.round??0,sort_order:rows.length+1,recoveredFromFormula:true});seen.add(normalized);
-  }
-  await loadPackingSourceRates(requestedKey);if(requestedKey!==key())return;
-  $('narration').value=published[0]?.narration||'';$('looseRate').value=s.looseReference?(looseResolution().value??''):s.looseRate;$('pvFormula').value=s.masterFormula||'MASTER*1';$('pvRound').value=s.masterRound||0;preview();renderMasterState();renderLocks();renderTable();loadedRateKey=requestedKey;
-}
+async function loadRates(){loadedRateKey='';packingSourceRates=new Map();packingReferenceLoadError='';if(!productId)return;const requestedKey=key();const{data,error}=await supabase.from('rates').select('*').eq('city',city).eq('product_id',productId).order('sort_order');if(requestedKey!==key())return;if(error){toast('Rate load failed');return}const s=st();rows=(data||[]).map((r,i)=>{const m=s.rows?.[r.packing]||{};return{id:r.id,packing:r.packing,oldRate:r.rate,master:m.master||'LOOSE OIL RATE',formula:m.formula||'MASTER*1',extra:m.extra||0,round:m.round||0,sort_order:r.sort_order??i}});await loadPackingSourceRates(requestedKey);if(requestedKey!==key())return;$('narration').value=data?.[0]?.narration||'';$('looseRate').value=s.looseReference?(looseResolution().value??''):s.looseRate;$('pvFormula').value=s.masterFormula||'MASTER*1';$('pvRound').value=s.masterRound||0;preview();renderMasterState();renderLocks();renderTable();loadedRateKey=requestedKey}
 // Capture the actual editor, including entries not yet published by SAVE ALL.
 window.vrclAdminBackup={captureProduct(){
   if(!currentProduct()||loadedRateKey!==key())throw new Error('Wait for the selected product to finish loading, then try backup again.');
