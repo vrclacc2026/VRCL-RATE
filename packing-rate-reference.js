@@ -53,12 +53,12 @@ export function packingRateDependants(meta, changedKeys, products) {
   return result;
 }
 
-// Referenced products normally keep their own packing rows. Udaan is different:
-// Ahmedabad is the packing master, so Udaan must use exactly the Ahmedabad packing
-// list. This prevents stale Udaan-only rows from breaking Ahmedabad saves when a
-// packing was removed upstream (for example 15 KG OLD TIN on Cottonseed Oil).
+// Udaan normally mirrors Ahmedabad packings, but an admin may explicitly delete
+// individual Udaan packings. Those exclusions are persisted in admin_state and must
+// be respected here so Ahmedabad recalculation can never recreate them.
 export function calculatePackingReferencedRates({ meta, product, rates, sourceRates, calcFormula, applyExtraCost, roundPackingValue }) {
   const targetKey = productKey(product), settings = meta[targetKey]?.rows || {}, udaan = product?.city === 'Udaan';
+  const excluded = new Set((Array.isArray(meta[targetKey]?.excludedPackings) ? meta[targetKey].excludedPackings : []).map(packingKey));
   const sourceByPacking = new Map();
   for (const row of sourceRates || []) {
     const key = packingKey(row.packing), value = Number(row.rate);
@@ -74,7 +74,7 @@ export function calculatePackingReferencedRates({ meta, product, rates, sourceRa
   }
 
   const targetRows = udaan
-    ? (sourceRates || []).map((sourceRow, index) => {
+    ? (sourceRates || []).filter(sourceRow => !excluded.has(packingKey(sourceRow.packing))).map((sourceRow, index) => {
         const existing = existingByPacking.get(packingKey(sourceRow.packing));
         return {
           city: product.city,
