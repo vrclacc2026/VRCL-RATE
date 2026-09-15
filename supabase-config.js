@@ -20,11 +20,15 @@ if (isAdminPage) {
   await import('./product-delete-control.js?v=20260915-product-delete-v2');
 
   // Prevent deletion of any packing row that is still used as another row's MASTER.
-  // This avoids broken master chains and recurring SOURCE ERROR rows in every product.
   await import('./packing-delete-guard.js?v=20260915-master-delete-guard-v1');
 
+  // Udaan packing deletion is an explicit override of the Ahmedabad packing list.
+  // Load this BEFORE the Udaan editor so its capture handler persists exclusions
+  // and the same Ahmedabad packing cannot be auto-created again on reload/save.
+  await import('./udaan-packing-delete-control.js?v=20260915-udaan-packing-delete-v1');
+
   // Udaan owns its Ahmedabad packing-reference editor.
-  await import('./udaan-rate-system.js?v=20260915-udaan-load-race-v3');
+  await import('./udaan-rate-system.js?v=20260915-udaan-packing-delete-v1');
 
   // Keep photo upload + customer visibility switch visible in Udaan while hiding
   // only the loose-rate controls that Udaan does not use.
@@ -43,8 +47,6 @@ if (isAdminPage) {
 }
 
 if (isAdminRateCheck) {
-  // Reliable copy works with Clipboard API and a legacy browser fallback, while
-  // preserving the saved narration/terms from the selected product.
   await import('./admin-rate-check-copy.js?v=20260915-copy-fix-v2');
 }
 
