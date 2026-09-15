@@ -13,12 +13,12 @@ try {
   }
 } catch {}
 
-// Admin-only extension. Customer pages do not load these modules.
+// Admin-only extensions. Rate rendering/saving stays exclusively in admin.html
+// so product selection cannot be overwritten by a second recovery editor.
 if (typeof window !== 'undefined' && /\/admin(?:\.html)?\/?$/.test(window.location.pathname)) {
-  import('./admin-products.js?v=20260915-admin-rate-recovery-v2');
-  import('./admin-rate-recovery.js?v=20260915-rate-save-recovery');
-  import('./backup-manager.js?v=20260912-rate-tools');
+  import('./admin-products.js?v=20260915-admin-stable');
+  import('./backup-manager.js?v=20260915-admin-stable');
 }
 if (typeof window !== 'undefined' && /\/dashboard(?:\.html)?\/?$/.test(window.location.pathname)) {
-  import('./backup-manager.js?v=20260912-rate-tools');
+  import('./backup-manager.js?v=20260915-admin-stable');
 }
