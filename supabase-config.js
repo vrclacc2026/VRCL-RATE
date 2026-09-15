@@ -14,13 +14,16 @@ try {
   }
 } catch {}
 
-// Udaan controller owns Udaan. Loose-reference control owns the loose reference lock
-// and source editing for Rajkot/Ahmedabad before the older inline handlers can run.
 if (isAdminPage) {
-  await import('./udaan-rate-system.js?v=20260915-udaan-master-formula-v2');
+  // Load the authoritative delete handler before the older product helper so a
+  // removed product is verified inactive on the server and cannot reappear.
+  await import('./product-delete-control.js?v=20260915-product-delete-v1');
 
-  // Udaan does not use loose-rate controls, but the ingredient photo uploader and
-  // customer rate-card visibility switch are still product controls and must remain.
+  // Udaan owns its Ahmedabad packing-reference editor.
+  await import('./udaan-rate-system.js?v=20260915-udaan-load-race-v3');
+
+  // Keep photo upload + customer visibility switch visible in Udaan while hiding
+  // only the loose-rate controls that Udaan does not use.
   const udaanPhotoStyle = document.createElement('style');
   udaanPhotoStyle.id = 'vrclUdaanPhotoControls';
   udaanPhotoStyle.textContent = `
@@ -32,8 +35,11 @@ if (isAdminPage) {
   document.head.appendChild(udaanPhotoStyle);
 
   await import('./loose-reference-control.js?v=20260915-loose-ref-control-v2');
-  await import('./admin-products.js?v=20260915-exact-selected-product-v3');
+
+  // Fresh URL intentionally invalidates the stale admin helper that was leaving
+  // the rate tbody empty even though the selected product had saved DB rows.
+  await import('./admin-products.js?v=20260915-rate-table-rescue-v4');
 }
 if (typeof window !== 'undefined' && /\/dashboard(?:\.html)?\/?$/.test(window.location.pathname)) {
-  import('./backup-manager.js?v=20260915-exact-selected-product-v3');
+  import('./backup-manager.js?v=20260915-rate-table-rescue-v4');
 }
