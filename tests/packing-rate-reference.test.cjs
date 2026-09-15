@@ -23,25 +23,35 @@ const products = [
   { id:C, city:'Rajkot', code:'palm', name:'Palm Rajkot', active:true }
 ];
 
-test('Udaan Palm stays exactly 5% above Ahmedabad same-packing rates without rewriting saved formulas', () => {
+test('Udaan uses Ahmedabad same-packing rate as MASTER and applies only editable EXTRA COSTING', () => {
   const meta = {
     [keyA]: { rows:{} },
     [keyB]: { packingRateReference:{city:'Ahmedabad',productId:A}, rows:{
-      '15 KG': { master:'LOOSE OIL RATE', formula:'+5%', extra:0, round:0 },
-      '5 L': { master:'15 KG', formula:'MASTER*1.05', extra:'+10', round:1 }
+      '15 KG': { master:'LOOSE OIL RATE', formula:'MASTER*9', extra:0, round:0 },
+      '5 L': { master:'15 KG', formula:'MASTER*7', extra:'+5%', round:0 },
+      '1 L': { master:'LOOSE OIL RATE', formula:'MASTER*4', extra:'+2%', round:0 }
     } }
   };
   const rates = [
     { city:'Udaan', product_id:B, packing:'15 KG', rate:0, narration:'Udaan terms', sort_order:1 },
-    { city:'Udaan', product_id:B, packing:'5 L', rate:0, narration:'Udaan terms', sort_order:2 }
+    { city:'Udaan', product_id:B, packing:'5 L', rate:0, narration:'Udaan terms', sort_order:2 },
+    { city:'Udaan', product_id:B, packing:'1 L', rate:0, narration:'Udaan terms', sort_order:3 }
   ];
   const sourceRates = [
     { city:'Ahmedabad', product_id:A, packing:'15 kg', rate:1000 },
-    { city:'Ahmedabad', product_id:A, packing:'5 L', rate:500 }
+    { city:'Ahmedabad', product_id:A, packing:'5 L', rate:500 },
+    { city:'Ahmedabad', product_id:A, packing:'1 L', rate:100 }
   ];
   const result = reference.calculatePackingReferencedRates({meta,product:products[1],rates,sourceRates,...calculator});
-  assert.deepEqual(JSON.parse(JSON.stringify(result.map(r=>r.rate))),[1050,525]);
+  assert.deepEqual(JSON.parse(JSON.stringify(result.map(r=>r.rate))),[1000,525,102]);
   assert.equal(result[0].narration,'Udaan terms');
+});
+
+test('the Udaan rule applies to non-Palm products too', () => {
+  const product={ id:B, city:'Udaan', code:'g-n-udaan', name:'GROUNDNUT OIL', active:true };
+  const meta={[keyB]:{packingRateReference:{city:'Ahmedabad',productId:A},rows:{'15 KG':{formula:'MASTER*99',extra:'+5%',round:0}}}};
+  const result=reference.calculatePackingReferencedRates({meta,product,rates:[{city:'Udaan',product_id:B,packing:'15 KG',rate:0}],sourceRates:[{packing:'15 KG',rate:2000}],...calculator});
+  assert.equal(result[0].rate,2100);
 });
 
 test('packing dependants are returned in source-to-target calculation order', () => {
@@ -55,7 +65,7 @@ test('packing dependants are returned in source-to-target calculation order', ()
 });
 
 test('missing same-packing source rate fails instead of publishing zero', () => {
-  const meta = {[keyB]:{packingRateReference:{city:'Ahmedabad',productId:A},rows:{'15 KG':{formula:'+5%',extra:0,round:0}}}};
+  const meta = {[keyB]:{packingRateReference:{city:'Ahmedabad',productId:A},rows:{'15 KG':{formula:'MASTER*1',extra:0,round:0}}}};
   assert.throws(()=>reference.calculatePackingReferencedRates({
     meta,product:products[1],rates:[{city:'Udaan',product_id:B,packing:'15 KG',rate:0}],sourceRates:[{packing:'5 L',rate:500}],...calculator
   }),/source has no matching rate for 15 KG/);
