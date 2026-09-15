@@ -30,12 +30,57 @@ if (area && !document.querySelector('.productManageBar')) {
   function selectedId(){ return area.querySelector('.productBtn.active')?.dataset.product || ''; }
   function selectedCity(){ return document.querySelector('.city.active')?.dataset.city || 'Rajkot'; }
   function cleanCode(v){ return String(v||'').trim().toLowerCase().replace(/[^a-z0-9_-]+/g,'-').replace(/^-+|-+$/g,''); }
+  function esc(v){ return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function normalizePacking(v){ return String(v??'').trim().toLocaleUpperCase('en-IN'); }
+  function readJson(key,fallback={}){ try{return JSON.parse(localStorage.getItem(key)||'')??fallback}catch{return fallback} }
   async function requireAdmin(){
     const {data:{session}} = await supabase.auth.getSession();
     if(!session) return false;
     const {data:p} = await supabase.from('profiles').select('role,active').eq('id',session.user.id).single();
     return !!(p && p.role === 'admin' && p.active);
   }
+
+  // Safety net for the rate editor. The primary admin module owns the live `rows`
+  // array and all SAVE ALL/input handlers. If another render step throws after the
+  // rows were loaded, the tbody can stay empty even though Supabase data is intact.
+  // In that one case, rebuild the same DOM controls from the saved rates + formula
+  // metadata. Existing delegated input/change handlers continue updating the primary
+  // editor state, so calculations and SAVE ALL remain handled by admin.html.
+  async function recoverRateTable(){
+    const body=document.getElementById('rateBody'),id=selectedId(),city=selectedCity();
+    if(!body||!id)return;
+    if(body.querySelector('[data-i]'))return;
+    const marker=body.textContent.trim();
+    if(marker && !/^(No packing yet|Select or add a product)/i.test(marker))return;
+    const {data,error}=await supabase.from('rates').select('id,packing,rate,sort_order').eq('city',city).eq('product_id',id).order('sort_order');
+    if(error||!data?.length)return;
+    if(id!==selectedId()||city!==selectedCity()||body.querySelector('[data-i]'))return;
+
+    const meta=readJson('VISHWAS_RATE_ADMIN_META_V3',{}),state=meta[city+'|'+id]||{},settings=state.rows||{};
+    const rows=data.map((r,i)=>{const m=settings[r.packing]||{};return{id:r.id,packing:r.packing,oldRate:Number(r.rate)||0,master:m.master||'LOOSE OIL RATE',formula:m.formula||'MASTER*1',extra:m.extra??0,round:m.round??0,sort_order:r.sort_order??i};});
+    const seen=new Set(rows.map(r=>normalizePacking(r.packing)));
+    for(const [packing,m] of Object.entries(settings)){
+      const key=normalizePacking(packing);if(!key||seen.has(key))continue;
+      rows.push({id:null,packing,oldRate:0,master:m?.master||'LOOSE OIL RATE',formula:m?.formula||'MASTER*1',extra:m?.extra??0,round:m?.round??0,sort_order:rows.length+1});seen.add(key);
+    }
+    if(!rows.length)return;
+
+    const locks=Object.assign({packing:false,master:false,old:true,formula:false,extra:false,round:false},readJson('VRCL_ADMIN_COLUMN_LOCKS',{}));
+    const packingLinked=!!state.packingRateReference;
+    body.innerHTML=rows.map((r,i)=>{
+      const opts=rows.map((x,j)=>j!==i&&x.packing?`<option value="${esc(x.packing)}" ${r.master===x.packing?'selected':''}>${esc(x.packing)}</option>`:'').join('');
+      const masterControl=packingLinked
+        ? '<select class="sourceMaster" disabled title="Same packing from referenced product is MASTER"><option>REFERENCE / SAME PACKING</option></select>'
+        : `<select data-i="${i}" data-f="master" ${locks.master?'disabled':''}><option value="LOOSE OIL RATE" ${r.master==='LOOSE OIL RATE'?'selected':''}>LOOSE OIL RATE</option>${opts}</select>`;
+      const shownNew=Number(r.oldRate)||0;
+      return `<tr><td><input class="packingField" data-i="${i}" data-f="packing" value="${esc(r.packing)}" ${locks.packing?'disabled':''}></td><td>${masterControl}</td><td><input class="oldRateField" value="${shownNew.toFixed(2)}" ${locks.old?'disabled':''} data-i="${i}" data-f="oldRate"></td><td><input data-i="${i}" data-f="formula" value="${esc(r.formula)}" placeholder="MASTER*1.365 or +5%" ${locks.formula?'disabled':''}></td><td><input type="text" inputmode="decimal" data-i="${i}" data-f="extra" value="${esc(r.extra)}" placeholder="+15 / *1.05 / +5%" ${locks.extra?'disabled':''}></td><td><input type="number" data-i="${i}" data-f="round" value="${esc(r.round)}" ${locks.round?'disabled':''}></td><td><input class="newRate" data-new="${i}" value="${shownNew.toFixed(2)}" disabled></td><td><button class="btn light" type="button" disabled title="Reload the page before deleting a recovered row">🗑️</button></td></tr>`;
+    }).join('');
+  }
+  function scheduleRateRecovery(){ setTimeout(()=>void recoverRateTable(),350); setTimeout(()=>void recoverRateTable(),1200); }
+  area.addEventListener('click',e=>{if(e.target.closest('[data-product]'))scheduleRateRecovery();});
+  document.getElementById('cityArea')?.addEventListener('click',e=>{if(e.target.closest('[data-city]'))scheduleRateRecovery();});
+  scheduleRateRecovery();
+
   function openEditor(mode, p={}){
     document.getElementById('pmModal')?.remove();
     const modal=document.createElement('div');
