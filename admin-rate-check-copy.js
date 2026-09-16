@@ -5,6 +5,18 @@ const SUPABASE_ANON_KEY='sb_publishable_hQTkAf0vHJsw618Y2wrCOw_R-c24HHQ';
 const supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'vrcl-admin-auth'}});
 const companyName='VISHWAS REFOILS & CONSUMER LIMITED';
 
+// The decorative card pseudo-element sits over the top-right corner where COPY lives.
+// It must never receive pointer events. Keep the actual header/button above decoration.
+const hitStyle=document.createElement('style');
+hitStyle.id='vrclRateCheckCopyHitFix';
+hitStyle.textContent=`
+  .card::before,.card::after{pointer-events:none!important}
+  .card .head{position:relative!important;z-index:3!important}
+  .card .copy{position:relative!important;z-index:5!important;pointer-events:auto!important;cursor:pointer!important;user-select:none}
+  .card .copy:disabled{cursor:wait!important;opacity:.75}
+`;
+document.head.appendChild(hitStyle);
+
 function legacyCopy(text){
   const ta=document.createElement('textarea');
   ta.value=text;
@@ -58,7 +70,8 @@ document.addEventListener('click',async event=>{
     const text=await buildText(button);
     const ok=!!text&&await copyText(text);
     button.textContent=ok?'COPIED ✓':'COPY FAILED';
-  }catch{
+  }catch(error){
+    console.error('Rate check copy failed',error);
     button.textContent='COPY FAILED';
   }
   setTimeout(()=>{button.textContent=old;button.disabled=false},1200);
