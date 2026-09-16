@@ -18,9 +18,6 @@ try {
 if (isAdminPage) {
   await import('./product-delete-control.js?v=20260916-product-delete-v3');
   await import('./packing-delete-guard.js?v=20260916-master-delete-guard-v2');
-
-  // Udaan editor now owns deletion persistence itself. Deleted Udaan packings are
-  // stored as exclusions in admin_state and filtered before every render/save.
   await import('./udaan-rate-system.js?v=20260916-udaan-core-delete-v1');
 
   const udaanPhotoStyle = document.createElement('style');
@@ -38,7 +35,7 @@ if (isAdminPage) {
 }
 
 if (isAdminRateCheck) {
-  await import('./admin-rate-check-copy.js?v=20260916-copy-fix-v3');
+  await import('./admin-rate-check-copy.js?v=20260916-copy-hit-fix-v4');
 }
 
 if (typeof window !== 'undefined' && /\/dashboard(?:\.html)?\/?$/.test(window.location.pathname)) {
