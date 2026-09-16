@@ -16,22 +16,13 @@ try {
 } catch {}
 
 if (isAdminPage) {
-  // Product removal is server-verified so inactive products cannot reappear.
-  await import('./product-delete-control.js?v=20260915-product-delete-v2');
+  await import('./product-delete-control.js?v=20260916-product-delete-v3');
+  await import('./packing-delete-guard.js?v=20260916-master-delete-guard-v2');
 
-  // Prevent deletion of any packing row that is still used as another row's MASTER.
-  await import('./packing-delete-guard.js?v=20260915-master-delete-guard-v1');
+  // Udaan editor now owns deletion persistence itself. Deleted Udaan packings are
+  // stored as exclusions in admin_state and filtered before every render/save.
+  await import('./udaan-rate-system.js?v=20260916-udaan-core-delete-v1');
 
-  // Udaan packing deletion is an explicit override of the Ahmedabad packing list.
-  // Load this BEFORE the Udaan editor so its capture handler persists exclusions
-  // and the same Ahmedabad packing cannot be auto-created again on reload/save.
-  await import('./udaan-packing-delete-control.js?v=20260915-udaan-packing-delete-v1');
-
-  // Udaan owns its Ahmedabad packing-reference editor.
-  await import('./udaan-rate-system.js?v=20260915-udaan-packing-delete-v1');
-
-  // Keep photo upload + customer visibility switch visible in Udaan while hiding
-  // only the loose-rate controls that Udaan does not use.
   const udaanPhotoStyle = document.createElement('style');
   udaanPhotoStyle.id = 'vrclUdaanPhotoControls';
   udaanPhotoStyle.textContent = `
@@ -42,14 +33,14 @@ if (isAdminPage) {
   `;
   document.head.appendChild(udaanPhotoStyle);
 
-  await import('./loose-reference-control.js?v=20260915-loose-ref-control-v2');
-  await import('./admin-products.js?v=20260915-rate-table-rescue-v4');
+  await import('./loose-reference-control.js?v=20260916-loose-ref-control-v3');
+  await import('./admin-products.js?v=20260916-rate-table-rescue-v5');
 }
 
 if (isAdminRateCheck) {
-  await import('./admin-rate-check-copy.js?v=20260915-copy-fix-v2');
+  await import('./admin-rate-check-copy.js?v=20260916-copy-fix-v3');
 }
 
 if (typeof window !== 'undefined' && /\/dashboard(?:\.html)?\/?$/.test(window.location.pathname)) {
-  import('./backup-manager.js?v=20260915-rate-table-rescue-v4');
+  import('./backup-manager.js?v=20260916-rate-table-rescue-v5');
 }
