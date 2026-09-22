@@ -56,7 +56,7 @@
 </div>
 </section>
 <section class="card"><div class="title">RATE SETUP</div><div class="tableWrap"><table><thead><tr><th>PACKING<button class="lockMini" data-lock="packing">🔓</button></th><th>MASTER LINK<button class="lockMini" data-lock="master">🔓</button></th><th>OLD RATE<button class="lockMini" data-lock="old">🔓</button></th><th>FORMULA<button class="lockMini" data-lock="formula">🔓</button></th><th>EXTRA COSTING<button class="lockMini" data-lock="extra">🔓</button></th><th>ROUND OFF<button class="lockMini" data-lock="round">🔓</button></th><th>NEW RATE</th><th>ACTION</th></tr></thead><tbody id="rateBody"></tbody></table></div><div class="calcHelp">Formula: <code>+5%</code> <code>MASTER*1.05</code> &nbsp; Extra costing: <code>+15</code> <code>-10</code> <code>*1.05</code> <code>/2</code> <code>+5%</code></div><div class="actions"><button class="btn green" id="addPacking">＋ ADD PACKING / WEIGHT</button><button class="btn dark" id="saveAll">💾 SAVE ALL</button></div><div class="note"><b>📝 NARRATION / TERMS &amp; CONDITIONS</b><textarea id="narration"></textarea><div class="actions"><button class="btn light" id="saveNote">💾 SAVE NARRATION</button></div></div></section>
-<section class="card"><div class="title">📋 RATE HISTORY — LAST 3 DAYS</div><div id="history" class="historyList"><div class="empty">No history yet.</div></div></section>
+<section class="card"><div class="title">📋 RATE HISTORY — RECENT CHANGES</div><div id="history" class="historyList"><div class="empty">No history yet.</div></div></section>
 </main><div id="toast" class="toast"></div>
 <script type="module">
 import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
@@ -356,8 +356,8 @@ $('saveAll').onclick=async()=>{
 $('saveNote').onclick=async()=>{const narr=$('narration').value;for(const r of rows)if(r.id)await supabase.from('rates').update({narration:narr}).eq('id',r.id);toast('✅ NARRATION SAVED')};
 async function loadHistory(){
   if(!productId)return;
-  const requestedKey=key(),since=new Date(Date.now()-3*86400000).toISOString();
-  const{data,error}=await supabase.from('rate_history').select('changed_at,changed_by,snapshot').eq('city',city).eq('product_id',productId).gte('changed_at',since).order('changed_at',{ascending:false}).limit(30);
+  const requestedKey=key();
+  const{data,error}=await supabase.from('rate_history').select('changed_at,changed_by,snapshot').eq('city',city).eq('product_id',productId).order('changed_at',{ascending:false}).limit(30);
   if(requestedKey!==key())return;
   if(error){$('history').innerHTML='<div class="empty">History load failed.</div>';return}
   const items=data||[],ids=[...new Set(items.map(h=>h.changed_by).filter(Boolean))];
@@ -368,7 +368,7 @@ async function loadHistory(){
     const s=h.snapshot||{},list=Array.isArray(s.rates)?s.rates:[],actor=s.changed_by_name||names.get(h.changed_by)||'Name unavailable';
     const hasLoose=s.loose_rate!==null&&s.loose_rate!==undefined&&Number.isFinite(Number(s.loose_rate));
     return `<div class="historyItem"><div class="historyTop"><b>${esc(s.product_name||currentProduct()?.name||'Product')}</b><span class="historyTime">${new Date(h.changed_at).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:true})}</span></div><div class="historyActor">Changed by <strong>${esc(actor)}</strong></div><div class="historyRates">${hasLoose?`<span class="historyRate historyLoose">LOOSE / 10 KG: ₹ ${Number(s.loose_rate).toFixed(2)}</span>`:'<span class="historyTime">Loose rate was not recorded in this older entry.</span>'}${list.map(x=>`<span class="historyRate">${esc(x.packing)}: ₹ ${Number(x.rate||0).toFixed(2)}</span>`).join('')}</div>${s.loose_source?`<div class="historyActor">Loose linked from ${esc(s.loose_source)}</div>`:''}${s.packing_source?`<div class="historyActor">Packing MASTER from ${esc(s.packing_source)}</div>`:''}</div>`
-  }).join(''):'<div class="empty">Last 3 days me koi saved rate change nahi.</div>';
+  }).join(''):'<div class="empty">Is product ke liye abhi koi saved rate history nahi.</div>';
 }
 async function compress(file){const bmp=await createImageBitmap(file),max=800,scale=Math.min(1,max/Math.max(bmp.width,bmp.height)),c=document.createElement('canvas');c.width=Math.round(bmp.width*scale);c.height=Math.round(bmp.height*scale);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);return await new Promise(r=>c.toBlob(r,'image/webp',.84))}
 $('photoInput').onchange=async e=>{const file=e.target.files[0];if(!file||!productId||masterLocked())return;try{toast('Optimizing photo…');const blob=await compress(file),p=currentProduct(),path=`ingredients/${p.code}-${Date.now()}.webp`;const{error:u}=await supabase.storage.from('product-images').upload(path,blob,{contentType:'image/webp',cacheControl:'31536000'});if(u)throw u;const{data:pub}=supabase.storage.from('product-images').getPublicUrl(path);const{error:up}=await supabase.from('products').update({ingredient_image_url:pub.publicUrl}).eq('id',productId);if(up)throw up;p.ingredient_image_url=pub.publicUrl;showPhoto();toast('✅ INGREDIENT PHOTO SAVED')}catch(err){toast(err.message||'Photo upload failed')}};
