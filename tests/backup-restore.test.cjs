@@ -22,7 +22,7 @@ function storage() {
 }
 function fixture() {
   return {
-    signedIn: true, rpcCalls: 0, cloudWrites: 0,
+    signedIn: true, rpcCalls: 0, cloudWrites: 0, uploads: [],
     profiles: [{ id: 'admin-test', display_name: 'Admin One', role: 'admin', active: true }],
     products: [
       { id: A, code: 'groundnut', name: 'Groundnut', city: 'Rajkot', active: true, sort_order: 1 },
@@ -75,6 +75,7 @@ function app({ db = fixture(), local = storage(), session = storage() } = {}) {
     upsert(payload) { this.payload = clone(payload); return this; }
     insert(payload) { this.payload = clone(payload); this.insertOnly = true; return this; }
     async execute(single) {
+      if (this.table === 'rates' && db.rateGate) await db.rateGate;
       if (this.payload) {
         if (this.table === 'rates') {
           if (db.failRates) return { data: null, error: new Error('Rate storage unavailable') };
@@ -108,6 +109,7 @@ function app({ db = fixture(), local = storage(), session = storage() } = {}) {
     then(resolve, reject) { return this.execute(false).then(resolve, reject); }
   }
   const supabase = {
+    storage: { from(bucket) { return { async upload(name, bytes) { db.uploads.push({bucket,name,bytes:bytes.length}); return {error:null}; } }; } },
     auth: { async getSession() { return { data: { session: db.signedIn ? { user: { id: 'admin-test' } } : null } }; } },
     from: table => new Query(table),
     async rpc(name, args) {
@@ -128,7 +130,7 @@ function app({ db = fixture(), local = storage(), session = storage() } = {}) {
   };
   const shared = {
     window, document, localStorage: local, sessionStorage: session, console, Event,
-    crypto: webcrypto, createClient: () => supabase, SUPABASE_URL: 'test', SUPABASE_ANON_KEY: 'test',
+    crypto: webcrypto, TextEncoder, createClient: () => supabase, SUPABASE_URL: 'test', SUPABASE_ANON_KEY: 'test',
     location: { pathname: '/test.html', reload() {} },
     setTimeout: () => 0, clearTimeout() {}, setInterval: () => 0,
     fetch: async () => ({ ok: true, text: async () => '' })
@@ -219,6 +221,101 @@ test('backup captures unsaved packaging and formulas; restore and reload show th
   assert.equal(reload.document.getElementById('pvRound').value, 2);
   assert.match(reload.document.getElementById('rateBody').innerHTML, /data-f="formula" value="MASTER\/8"/);
   assert.equal(reload.document.getElementById('narration').value, 'Restored terms');
+});
+
+test('product backup saves a cloud copy without overwriting other cloud formulas', async () => {
+  const a = app();
+  const cloud = metadata(), cached = metadata();
+  cached[keyA].rows['15 KG'].formula = 'WRONG CACHED FORMULA';
+  a.local.setItem(META, JSON.stringify(cached));
+  a.db.admin_state = [{key:CLOUD,value:{meta:cloud,locks:{},master_lock:false}}];
+  await a.editor.check();
+  await a.editor.select('Ahmedabad', B);
+  await a.backup.makeProductBackup();
+  assert.equal(a.db.cloudWrites, 0, 'a backup must never publish cached formula data');
+  assert.equal(a.db.admin_state[0].value.meta[keyA].rows['15 KG'].formula, 'MASTER*1.5');
+  assert.equal(a.db.uploads.length, 1);
+  assert.match(a.db.uploads[0].name, /^products\/ahmedabad\//);
+  assert.equal(a.manager.downloadedBackup.formula_state.meta[keyB].rows['5 L'].formula, 'MASTER*5');
+});
+
+test('Udaan product backup respects deliberately deleted packings', async () => {
+  const a = app(), id = '33333333-3333-4333-8333-333333333333', productKey = 'Udaan|' + id;
+  a.db.products.push({id,city:'Udaan',name:'Cottonseed',code:'cotton',active:true});
+  a.db.rates.push(
+    {id:'dddddddd-dddd-4ddd-8ddd-dddddddddddd',city:'Udaan',product_id:id,packing:'15 LTR NEW TIN',rate:1900,sort_order:1},
+    {id:'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',city:'Udaan',product_id:id,packing:'15 LTR OLD TIN',rate:1800,sort_order:2}
+  );
+  await a.editor.select('Udaan', id);
+  a.window.vrclUdaanBackup={captureProduct(){return{city:'Udaan',product_id:id,rates:[a.db.rates.find(r=>r.product_id===id&&r.packing==='15 LTR NEW TIN')],excluded_packings:['15 LTR OLD TIN'],formula_state:{rows:{'15 LTR NEW TIN':{formula:'MASTER*1',extra:0,round:0}},excludedPackings:['15 LTR OLD TIN']}}}};
+  await a.backup.makeProductBackup();
+  assert.deepEqual(clone(a.manager.downloadedBackup.rates.map(r=>r.packing)), ['15 LTR NEW TIN']);
+  assert.deepEqual(clone(a.manager.downloadedBackup.formula_state.meta[productKey].excludedPackings), ['15 LTR OLD TIN']);
+  assert.equal(a.db.rateWrites||0, 0);
+  assert.equal(a.db.cloudWrites, 0);
+});
+
+test('an older admin tab cannot restore Udaan packings deleted in the cloud', async () => {
+  const a = app(), id = '33333333-3333-4333-8333-333333333333', key = 'Udaan|' + id;
+  const old = {meta:{[key]:{rows:{'15 KG OLD TIN':{formula:'MASTER*1'}}}},locks:{},master_lock:false};
+  a.local.setItem(META,JSON.stringify(old.meta));
+  a.db.admin_state=[{key:CLOUD,value:{...old,meta:{[key]:{rows:{},excludedPackings:['15 KG OLD TIN']}}}}];
+  await a.backup.syncStateToCloud(old);
+  const saved = a.db.admin_state[0].value.meta[key];
+  assert.deepEqual(clone(saved.excludedPackings), ['15 KG OLD TIN']);
+  assert.equal(saved.rows['15 KG OLD TIN'], undefined);
+});
+
+test('saved history appears while the initial packaging request is pending', async () => {
+  const a = app();
+  a.db.rate_history.push({city:'Rajkot',product_id:A,changed_by:'admin-test',changed_at:'2026-09-23T04:11:59Z',snapshot:{product_name:'Groundnut',rates:[{packing:'15 KG',rate:1500}]}});
+  let release;
+  a.db.rateGate = new Promise(resolve => { release=resolve; });
+  const loading = a.editor.select('Rajkot', A);
+  await settle(); await settle();
+  assert.match(a.document.getElementById('history').innerHTML, /Groundnut/);
+  assert.match(a.document.getElementById('history').innerHTML, /Admin One/);
+  release(); await loading;
+  assert.match(a.document.getElementById('rateBody').innerHTML, /15 KG/);
+});
+
+test('a direct Udaan save records the product, actor and published rate in history', async () => {
+  const id = '33333333-3333-4333-8333-333333333333', history = [], savedRates = [];
+  const supabase = {
+    auth:{async getSession(){return {data:{session:{user:{id:'admin-test'}}}};}},
+    from(table){
+      const q={
+        select(){return this},eq(){return this},maybeSingle(){return Promise.resolve({data:{value:{meta:{}}},error:null})},
+        single(){return Promise.resolve({data:table==='profiles'?{role:'admin',active:true,display_name:'Admin One'}:{key:CLOUD},error:null})},
+        upsert(rows){if(table==='rates')savedRates.push(...rows);return this},
+        insert(row){history.push(row);return Promise.resolve({data:row,error:null})},
+        then(resolve,reject){return Promise.resolve({data:table==='rates'?savedRates:[],error:null}).then(resolve,reject)}
+      };return q;
+    }
+  };
+  const saveButton={disabled:false},narration={value:'Delivery terms'},local=storage();
+  const document={
+    getElementById(key){return key==='saveAll'?saveButton:key==='narration'?narration:key==='vrclUdaanModeStyle'?{}:null},
+    querySelector(key){return key.includes('city.active')?{dataset:{city:'Udaan'}}:{dataset:{product:id}}}
+  };
+  let refreshes=0;
+  const context=vm.createContext({document,window:{vrclAdminHistory:{async refresh(){refreshes++;}}},localStorage:local,
+    createClient:()=>supabase,calcFormula:(_,rate)=>rate,applyExtraCost:(rate,extra)=>rate+Number(extra),
+    roundPackingValue:rate=>rate,crypto:webcrypto,console,setTimeout,clearTimeout});
+  const source=fs.readFileSync(path.join(root,'udaan-rate-system.js'),'utf8').replace(/^import .*\n/gm,'');
+  vm.runInContext(source+`
+    editor={key:'Udaan|${id}',id:'${id}',target:{name:'COTTONSEED OIL'},source:{id:'source-id'},
+      state:{},sourceMap:new Map([['15 KG',1000]]),
+      rows:[{packing:'15 KG',master:'AHMEDABAD SAME PACKING',formula:'MASTER*1',extra:5,round:0,oldRate:1000}],narration:'Delivery terms'};
+    loadUdaan=async()=>{};this.runSave=saveUdaan;
+  `,context);
+  await context.runSave();
+  assert.equal(savedRates.length,1);
+  assert.equal(history.length,1);
+  assert.equal(history[0].changed_by,'admin-test');
+  assert.equal(history[0].snapshot.changed_by_name,'Admin One');
+  assert.equal(history[0].snapshot.rates[0].rate,1005);
+  assert.equal(refreshes,1);
 });
 
 test('an admin logging in on a fresh browser loads cloud formulas before rendering packaging', async () => {

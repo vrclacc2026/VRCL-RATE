@@ -222,11 +222,11 @@ $('packingRefOpen').onclick=async()=>{const ref=st().packingRateReference;if(!re
 
 $('eye').onclick=()=>{$('password').type=$('password').type==='password'?'text':'password';$('eye').textContent=$('password').type==='password'?'👁':'🙈'};
 async function check(){const{data:{session}}=await supabase.auth.getSession();if(!session)return false;const{data:p,error}=await supabase.from('profiles').select('id,display_name,login_id,role,active').eq('id',session.user.id).single();if(error||!p||p.role!=='admin'||!p.active)return false;adminProfile=p;try{await hydrateStateFromCloud();meta=JSON.parse(localStorage.getItem(META)||'{}')}catch{$('loginMsg').textContent='Formula settings could not be loaded. Please try again.';return false}$('loginOverlay').classList.add('hidden');$('logout').classList.remove('hidden');await loadProducts();return true}
-async function loadProducts(){const requestedCity=city;const{data,error}=await supabase.from('products').select('id,code,name,sort_order,ingredient_image_url,city,customer_visible').eq('active',true).order('sort_order');if(requestedCity!==city)return;if(error){toast('Products load failed');return}allProducts=data||[];products=allProducts.filter(p=>p.city===city);if(!products.some(p=>p.id===productId))productId=products[0]?.id||'';renderCities();renderProducts();await loadRates();showPhoto();await loadHistory();renderLooseReference();renderPackingReference()}
+async function loadProducts(){const requestedCity=city;const{data,error}=await supabase.from('products').select('id,code,name,sort_order,ingredient_image_url,city,customer_visible').eq('active',true).order('sort_order');if(requestedCity!==city)return;if(error){toast('Products load failed');return}allProducts=data||[];products=allProducts.filter(p=>p.city===city);if(!products.some(p=>p.id===productId))productId=products[0]?.id||'';renderCities();renderProducts();showPhoto();await Promise.all([loadRates(),loadHistory()]);renderLooseReference();renderPackingReference()}
 function renderCities(){$('cityArea').innerHTML=['Rajkot','Ahmedabad','Udaan'].map(c=>`<button class="city ${c===city?'active':''}" data-city="${c}">${c}</button>`).join('');document.querySelectorAll('[data-city]').forEach(b=>b.onclick=async()=>{city=b.dataset.city;productId='';renderCustomerVisibility();renderCities();await loadProducts()})}
 function renderProducts(){
   $('productArea').innerHTML=products.map(p=>'<button class="productBtn '+(p.id===productId?'active':'')+'" data-product="'+p.id+'"><span>'+esc(p.name)+'</span><span class="productStatus" aria-hidden="true"></span></button>').join('');
-  document.querySelectorAll('[data-product]').forEach(b=>b.onclick=async()=>{productId=b.dataset.product;renderProducts();showPhoto();await loadRates();await loadHistory()});
+  document.querySelectorAll('[data-product]').forEach(b=>b.onclick=async()=>{productId=b.dataset.product;renderProducts();showPhoto();await Promise.all([loadRates(),loadHistory()])});
   renderCustomerVisibility();
 }
 function renderCustomerVisibility(){
@@ -257,9 +257,10 @@ async function toggleCustomerVisibility(id){
 }
 function currentProduct(){return products.find(p=>p.id===productId)}function showPhoto(){const p=currentProduct();$('photoPrev').innerHTML=p?.ingredient_image_url?`<img src="${esc(p.ingredient_image_url)}" alt="Ingredient">`:'<div class="noPhoto">INGREDIENT<br>PHOTO</div>'}
 async function loadRates(){
-  loadedRateKey='';packingSourceRates=new Map();packingReferenceLoadError='';if(!productId)return;
+  loadedRateKey='';packingSourceRates=new Map();packingReferenceLoadError='';if(!productId){rows=[];renderTable();return}
+  $('rateBody').innerHTML='<tr><td colspan="8" class="empty">Loading packaging…</td></tr>';
   const requestedKey=key(),{data,error}=await supabase.from('rates').select('*').eq('city',city).eq('product_id',productId).order('sort_order');
-  if(requestedKey!==key())return;if(error){toast('Rate load failed');return}
+  if(requestedKey!==key())return;if(error){$('rateBody').innerHTML='<tr><td colspan="8" class="empty">Packaging could not load. Select the product again to retry.</td></tr>';toast('Rate load failed');return}
   const s=st(),published=data||[];
   rows=published.map((r,i)=>{const m=s.rows?.[r.packing]||{};return{id:r.id,packing:r.packing,oldRate:r.rate,master:m.master||'LOOSE OIL RATE',formula:m.formula||'MASTER*1',extra:m.extra??0,round:m.round??0,sort_order:r.sort_order??i}});
   const seen=new Set(rows.map(r=>normalizedPacking(r.packing)));
@@ -283,8 +284,7 @@ window.vrclAdminBackup={captureProduct(){
     snapshotRows[packing]={master:r.master,formula:r.formula,extra:r.extra,round:r.round};
     return{id:r.id||crypto.randomUUID(),city,product_id:productId,packing,rate:r.id?Number(r.oldRate)||0:calculated.rate,narration:$('narration').value,sort_order:i+1,updated_at:capturedAt};
   });
-  st().rows=snapshotRows;saveMeta();
-  return{city,product_id:productId,rates};
+  return{city,product_id:productId,rates,formula_state:{...JSON.parse(JSON.stringify(st())),rows:snapshotRows}};
 }};
 window.addEventListener('vrcl:admin-state-applied',()=>{
   try{meta=JSON.parse(localStorage.getItem(META)||'{}')}catch{meta={}}
@@ -355,8 +355,9 @@ $('saveAll').onclick=async()=>{
 };
 $('saveNote').onclick=async()=>{const narr=$('narration').value;for(const r of rows)if(r.id)await supabase.from('rates').update({narration:narr}).eq('id',r.id);toast('✅ NARRATION SAVED')};
 async function loadHistory(){
-  if(!productId)return;
+  if(!productId){$('history').innerHTML='<div class="empty">Select a product to view its history.</div>';return}
   const requestedKey=key();
+  $('history').innerHTML='<div class="empty">Loading rate history…</div>';
   const{data,error}=await supabase.from('rate_history').select('changed_at,changed_by,snapshot').eq('city',city).eq('product_id',productId).order('changed_at',{ascending:false}).limit(30);
   if(requestedKey!==key())return;
   if(error){$('history').innerHTML='<div class="empty">History load failed.</div>';return}
@@ -370,6 +371,7 @@ async function loadHistory(){
     return `<div class="historyItem"><div class="historyTop"><b>${esc(s.product_name||currentProduct()?.name||'Product')}</b><span class="historyTime">${new Date(h.changed_at).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:true})}</span></div><div class="historyActor">Changed by <strong>${esc(actor)}</strong></div><div class="historyRates">${hasLoose?`<span class="historyRate historyLoose">LOOSE / 10 KG: ₹ ${Number(s.loose_rate).toFixed(2)}</span>`:'<span class="historyTime">Loose rate was not recorded in this older entry.</span>'}${list.map(x=>`<span class="historyRate">${esc(x.packing)}: ₹ ${Number(x.rate||0).toFixed(2)}</span>`).join('')}</div>${s.loose_source?`<div class="historyActor">Loose linked from ${esc(s.loose_source)}</div>`:''}${s.packing_source?`<div class="historyActor">Packing MASTER from ${esc(s.packing_source)}</div>`:''}</div>`
   }).join(''):'<div class="empty">Is product ke liye abhi koi saved rate history nahi.</div>';
 }
+window.vrclAdminHistory={refresh:loadHistory};
 async function compress(file){const bmp=await createImageBitmap(file),max=800,scale=Math.min(1,max/Math.max(bmp.width,bmp.height)),c=document.createElement('canvas');c.width=Math.round(bmp.width*scale);c.height=Math.round(bmp.height*scale);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);return await new Promise(r=>c.toBlob(r,'image/webp',.84))}
 $('photoInput').onchange=async e=>{const file=e.target.files[0];if(!file||!productId||masterLocked())return;try{toast('Optimizing photo…');const blob=await compress(file),p=currentProduct(),path=`ingredients/${p.code}-${Date.now()}.webp`;const{error:u}=await supabase.storage.from('product-images').upload(path,blob,{contentType:'image/webp',cacheControl:'31536000'});if(u)throw u;const{data:pub}=supabase.storage.from('product-images').getPublicUrl(path);const{error:up}=await supabase.from('products').update({ingredient_image_url:pub.publicUrl}).eq('id',productId);if(up)throw up;p.ingredient_image_url=pub.publicUrl;showPhoto();toast('✅ INGREDIENT PHOTO SAVED')}catch(err){toast(err.message||'Photo upload failed')}};
 $('loginBtn').onclick=async()=>{const{error}=await supabase.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){$('loginMsg').textContent='Invalid admin login.';return}if(!await check())$('loginMsg').textContent='Admin access denied.'};$('logout').onclick=async()=>{await supabase.auth.signOut({scope:'local'});location.reload()};await check();
