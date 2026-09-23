@@ -76,6 +76,8 @@ function app({ db = fixture(), local = storage(), session = storage() } = {}) {
     insert(payload) { this.payload = clone(payload); this.insertOnly = true; return this; }
     async execute(single) {
       if (this.table === 'rates' && db.rateGate) await db.rateGate;
+      if (this.table === 'rates' && db.failRateReads > 0) { db.failRateReads--; return {data:null,error:new Error('Temporary network failure')}; }
+      if (this.table === 'rate_history' && db.failHistoryReads > 0) { db.failHistoryReads--; return {data:null,error:new Error('Temporary network failure')}; }
       if (this.payload) {
         if (this.table === 'rates') {
           if (db.failRates) return { data: null, error: new Error('Rate storage unavailable') };
@@ -277,6 +279,17 @@ test('saved history appears while the initial packaging request is pending', asy
   assert.match(a.document.getElementById('history').innerHTML, /Admin One/);
   release(); await loading;
   assert.match(a.document.getElementById('rateBody').innerHTML, /15 KG/);
+});
+
+test('first-open packaging and history recover after one temporary network failure', async () => {
+  const a = app();
+  a.db.failRateReads=1;a.db.failHistoryReads=1;
+  a.db.rate_history.push({city:'Rajkot',product_id:A,changed_by:'admin-test',changed_at:'2026-09-23T04:11:59Z',snapshot:{product_name:'Groundnut',rates:[{packing:'15 KG',rate:1500}]}});
+  await a.editor.select('Rajkot', A);
+  assert.equal(a.db.failRateReads,0);
+  assert.equal(a.db.failHistoryReads,0);
+  assert.match(a.document.getElementById('rateBody').innerHTML, /15 KG/);
+  assert.match(a.document.getElementById('history').innerHTML, /Admin One/);
 });
 
 test('a direct Udaan save records the product, actor and published rate in history', async () => {
