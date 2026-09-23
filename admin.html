@@ -259,7 +259,9 @@ function currentProduct(){return products.find(p=>p.id===productId)}function sho
 async function loadRates(){
   loadedRateKey='';packingSourceRates=new Map();packingReferenceLoadError='';if(!productId){rows=[];renderTable();return}
   $('rateBody').innerHTML='<tr><td colspan="8" class="empty">Loading packaging…</td></tr>';
-  const requestedKey=key(),{data,error}=await supabase.from('rates').select('*').eq('city',city).eq('product_id',productId).order('sort_order');
+  const requestedKey=key(),readRates=()=>supabase.from('rates').select('*').eq('city',city).eq('product_id',productId).order('sort_order');
+  let{data,error}=await readRates();
+  if(error&&requestedKey===key())({data,error}=await readRates());
   if(requestedKey!==key())return;if(error){$('rateBody').innerHTML='<tr><td colspan="8" class="empty">Packaging could not load. Select the product again to retry.</td></tr>';toast('Rate load failed');return}
   const s=st(),published=data||[];
   rows=published.map((r,i)=>{const m=s.rows?.[r.packing]||{};return{id:r.id,packing:r.packing,oldRate:r.rate,master:m.master||'LOOSE OIL RATE',formula:m.formula||'MASTER*1',extra:m.extra??0,round:m.round??0,sort_order:r.sort_order??i}});
@@ -358,7 +360,9 @@ async function loadHistory(){
   if(!productId){$('history').innerHTML='<div class="empty">Select a product to view its history.</div>';return}
   const requestedKey=key();
   $('history').innerHTML='<div class="empty">Loading rate history…</div>';
-  const{data,error}=await supabase.from('rate_history').select('changed_at,changed_by,snapshot').eq('city',city).eq('product_id',productId).order('changed_at',{ascending:false}).limit(30);
+  const readHistory=()=>supabase.from('rate_history').select('changed_at,changed_by,snapshot').eq('city',city).eq('product_id',productId).order('changed_at',{ascending:false}).limit(30);
+  let{data,error}=await readHistory();
+  if(error&&requestedKey===key())({data,error}=await readHistory());
   if(requestedKey!==key())return;
   if(error){$('history').innerHTML='<div class="empty">History load failed.</div>';return}
   const items=data||[],ids=[...new Set(items.map(h=>h.changed_by).filter(Boolean))];
