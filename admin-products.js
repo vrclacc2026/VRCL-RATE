@@ -35,6 +35,21 @@ function productFamily(product){ const text=((product?.code||'')+' '+(product?.n
 function isUdaanPalm(product){ return product?.city==='Udaan' && productFamily(product)==='palm'; }
 function toast(message){ const el=$('toast'); if(!el)return; el.textContent=message; el.style.display='block'; clearTimeout(window.__vrclFallbackToast); window.__vrclFallbackToast=setTimeout(()=>el.style.display='none',2600); }
 function fallbackActive(){ return !!fallback && fallback.key===selectedKey() && !!document.querySelector('#rateBody [data-fallback-row]'); }
+window.vrclFallbackBackup={
+  active:fallbackActive,
+  captureProduct(){
+    if(!fallbackActive())throw new Error('Wait for the selected packing editor to finish loading.');
+    const values=evaluateRows(fallback),settings={},seen=new Set();
+    const rates=fallback.rows.map((r,i)=>{
+      const packing=String(r.packing||'').trim(),key=norm(packing),result=values[i];
+      if(!packing||seen.has(key))throw new Error('Packaging names must be present and unique.');
+      if(result?.error||result?.cycle)throw new Error(result.error||'Packing master link cycle.');
+      seen.add(key);settings[packing]={master:r.master,formula:r.formula,extra:r.extra,round:r.round};
+      return{id:r.id||crypto.randomUUID(),city:fallback.city,product_id:fallback.id,packing,rate:r.id?Number(r.oldRate)||0:result.rate,narration:$('narration')?.value??fallback.narration,sort_order:i+1};
+    });
+    return{city:fallback.city,product_id:fallback.id,rates,formula_state:{...clone(fallback.state),rows:settings}};
+  }
+};
 
 async function requireAdmin(){
   const {data:{session}}=await supabase.auth.getSession();
@@ -196,6 +211,8 @@ async function saveFallback(){
     const historyRows=groups.map(group=>{const k=group.product.city+'|'+group.product.id,s=meta[k]||{},loose=resolveLooseRate(meta,k,products||[]);return{city:group.product.city,product_id:group.product.id,changed_by:session.user.id,snapshot:{product_name:group.product.name,changed_by_name:profile.display_name||profile.login_id||null,loose_rate:loose.error?null:loose.value,loose_unit:'10 KG',rates:group.rates.map(r=>({packing:r.packing,rate:r.rate})),narration:group.rates[0]?.narration||''}}});
     const history=await supabase.from('rate_history').insert(historyRows);
     toast(history.error?'✅ RATES SAVED (history warning)':'✅ RATE UPDATE SAVED');
+    if(history.error)console.error('Rate history save failed',history.error);
+    await window.vrclAdminHistory?.refresh();
     fallback=null;await activateFallback(true);
   }catch(error){console.error('Exact admin fallback save failed',error);toast('Rates not saved: '+(error.message||error))}
   finally{fallbackSaving=false;if(save)save.disabled=false}

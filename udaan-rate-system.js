@@ -106,10 +106,29 @@ async function saveUdaan(){
     if(excluded.size){const names=[...excluded];const del=await supabase.from('rates').delete().eq('city','Udaan').eq('product_id',editor.id).in('packing',names);if(del.error)throw del.error}
     const narration=$('narration')?.value??editor.narration??'',payload=activeRows.map((r,i)=>({city:'Udaan',product_id:editor.id,packing:r.packing,rate:values[i].rate,narration,sort_order:i+1}));
     if(payload.length){const{data,error}=await supabase.from('rates').upsert(payload,{onConflict:'city,product_id,packing'}).select('city,product_id,packing');if(error)throw error;if(data?.length!==payload.length)throw new Error('Server did not confirm all Udaan rates.')}
-    editor.rows=activeRows;editor.state=state;toast('✅ UDAAN RATES SAVED');await loadUdaan()
+    const {data:profile,error:profileError}=await supabase.from('profiles').select('display_name,login_id').eq('id',session.user.id).single();
+    if(profileError)console.error('Udaan history actor could not be loaded',profileError);
+    const history=await supabase.from('rate_history').insert({city:'Udaan',product_id:editor.id,changed_by:session.user.id,snapshot:{product_name:editor.target.name,changed_by_name:profile?.display_name||profile?.login_id||null,loose_rate:null,rates:payload.map(r=>({packing:r.packing,rate:r.rate})),narration}});
+    editor.rows=activeRows;editor.state=state;
+    toast(history.error?'Udaan rates saved, but history could not be saved.':'✅ UDAAN RATES SAVED');
+    if(history.error)console.error('Udaan rate history save failed',history.error);
+    await window.vrclAdminHistory?.refresh();await loadUdaan()
   }catch(error){toast('Udaan rates not saved: '+(error.message||error))}
   finally{saving=false;if(btn)btn.disabled=false;render()}
 }
+
+window.vrclUdaanBackup={captureProduct(){
+  if(selectedCity()!=='Udaan'||!editor||editor.key!==selectedKey())throw new Error('Wait for the Udaan packing editor to finish loading.');
+  const values=evaluateRows(editor),rows={},excluded=exclusions(editor.state),seen=new Set();
+  const rates=editor.rows.filter(r=>!excluded.has(norm(r.packing))).map(r=>{
+    const packing=String(r.packing||'').trim(),key=norm(packing),i=editor.rows.indexOf(r),calculated=values[i];
+    if(!packing||seen.has(key))throw new Error('Udaan packaging names must be present and unique.');
+    if(calculated?.error)throw new Error(calculated.error);
+    seen.add(key);rows[packing]={master:r.master||AHD,formula:r.formula||'MASTER*1',extra:r.extra??0,round:r.round??0};
+    return{id:r.id||crypto.randomUUID(),city:'Udaan',product_id:editor.id,packing,rate:r.id?Number(r.oldRate)||0:calculated.rate,narration:$('narration')?.value??editor.narration,sort_order:i+1};
+  });
+  return{city:'Udaan',product_id:editor.id,rates,formula_state:{...clone(editor.state),rows},excluded_packings:[...excluded]};
+}};
 
 if($('rateBody')){
   installModeStyle();
@@ -123,6 +142,6 @@ if($('rateBody')){
     const del=e.target.closest('[data-udaan-delete]');if(del){e.preventDefault();e.stopImmediatePropagation();void deleteRow(+del.dataset.udaanDelete);return}
     if(e.target.closest('#addPacking')){e.preventDefault();e.stopImmediatePropagation();toast('Udaan packing comes from Ahmedabad. Delete any Udaan packing you do not want.')}
   },true);
-  const observer=new MutationObserver(()=>{applyUdaanUi();if(selectedCity()==='Udaan'&&editor&&!document.querySelector('#rateBody [data-udaan-row]'))schedule(60)});observer.observe(document.querySelector('main')||document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','hidden']});
+  const observer=new MutationObserver(()=>{applyUdaanUi();if(selectedCity()==='Udaan'&&selectedId()&&(!editor||editor.key!==selectedKey()||(editor.rows.length&&!document.querySelector('#rateBody [data-udaan-row]'))))schedule(60)});observer.observe(document.querySelector('main')||document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','hidden']});
   applyUdaanUi();schedule(450);setTimeout(()=>schedule(0),1200);
 }

@@ -77,6 +77,16 @@ export function syncStateToCloud(value = currentLocalState()) {
     if (!await isAdmin()) throw new Error('Active admin login required to save formulas.');
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error('Admin session expired. Please log in again.');
+    const { data: current, error: readError } = await supabase.from('admin_state').select('value').eq('key', CLOUDKEY).maybeSingle();
+    if (readError) throw readError;
+    // A tab opened before a Udaan deletion must not bring excluded packings back.
+    for (const [key, state] of Object.entries(current?.value?.meta || {})) {
+      if (!Array.isArray(state?.excludedPackings) || !snapshot.meta?.[key]) continue;
+      const localState = snapshot.meta[key];
+      const excluded = [...new Set([...state.excludedPackings, ...(localState.excludedPackings || [])])];
+      localState.excludedPackings = excluded;
+      for (const packing of excluded) if (localState.rows) delete localState.rows[packing];
+    }
     const { data, error } = await supabase.from('admin_state').upsert({ key: CLOUDKEY, value: snapshot, updated_by: session.user.id, updated_at: new Date().toISOString() }, { onConflict: 'key' }).select('key').single();
     if (error) throw error;
     if (data?.key !== CLOUDKEY) throw new Error('Formulas could not be saved. Please try again.');
@@ -152,24 +162,25 @@ function noteStyle() { return 'font-size:8px;color:#667085;line-height:1.25'; }
 
 async function makeProductBackup() {
   const id = selectedProductId(); if (!id) throw new Error('Select a product first.');
-  if (!window.vrclAdminBackup?.captureProduct) throw new Error('Refresh the admin page before taking a backup.');
-  const editor = window.vrclAdminBackup.captureProduct();
+  if (!await isAdmin()) throw new Error('Active admin login required to take a backup.');
+  const source = selectedCity() === 'Udaan' ? window.vrclUdaanBackup : window.vrclFallbackBackup?.active?.() ? window.vrclFallbackBackup : window.vrclAdminBackup;
+  if (!source?.captureProduct) throw new Error('Wait for the packing editor to finish loading.');
+  const editor = source.captureProduct();
   if (editor.product_id !== id) throw new Error('The selected product changed. Please try again.');
-  const state = currentLocalState();
-  await syncStateToCloud(state);
-  const [{ data: product, error: pe }, { data: rates, error: re }] = await Promise.all([
+  const [{ data: product, error: pe }, { data: cloud, error: ce }] = await Promise.all([
     supabase.from('products').select('*').eq('id', id).single(),
-    supabase.from('rates').select('*').eq('product_id', id).order('city').order('sort_order')
+    supabase.from('admin_state').select('value').eq('key', CLOUDKEY).maybeSingle()
   ]);
-  if (pe) throw pe; if (re) throw re;
-  const productMeta = {};
-  for (const [k, v] of Object.entries(state.meta || {})) if (k.endsWith('|' + id)) productMeta[k] = v;
+  if (pe) throw pe; if (ce) throw ce;
+  const cloudState = cloud?.value || {}, localState = currentLocalState();
+  const productKey = editor.city + '|' + id;
+  const productMeta = { [productKey]: editor.formula_state || cloudState.meta?.[productKey] || localState.meta?.[productKey] || {} };
   const backup = {
     format: PRODUCT_FORMAT,
     created_at: new Date().toISOString(),
     product,
-    rates: [...(rates || []).filter(r => r.city !== editor.city), ...editor.rates],
-    formula_state: { meta: productMeta, locks: state.locks, master_lock: state.master_lock },
+    rates: editor.rates,
+    formula_state: { meta: productMeta, locks: cloudState.locks || localState.locks, master_lock: cloudState.master_lock ?? localState.master_lock },
     images: {
       ingredient: await urlToEmbedded(product.ingredient_image_url),
       header: await urlToEmbedded(product.header_image_url)
@@ -177,6 +188,10 @@ async function makeProductBackup() {
   };
   const clean = String(product.name || product.code || 'product').replace(/[^a-z0-9_-]+/gi, '-').replace(/^-|-$/g, '').toLowerCase();
   downloadJson(backup, `vrcl-${clean}-backup-${new Date().toISOString().slice(0,10)}.json`);
+  let cloudError = null;
+  try { await saveCloudBackup(backup, `products/${editor.city.toLowerCase()}/${id}`); }
+  catch (error) { cloudError = error; console.error('Product cloud backup failed', error); }
+  return { product_name: product.name, cloudError };
 }
 function prepareProductRestore(backup) {
   if (backup?.format !== PRODUCT_FORMAT || !backup.product?.id) throw new Error('Invalid VRCL product backup file.');
@@ -244,7 +259,6 @@ async function collectCodeSnapshot() {
 }
 async function buildFullBackup() {
   await hydrateStateFromCloud();
-  await syncStateToCloud();
   const [profiles, products, rates, history, activity, headers, adminState] = await Promise.all([
     supabase.from('profiles').select('*').order('created_at'),
     supabase.from('products').select('*').order('city').order('sort_order'),
@@ -271,15 +285,15 @@ async function buildFullBackup() {
       profiles: profiles.data || [], products: plist, rates: rates.data || [], rate_history: history.data || [],
       user_activity: activity.data || [], header_assets: headers.data || [], admin_state: adminState.data || []
     },
-    local_admin_state: currentLocalState(),
+    local_admin_state: (adminState.data || []).find(x => x.key === CLOUDKEY)?.value || currentLocalState(),
     images: imageMap,
     code_snapshot: await collectCodeSnapshot(),
     note: 'GitHub remains the authoritative deploy/version history. This backup restores Supabase business data, formulas and photos from the dashboard.'
   };
   return backup;
 }
-async function saveCloudBackup(backup) {
-  const name = `full/vrcl-full-${new Date().toISOString().replace(/[:.]/g,'-')}.json`;
+async function saveCloudBackup(backup, folder = 'full') {
+  const name = `${folder}/vrcl-${new Date().toISOString().replace(/[:.]/g,'-')}.json`;
   const bytes = new TextEncoder().encode(JSON.stringify(backup));
   const { error } = await supabase.storage.from('site-backups').upload(name, bytes, { contentType: 'application/json', upsert: false });
   if (error) throw error;
@@ -320,8 +334,9 @@ function addProductControls() {
   const restore = document.createElement('button'); restore.type='button'; restore.title='Restore product backup'; restore.setAttribute('aria-label','Restore product backup'); restore.style.cssText=iconStyle(); restore.innerHTML='↺';
   const input = document.createElement('input'); input.type='file'; input.accept='.json,application/json'; input.hidden=true;
   let restoreTarget;
-  tools.append(backup, restore, input); photo.insertAdjacentElement('afterend', tools);
-  backup.onclick = async () => { backup.disabled=true; try { await makeProductBackup(); } catch(e){ alert('Product backup failed: '+(e.message||e)); } finally { backup.disabled=false; } };
+  const status = document.createElement('span'); status.style.cssText=noteStyle(); status.setAttribute('role','status');
+  tools.append(backup, restore, input, status); photo.insertAdjacentElement('afterend', tools);
+  backup.onclick = async () => { backup.disabled=true; status.textContent='PREPARING…'; try { const result=await makeProductBackup(); status.textContent=result.cloudError?'FILE DOWNLOADED · CLOUD SAVE FAILED':'BACKUP SAVED'; if(result.cloudError)alert('Product backup file downloaded, but cloud copy failed: '+(result.cloudError.message||result.cloudError)); } catch(e){ status.textContent='BACKUP FAILED'; alert('Product backup failed: '+(e.message||e)); } finally { backup.disabled=false; } };
   restore.onclick = () => { restoreTarget = selectedRestoreTarget(); input.click(); };
   input.onchange = async () => {
     const file=input.files?.[0]; if(!file)return;
