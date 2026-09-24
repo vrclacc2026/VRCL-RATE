@@ -41,7 +41,7 @@ test('customer permission is selectable per city and enforced in database polici
 
 test('rate check copies a WhatsApp-bold title and restored customer motion stays sharp and accessible', () => {
   const check = read('customer-check.html'), css = read('customer.css') + read('customer-restored.css');
-  assert.match(check, /date,'',`\*\$\{p\.name\}\*`/);
+  assert.match(check, /date,\.\.\.\(city==='Ahmedabad'\?\['CALL 9638377021 BHAVIK'\]:\[\]\),'',`\*\$\{p\.name\}\*`/);
   assert.match(check, /@keyframes checkCardEnter/);
   assert.match(check, /prefers-reduced-motion/);
   assert.doesNotMatch(read('index.html'), /marketMotion|headingRight/);
@@ -53,6 +53,27 @@ test('rate check copies a WhatsApp-bold title and restored customer motion stays
   assert.match(css, /\.stripLabel[^}]+text-shadow:none!important/);
   assert.match(css, /drop-shadow/);
   assert.match(css, /prefers-reduced-motion/);
+});
+
+test('copied rate includes Bhavik contact after date for Ahmedabad only', async () => {
+  const source=read('admin-rate-check-copy.js').replace(/^import .*\n/gm,'');
+  let city='Ahmedabad';
+  const document={
+    createElement(){return{style:{},setAttribute(){}}},
+    head:{appendChild(){}},addEventListener(){},
+    querySelector(){return{dataset:{c:city}}}
+  };
+  const client={from(){return{select(){return this},eq(){return this},order(){return Promise.resolve({data:[{packing:'15 KG',rate:1500,narration:'Delivery terms'}],error:null})}}}};
+  const context=vm.createContext({document,createClient:()=>client,setTimeout,console});
+  vm.runInContext(source+'\nthis.buildText=buildText;',context);
+  const button={dataset:{copy:'product-id'},closest(){return{querySelector(){return{textContent:'COTTONSEED OIL'}}}}};
+  const date=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
+  const ahd=await context.buildText(button);
+  assert.ok(ahd.includes(`${date}\nCALL 9638377021 BHAVIK\n\n*COTTONSEED OIL*`));
+  city='Rajkot';
+  assert.ok((await context.buildText(button)).includes(`${date}\n\n*COTTONSEED OIL*`));
+  city='Udaan';
+  assert.doesNotMatch(await context.buildText(button),/9638377021/);
 });
 
 test('older full backups keep single-city permissions during restore', () => {

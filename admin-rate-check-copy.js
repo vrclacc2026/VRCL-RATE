@@ -56,7 +56,7 @@ async function buildText(button){
     rows=[...card.querySelectorAll('tbody tr')].map((tr,index)=>{const cells=tr.querySelectorAll('td');return{packing:cells[0]?.textContent?.trim()||'',rate:(cells[1]?.textContent||'').replace('₹','').trim(),sort_order:index+1}}).filter(r=>r.packing);
   }
   const date=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
-  return ['JAY SIYARAM',`*${companyName}*`,date,'',`*${name}*`,...rows.map(r=>`${r.packing}  ${r.rate}`),'','TERMS & CONDITIONS',narration].join('\n');
+  return ['JAY SIYARAM',`*${companyName}*`,date,...(city==='Ahmedabad'?['CALL 9638377021 BHAVIK']:[]),'',`*${name}*`,...rows.map(r=>`${r.packing}  ${r.rate}`),'','TERMS & CONDITIONS',narration].join('\n');
 }
 
 document.addEventListener('click',async event=>{
