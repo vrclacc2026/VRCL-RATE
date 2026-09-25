@@ -56,7 +56,7 @@
 </div>
 </section>
 <section class="card"><div class="title">RATE SETUP</div><div class="tableWrap"><table><thead><tr><th>PACKING<button class="lockMini" data-lock="packing">🔓</button></th><th>MASTER LINK<button class="lockMini" data-lock="master">🔓</button></th><th>OLD RATE<button class="lockMini" data-lock="old">🔓</button></th><th>FORMULA<button class="lockMini" data-lock="formula">🔓</button></th><th>EXTRA COSTING<button class="lockMini" data-lock="extra">🔓</button></th><th>ROUND OFF<button class="lockMini" data-lock="round">🔓</button></th><th>NEW RATE</th><th>ACTION</th></tr></thead><tbody id="rateBody"></tbody></table></div><div class="calcHelp">Formula: <code>+5%</code> <code>MASTER*1.05</code> &nbsp; Extra costing: <code>+15</code> <code>-10</code> <code>*1.05</code> <code>/2</code> <code>+5%</code></div><div class="actions"><button class="btn green" id="addPacking">＋ ADD PACKING / WEIGHT</button><button class="btn dark" id="saveAll">💾 SAVE ALL</button></div><div class="note"><b>📝 NARRATION / TERMS &amp; CONDITIONS</b><textarea id="narration"></textarea><div class="actions"><button class="btn light" id="saveNote">💾 SAVE NARRATION</button></div></div></section>
-<section class="card"><div class="title">📋 RATE HISTORY — RECENT CHANGES</div><div class="actions" style="margin:0 0 12px"><button class="btn light" type="button" id="historyCsv">⬇ DOWNLOAD HISTORY CSV</button><button class="btn light" type="button" id="historyJson">⬇ FULL HISTORY BACKUP</button><span class="hint" id="historyDownloadStatus" role="status" aria-live="polite"></span></div><div id="history" class="historyList"><div class="empty">No history yet.</div></div></section>
+<section class="card"><div class="title">📋 RATE HISTORY — RECENT CHANGES</div><div class="actions" style="margin:0 0 12px"><a class="btn light" href="https://docs.google.com/spreadsheets/d/1T8xuvj1mRgx9rWRocYg3uhBWn0P3sTHSvv05-tcalkI/edit" target="_blank" rel="noopener noreferrer" style="text-decoration:none">↗ OPEN GOOGLE SHEET HISTORY BACKUP</a></div><div id="history" class="historyList"><div class="empty">No history yet.</div></div></section>
 </main><div id="toast" class="toast"></div>
 <script type="module">
 import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
@@ -65,7 +65,6 @@ import{hydrateStateFromCloud,syncStateToCloud}from'./backup-manager.js?v=2026091
 import{resolveLooseRate,canReferenceLooseRate,looseRateDependants,calculateReferencedRates}from'./loose-rate-reference.js?v=20260912-rate-tools';
 import{packingReferenceKey,resolvePackingReference,canReferencePackingRates,packingRateDependants,calculatePackingReferencedRates}from'./packing-rate-reference.js?v=20260915-udaan-palm';
 import{calcFormula,applyExtraCost,roundPackingValue,roundLooseValue}from'./rate-calculator.js?v=20260912-rate-tools';
-import{fetchRateHistory,buildHistoryCsv,downloadHistoryFile}from'./history-export.js?v=20260925-history-backup';
 const supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'vrcl-admin-auth'}}),$=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let city='Rajkot',products=[],allProducts=[],productId='',rows=[];let referenceSaving=false,rateSaving=false,looseReferenceDraft=null,packingReferenceDraft=null,packingSourceRates=new Map(),packingReferenceLoadError='';const META='VISHWAS_RATE_ADMIN_META_V3',LOCKKEY='VRCL_ADMIN_COLUMN_LOCKS',MASTERKEY='VRCL_MASTER_LOCK';let meta={};try{meta=JSON.parse(localStorage.getItem(META)||'{}')}catch{}
@@ -377,16 +376,6 @@ async function loadHistory(){
   }).join(''):'<div class="empty">Is product ke liye abhi koi saved rate history nahi.</div>';
 }
 window.vrclAdminHistory={refresh:loadHistory};
-for(const format of ['Csv','Json'])$('history'+format).onclick=async()=>{
-  const button=$('history'+format),status=$('historyDownloadStatus');
-  if(!adminProfile){status.textContent='Admin login required.';return}
-  button.disabled=true;status.textContent='Reading all saved history…';
-  try{
-    const records=await fetchRateHistory(supabase),date=new Date().toISOString().slice(0,10);
-    const file=format==='Csv'?{content:buildHistoryCsv(records),type:'text/csv;charset=utf-8',name:`vishwas-rate-history-${date}.csv`}:{content:JSON.stringify({format:'VISHWAS_RATE_HISTORY_V1',since_ist:'20-09-2026',exported_at:new Date().toISOString(),records},null,2),type:'application/json',name:`vishwas-rate-history-full-${date}.json`};
-    downloadHistoryFile(file);status.textContent=`Downloaded ${records.length} history records.`;
-  }catch(error){status.textContent='Backup failed: '+(error.message||error)}finally{button.disabled=false}
-};
 async function compress(file){const bmp=await createImageBitmap(file),max=800,scale=Math.min(1,max/Math.max(bmp.width,bmp.height)),c=document.createElement('canvas');c.width=Math.round(bmp.width*scale);c.height=Math.round(bmp.height*scale);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);return await new Promise(r=>c.toBlob(r,'image/webp',.84))}
 $('photoInput').onchange=async e=>{const file=e.target.files[0];if(!file||!productId||masterLocked())return;try{toast('Optimizing photo…');const blob=await compress(file),p=currentProduct(),path=`ingredients/${p.code}-${Date.now()}.webp`;const{error:u}=await supabase.storage.from('product-images').upload(path,blob,{contentType:'image/webp',cacheControl:'31536000'});if(u)throw u;const{data:pub}=supabase.storage.from('product-images').getPublicUrl(path);const{error:up}=await supabase.from('products').update({ingredient_image_url:pub.publicUrl}).eq('id',productId);if(up)throw up;p.ingredient_image_url=pub.publicUrl;showPhoto();toast('✅ INGREDIENT PHOTO SAVED')}catch(err){toast(err.message||'Photo upload failed')}};
 $('loginBtn').onclick=async()=>{const{error}=await supabase.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){$('loginMsg').textContent='Invalid admin login.';return}if(!await check())$('loginMsg').textContent='Admin access denied.'};$('logout').onclick=async()=>{await supabase.auth.signOut({scope:'local'});location.reload()};await check();
