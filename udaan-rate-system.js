@@ -28,8 +28,10 @@ function normalizedSetting(old={}){
   const formula=['0','00'].includes(String(old.formula??'').trim())?'MASTER*1':(old.formula||'MASTER*1');
   return{master,formula,extra:old.extra??0,round:old.round??0};
 }
-async function normalizeCloudState(target,source,cloudValue,sourceRates){
-  const key='Udaan|'+target.id,meta=clone(cloudValue.meta||{}),existing=clone(meta[key]||{}),rows=clone(existing.rows||{}),excluded=exclusions(existing);
+async function normalizeCloudState(target,source,cloudValue,sourceRates,targetRates){
+  const key='Udaan|'+target.id,meta=clone(cloudValue.meta||{});
+  if(targetRates?.length&&!meta[key])throw new Error('Saved formulas are missing for '+target.name+'. Restore its formula backup before publishing rates.');
+  const existing=clone(meta[key]||{}),rows=clone(existing.rows||{}),excluded=exclusions(existing);
   for(const rate of sourceRates||[]){if(excluded.has(norm(rate.packing)))continue;rows[rate.packing]=normalizedSetting(rows[rate.packing])}
   for(const name of Object.keys(rows)){if(excluded.has(norm(name)))delete rows[name]}
   const state={...existing,packingRateReference:{city:'Ahmedabad',productId:source.id},packingRateReferenceLocked:existing.packingRateReferenceLocked===true,udaanEditorVersion:3,rows};
@@ -72,7 +74,7 @@ async function loadUdaan(){
     const[{data:products,error:pe},{data:cloud,error:ce},{data:targetRates,error:te}]=await Promise.all([supabase.from('products').select('id,code,name,city,active,sort_order').eq('active',true).order('sort_order'),supabase.from('admin_state').select('value').eq('key',CLOUDKEY).maybeSingle(),supabase.from('rates').select('id,packing,rate,narration,sort_order').eq('city','Udaan').eq('product_id',id).order('sort_order')]);
     if(pe||ce||te||key!==selectedKey())return;const target=(products||[]).find(p=>p.id===id&&p.city==='Udaan');if(!target)return;const source=findAhmedabadSource(target,products||[]);if(!source){editor=null;toast('Ahmedabad matching product not found for '+target.name);return}
     const{data:sourceRates,error:se}=await supabase.from('rates').select('packing,rate,sort_order').eq('city','Ahmedabad').eq('product_id',source.id).order('sort_order');if(se||key!==selectedKey())return;
-    const ensured=await normalizeCloudState(target,source,cloud?.value||{},sourceRates||[]);if(key!==selectedKey())return;const state=ensured.state,excluded=exclusions(state),sourceMap=new Map((sourceRates||[]).map(r=>[norm(r.packing),Number(r.rate)])),existingByPacking=new Map((targetRates||[]).map(r=>[norm(r.packing),r]));
+    const ensured=await normalizeCloudState(target,source,cloud?.value||{},sourceRates||[],targetRates||[]);if(key!==selectedKey())return;const state=ensured.state,excluded=exclusions(state),sourceMap=new Map((sourceRates||[]).map(r=>[norm(r.packing),Number(r.rate)])),existingByPacking=new Map((targetRates||[]).map(r=>[norm(r.packing),r]));
     const rowSource=(sourceRates||[]).filter(src=>!excluded.has(norm(src.packing))).map((src,i)=>{const current=existingByPacking.get(norm(src.packing)),setting=normalizedSetting(state.rows?.[src.packing]||{});return{id:current?.id||null,packing:src.packing,oldRate:Number(current?.rate||0),master:setting.master,formula:setting.formula,extra:setting.extra,round:setting.round,sort_order:current?.sort_order??src.sort_order??i+1}});
     editor={key,id,target,source,products:products||[],cloudValue:ensured.cloudValue,meta:ensured.meta,state,sourceMap,rows:rowSource,narration:targetRates?.[0]?.narration||''};render();refresh();
   }catch(error){console.error('Udaan editor load failed',error);toast('Udaan setup load failed: '+(error.message||error))}
