@@ -77,20 +77,34 @@ export function syncStateToCloud(value = currentLocalState()) {
     if (!await isAdmin()) throw new Error('Active admin login required to save formulas.');
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error('Admin session expired. Please log in again.');
-    const { data: current, error: readError } = await supabase.from('admin_state').select('value').eq('key', CLOUDKEY).maybeSingle();
-    if (readError) throw readError;
-    // A tab opened before a Udaan deletion must not bring excluded packings back.
-    for (const [key, state] of Object.entries(current?.value?.meta || {})) {
-      if (!Array.isArray(state?.excludedPackings) || !snapshot.meta?.[key]) continue;
-      const localState = snapshot.meta[key];
-      const excluded = [...new Set([...state.excludedPackings, ...(localState.excludedPackings || [])])];
-      localState.excludedPackings = excluded;
-      for (const packing of excluded) if (localState.rows) delete localState.rows[packing];
+    const synced = safeJson(localStorage.getItem(SYNCED_STATE), null);
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const { data: current, error: readError } = await supabase.from('admin_state').select('value,updated_at').eq('key', CLOUDKEY).maybeSingle();
+      if (readError) throw readError;
+      // A browser can have only one product cached. Merge against the newest
+      // cloud copy instead of replacing all products with that partial cache.
+      const merged = mergeFormulaState(current?.value || {}, snapshot, synced);
+      for (const [key, state] of Object.entries(current?.value?.meta || {})) {
+        if (!Array.isArray(state?.excludedPackings) || !merged.meta?.[key]) continue;
+        const productState = merged.meta[key];
+        const excluded = [...new Set([...state.excludedPackings, ...(productState.excludedPackings || [])])];
+        productState.excludedPackings = excluded;
+        for (const packing of excluded) if (productState.rows) delete productState.rows[packing];
+      }
+      merged.captured_at = new Date().toISOString();
+      const update = { value: merged, updated_by: session.user.id, updated_at: merged.captured_at };
+      // A second admin may save between the read and write. Retry on a changed
+      // timestamp so that neither tab can erase the other tab's product edits.
+      const result = current
+        ? await supabase.from('admin_state').update(update).eq('key', CLOUDKEY).eq('updated_at', current.updated_at).select('key').maybeSingle()
+        : await supabase.from('admin_state').upsert({ key: CLOUDKEY, ...update }, { onConflict: 'key' }).select('key').maybeSingle();
+      if (result.error) throw result.error;
+      if (result.data?.key === CLOUDKEY) {
+        localStorage.setItem(SYNCED_STATE, JSON.stringify(merged));
+        return;
+      }
     }
-    const { data, error } = await supabase.from('admin_state').upsert({ key: CLOUDKEY, value: snapshot, updated_by: session.user.id, updated_at: new Date().toISOString() }, { onConflict: 'key' }).select('key').single();
-    if (error) throw error;
-    if (data?.key !== CLOUDKEY) throw new Error('Formulas could not be saved. Please try again.');
-    localStorage.setItem(SYNCED_STATE, JSON.stringify(snapshot));
+    throw new Error('Formula settings changed in another tab. Please save again.');
   });
   syncQueue = task;
   return task;
