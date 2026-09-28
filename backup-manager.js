@@ -271,21 +271,44 @@ async function collectCodeSnapshot() {
   }));
   return out;
 }
+async function readAll(table, orderColumn) {
+  const result = [];
+  for (let offset = 0; ; offset += 500) {
+    const { data, error, count } = await supabase.from(table).select('*',{count:'exact'}).order(orderColumn).range(offset, offset + 499);
+    if (error) throw error;
+    result.push(...(data || []));
+    if (count === result.length) return result;
+    if (!data || data.length !== 500 || count == null) throw new Error('Incomplete '+table+' backup: received '+result.length+' of '+count+' rows.');
+  }
+}
+async function readCurrentFormulaState() {
+  const { data, error } = await supabase.from('admin_state').select('*').eq('key', CLOUDKEY).single();
+  if (error || !data) throw error || new Error('Cloud formula state missing.');
+  return [data];
+}
+function inspectFullBackup(backup) {
+  if (backup?.format !== FULL_FORMAT) throw new Error('This is not a formula-inclusive VRCL full backup (V2). Older data-only files cannot restore formulas.');
+  for (const key of ['products','rates','rate_history','admin_state','header_assets']) {
+    if (!Array.isArray(backup.data?.[key])) throw new Error('Backup is missing '+key+'. Nothing was restored.');
+  }
+  const formula = backup.data.admin_state.find(x => x.key === CLOUDKEY)?.value;
+  if (!formula?.meta || typeof formula.meta !== 'object') throw new Error('Backup has no saved formula state.');
+  const ids = new Set(backup.data.products.map(p => p.id));
+  if (ids.size !== backup.data.products.length || backup.data.rates.some(r => !ids.has(r.product_id))) throw new Error('Backup has duplicate products or orphaned packing rates.');
+  const missing = backup.data.products.filter(p => p.active !== false && backup.data.rates.some(r => r.product_id === p.id && r.city === p.city) && backup.data.rates.some(r => r.product_id === p.id && r.city === p.city && typeof formula.meta[p.city+'|'+p.id]?.rows?.[r.packing]?.formula !== 'string')).map(p => p.city+' / '+p.name);
+  return { products: backup.data.products.length, rates: backup.data.rates.length, history: backup.data.rate_history.length, formulaProducts: backup.data.products.filter(p => !!formula.meta[p.city+'|'+p.id]).length, missing };
+}
 async function buildFullBackup() {
-  await hydrateStateFromCloud();
+  if (!await isAdmin()) throw new Error('Admin access required.');
   const [profiles, products, rates, history, activity, headers, adminState] = await Promise.all([
-    supabase.from('profiles').select('*').order('created_at'),
-    supabase.from('products').select('*').order('city').order('sort_order'),
-    supabase.from('rates').select('*').order('city').order('sort_order'),
-    supabase.from('rate_history').select('*').order('changed_at'),
-    supabase.from('user_activity').select('*').order('last_seen'),
-    supabase.from('header_assets').select('*').order('code'),
-    supabase.from('admin_state').select('*').order('key')
+    readAll('profiles','id'), readAll('products','id'), readAll('rates','id'),
+    readAll('rate_history','id'), readAll('user_activity','user_id'),
+    readAll('header_assets','code'), readCurrentFormulaState()
   ]);
-  const errs = [profiles,products,rates,history,activity,headers,adminState].map(x=>x.error).filter(Boolean); if (errs.length) throw errs[0];
-  const plist = products.data || [];
+  const formula = adminState.find(x => x.key === CLOUDKEY)?.value;
+  if (!formula?.meta) throw new Error('Cloud formula settings are missing. Backup was not labeled complete.');
   const imageMap = {};
-  for (const p of plist) {
+  for (const p of products) {
     imageMap[p.id] = {
       ingredient: await urlToEmbedded(p.ingredient_image_url),
       header: await urlToEmbedded(p.header_image_url)
@@ -295,46 +318,68 @@ async function buildFullBackup() {
     format: FULL_FORMAT,
     created_at: new Date().toISOString(),
     restore_scope: 'data+formulas+photos+runtime-code-snapshot',
-    data: {
-      profiles: profiles.data || [], products: plist, rates: rates.data || [], rate_history: history.data || [],
-      user_activity: activity.data || [], header_assets: headers.data || [], admin_state: adminState.data || []
-    },
-    local_admin_state: (adminState.data || []).find(x => x.key === CLOUDKEY)?.value || currentLocalState(),
+    data: { profiles, products, rates, rate_history: history, user_activity: activity, header_assets: headers, admin_state: adminState },
+    local_admin_state: formula,
     images: imageMap,
     code_snapshot: await collectCodeSnapshot(),
-    note: 'GitHub remains the authoritative deploy/version history. This backup restores Supabase business data, formulas and photos from the dashboard.'
+    note: 'GitHub stores deployed code. Full restore replaces site business data, formulas and photos; review the backup date first.'
   };
+  backup.summary = inspectFullBackup(backup);
+  backup.summary.imageErrors = Object.entries(imageMap).flatMap(([id,imgs]) => Object.entries(imgs).filter(([,v]) => v?.error).map(([type]) => id+'/'+type));
   return backup;
 }
-async function saveCloudBackup(backup, folder = 'full') {
-  const name = `${folder}/vrcl-${new Date().toISOString().replace(/[:.]/g,'-')}.json`;
+async function checksum(bytes) {
+  const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
+  return [...hash].map(n => n.toString(16).padStart(2,'0')).join('');
+}
+async function saveCloudBackup(backup, prefix = 'vrcl') {
+  const folder = prefix.startsWith('products/') ? prefix : 'full';
+  const label = prefix.startsWith('products/') ? 'vrcl' : prefix;
+  const name = folder+'/'+label+'-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json';
   const bytes = new TextEncoder().encode(JSON.stringify(backup));
-  const { error } = await supabase.storage.from('site-backups').upload(name, bytes, { contentType: 'application/json', upsert: false });
+  const storage = supabase.storage.from('site-backups');
+  const { error } = await storage.upload(name, bytes, { contentType:'application/json', upsert:false });
   if (error) throw error;
+  const { data: verified, error: verifyError } = await storage.download(name);
+  if (verifyError || !verified || await checksum(bytes) !== await checksum(await verified.arrayBuffer())) throw new Error('Cloud backup verification failed for '+name+'. Keep the downloaded file.');
   return name;
 }
-async function restoreFullBackup(backup) {
-  if (backup?.format !== FULL_FORMAT) throw new Error('Invalid VRCL full backup file.');
+async function listCloudBackups() {
   if (!await isAdmin()) throw new Error('Admin access required.');
+  const { data, error } = await supabase.storage.from('site-backups').list('full', { limit:100, sortBy:{column:'name',order:'desc'} });
+  if (error) throw error;
+  return (data || []).filter(file => file.name?.endsWith('.json')).map(file => file.name);
+}
+async function readCloudBackup(name) {
+  if (!/^(?:vrcl|pre-restore)-[0-9TZ-]+\.json$/.test(name)) throw new Error('Invalid backup selection.');
+  const { data, error } = await supabase.storage.from('site-backups').download('full/'+name);
+  if (error || !data) throw error || new Error('Backup could not be downloaded.');
+  return JSON.parse(await data.text());
+}
+async function restoreFullBackup(backup) {
+  if (!await isAdmin()) throw new Error('Admin access required.');
+  const requested = inspectFullBackup(backup);
+  if (requested.missing.length || backup.summary?.imageErrors?.length) throw new Error('This backup is incomplete: '+requested.missing.join(', ')+(backup.summary?.imageErrors?.length ? '; some product images failed to embed' : '')+'. Restore was blocked.');
   restoreInProgress = true;
   try {
-  await syncQueue.catch(() => {});
-  const copy = JSON.parse(JSON.stringify(backup));
-  const stamp = Date.now();
-  for (const p of copy.data?.products || []) {
-    const imgs = copy.images?.[p.id] || {};
-    if (imgs.ingredient?.base64) p.ingredient_image_url = await uploadEmbeddedImage(imgs.ingredient, `restored/ingredients/${p.code || p.id}-${stamp}.webp`);
-    if (imgs.header?.base64) p.header_image_url = await uploadEmbeddedImage(imgs.header, `restored/headers/${p.code || p.id}-${stamp}.webp`);
-  }
-  const { data, error } = await supabase.rpc('restore_vrcl_full_backup', { payload: copy });
-  if (error) throw error;
-  if (copy.local_admin_state) applyLocalState(copy.local_admin_state);
-  else {
-    const cloud = (copy.data?.admin_state || []).find(x => x.key === CLOUDKEY)?.value;
-    if (cloud) applyLocalState(cloud);
-  }
-  await syncStateToCloud();
-  return data;
+    await syncQueue.catch(() => {});
+    const safety = await buildFullBackup();
+    const safetyPath = await saveCloudBackup(safety,'pre-restore');
+    const copy = JSON.parse(JSON.stringify(backup));
+    const stamp = Date.now();
+    for (const p of copy.data.products) {
+      const imgs = copy.images?.[p.id] || {};
+      if (imgs.ingredient?.base64) p.ingredient_image_url = await uploadEmbeddedImage(imgs.ingredient, 'restored/ingredients/'+(p.code||p.id)+'-'+stamp+'.webp');
+      if (imgs.header?.base64) p.header_image_url = await uploadEmbeddedImage(imgs.header, 'restored/headers/'+(p.code||p.id)+'-'+stamp+'.webp');
+    }
+    const { data, error } = await supabase.rpc('restore_vrcl_full_backup', { payload: copy });
+    if (error) throw new Error('Restore failed; pre-restore copy: '+safetyPath+'. '+error.message);
+    if (!data?.ok || data.products !== requested.products || data.rates !== requested.rates || data.rate_history !== requested.history) throw new Error('Restore response count mismatch; inspect the site before proceeding. Safety copy: '+safetyPath);
+    const { data: restored, error: checkError } = await supabase.from('admin_state').select('value').eq('key',CLOUDKEY).single();
+    if (checkError || !sameValue(restored?.value?.meta,copy.local_admin_state?.meta)) throw new Error('Formula verification failed after restore. Pre-restore copy: '+safetyPath);
+    applyLocalState(copy.local_admin_state);
+    localStorage.setItem(SYNCED_STATE,JSON.stringify(restored.value));
+    return { ...data, safetyPath };
   } finally { restoreInProgress = false; }
 }
 
@@ -363,26 +408,50 @@ function addProductControls() {
 
 function upgradeDashboardBackup() {
   const old = $('manifest'); if (!old || document.getElementById('vrclRestoreFull')) return;
-  old.textContent = 'DOWNLOAD FULL SITE BACKUP';
-  old.onclick = async () => {
-    old.disabled=true; const prev=old.textContent; old.textContent='PREPARING FULL BACKUP…';
-    try { const backup=await buildFullBackup(); await saveCloudBackup(backup); downloadJson(backup,`vrcl-full-site-backup-${new Date().toISOString().slice(0,10)}.json`); }
-    catch(e){ alert('Full backup failed: '+(e.message||e)); }
-    finally { old.disabled=false; old.textContent=prev; }
+  old.textContent = 'BACKUP NOW · DOWNLOAD + CLOUD';
+  const host=old.parentElement;
+  const status=document.createElement('div');status.id='vrclBackupStatus';status.style.cssText='font-size:10px;line-height:1.5;margin-top:9px;color:#475467';status.textContent='A complete backup includes product rates, formulas, history and images.';
+  const controls=document.createElement('div');controls.style.cssText='display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-top:10px';
+  const versions=document.createElement('select');versions.id='vrclBackupVersions';versions.style.cssText='max-width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px;background:#fff';
+  const refresh=document.createElement('button');refresh.type='button';refresh.className='btn light';refresh.textContent='REFRESH BACKUPS';
+  const restore=document.createElement('button');restore.id='vrclRestoreFull';restore.type='button';restore.className='btn dark';restore.textContent='RESTORE CLOUD VERSION';
+  const local=document.createElement('button');local.type='button';local.className='btn light';local.textContent='RESTORE FROM FILE';
+  const input=document.createElement('input');input.type='file';input.accept='.json,application/json';input.hidden=true;
+  const show=message=>{status.textContent=message};
+  host.append(status,controls,input);controls.append(versions,refresh,restore,local);
+  async function reloadVersions(){
+    try {const names=await listCloudBackups();versions.replaceChildren(...names.map(name=>{const option=document.createElement('option');option.value=name;option.textContent=name;return option}));if(!names.length)show('No cloud backup yet. Click BACKUP NOW.')}
+    catch(error){show('Cloud backup list: '+(error.message||error))}
+  }
+  refresh.onclick=reloadVersions;
+  old.onclick=async()=>{
+    old.disabled=true;old.textContent='PREPARING FULL BACKUP…';show('Reading current products, formulas, rates and all history…');
+    try{
+      const backup=await buildFullBackup(),report=backup.summary;
+      downloadJson(backup,'vrcl-'+(report.missing.length?'partial':'full')+'-'+backup.created_at.replace(/[:.]/g,'-')+'.json');
+      show('File downloaded. Verifying cloud copy…');
+      const path=await saveCloudBackup(backup);
+      const warning=report.missing.length?' INCOMPLETE: '+report.missing.join(', ')+'.':'';
+      const images=report.imageErrors.length?' Image errors: '+report.imageErrors.join(', ')+'.':'';
+      show('Downloaded + verified cloud '+path+'. '+report.products+' products, '+report.rates+' rates, '+report.history+' history rows, '+report.formulaProducts+' formula products.'+warning+images);
+      if(warning||images)alert('Backup saved, but a full restore is unsafe until these gaps are fixed:'+warning+images);
+      await reloadVersions();
+    }catch(error){show('Backup issue: '+(error.message||error));alert('Backup issue: '+(error.message||error))}
+    finally{old.disabled=false;old.textContent='BACKUP NOW · DOWNLOAD + CLOUD'}
   };
-  const restore=document.createElement('button'); restore.id='vrclRestoreFull'; restore.type='button'; restore.className='btn dark'; restore.style.cssText='margin-top:8px;margin-left:6px'; restore.textContent='RESTORE FULL SITE';
-  const input=document.createElement('input'); input.type='file'; input.accept='.json,application/json'; input.hidden=true;
-  old.insertAdjacentElement('afterend',restore); restore.insertAdjacentElement('afterend',input);
-  const info=document.createElement('div'); info.style.cssText=noteStyle()+';margin-top:8px'; info.textContent='Includes products, rates, formulas, narration, customer visibility, photos, header assets and a runtime code snapshot. GitHub keeps the deploy/version history.'; input.insertAdjacentElement('afterend',info);
-  restore.onclick=()=>input.click();
-  input.onchange=async()=>{
-    const file=input.files?.[0];if(!file)return;
-    if(!confirm('FULL RESTORE will replace current products/rates/formulas with this backup. Continue?')){input.value='';return;}
-    restore.disabled=true;restore.textContent='RESTORING…';
-    try{const result=await restoreFullBackup(await readFileJson(file));alert('Full site data restored successfully. Products: '+(result?.products??'—')+', Rates: '+(result?.rates??'—'));location.reload();}
-    catch(e){alert('Full restore failed: '+(e.message||e));}
-    finally{restore.disabled=false;restore.textContent='RESTORE FULL SITE';input.value='';}
-  };
+  async function runRestore(backup, label){
+    const report=inspectFullBackup(backup);
+    if(report.missing.length||backup.summary?.imageErrors?.length){show('Restore blocked: backup has missing formulas or images.');throw new Error('Incomplete backup: '+report.missing.join(', '))}
+    const message='Restore '+label+' from '+backup.created_at+'? This replaces '+report.products+' products, '+report.rates+' rates and '+report.history+' history records. A verified pre-restore cloud backup is created first.';
+    if(!confirm(message))return;
+    restore.disabled=true;local.disabled=true;show('Saving and verifying a pre-restore backup…');
+    try{const result=await restoreFullBackup(backup);show('Restore verified. Safety copy: '+result.safetyPath);alert('Full site restored and verified. Safety copy: '+result.safetyPath);location.reload()}
+    finally{restore.disabled=false;local.disabled=false}
+  }
+  restore.onclick=async()=>{if(!versions.value){show('Select a cloud version first.');return}try{await runRestore(await readCloudBackup(versions.value),versions.value)}catch(error){show('Restore failed: '+(error.message||error));alert('Restore failed: '+(error.message||error))}};
+  local.onclick=()=>input.click();
+  input.onchange=async()=>{const file=input.files?.[0];if(!file)return;try{await runRestore(await readFileJson(file),file.name)}catch(error){show('Restore failed: '+(error.message||error));alert('Restore failed: '+(error.message||error))}finally{input.value=''}};
+  window.addEventListener('vrcl:dashboard-ready',()=>void reloadVersions());
 }
 
 async function bootAdmin() {
