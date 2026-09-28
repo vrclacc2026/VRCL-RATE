@@ -406,6 +406,28 @@ function addProductControls() {
   };
 }
 
+async function listFormulaVersions() {
+  if (!await isAdmin()) throw new Error('Admin access required.');
+  const { data, error } = await supabase.from('admin_state').select('key,updated_at,value').like('key','formula_revision_%').order('updated_at',{ascending:false}).limit(40);
+  if (error) throw error;
+  return (data || []).map(item => ({ key:item.key, at:item.updated_at, count:Object.keys(item.value?.meta || {}).length }));
+}
+async function restoreFormulaVersion(versionKey) {
+  if (!/^formula_revision_[0-9_\-a-f]+$/.test(versionKey) || !await isAdmin()) throw new Error('Invalid formula version or admin login.');
+  const [{data:chosen,error:chosenError},{data:current,error:currentError}] = await Promise.all([
+    supabase.from('admin_state').select('value').eq('key',versionKey).single(),
+    supabase.from('admin_state').select('value,updated_at').eq('key',CLOUDKEY).single()
+  ]);
+  if (chosenError || currentError || !chosen?.value?.meta || !current?.value?.meta) throw chosenError || currentError || new Error('Saved formula version is unavailable.');
+  const merged={...current.value,meta:{...current.value.meta,...chosen.value.meta},captured_at:new Date().toISOString()};
+  if (sameValue(merged.meta,current.value.meta)) throw new Error('This version has the same formulas as the current state.');
+  const safetyPath=await saveCloudBackup(await buildFullBackup(),'pre-restore');
+  const {data,error}=await supabase.from('admin_state').update({value:merged,updated_at:merged.captured_at}).eq('key',CLOUDKEY).eq('updated_at',current.updated_at).select('value').maybeSingle();
+  if(error || !data || !sameValue(data.value?.meta,merged.meta)) throw error || new Error('Formula restore was blocked or changed in another tab. Safety copy: '+safetyPath);
+  applyLocalState(data.value);
+  localStorage.setItem(SYNCED_STATE,JSON.stringify(data.value));
+  return safetyPath;
+}
 function upgradeDashboardBackup() {
   const old = $('manifest'); if (!old || document.getElementById('vrclRestoreFull')) return;
   old.textContent = 'BACKUP NOW · DOWNLOAD + CLOUD';
@@ -451,7 +473,28 @@ function upgradeDashboardBackup() {
   restore.onclick=async()=>{if(!versions.value){show('Select a cloud version first.');return}try{await runRestore(await readCloudBackup(versions.value),versions.value)}catch(error){show('Restore failed: '+(error.message||error));alert('Restore failed: '+(error.message||error))}};
   local.onclick=()=>input.click();
   input.onchange=async()=>{const file=input.files?.[0];if(!file)return;try{await runRestore(await readFileJson(file),file.name)}catch(error){show('Restore failed: '+(error.message||error));alert('Restore failed: '+(error.message||error))}finally{input.value=''}};
-  window.addEventListener('vrcl:dashboard-ready',()=>void reloadVersions());
+  const formulaTools=document.createElement('div');formulaTools.style.cssText='display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid #e1e7ec';
+  const formulaSelect=document.createElement('select');formulaSelect.style.cssText=versions.style.cssText;
+  const formulaRefresh=document.createElement('button');formulaRefresh.className='btn light';formulaRefresh.type='button';formulaRefresh.textContent='FORMULA VERSIONS';
+  const formulaRestore=document.createElement('button');formulaRestore.className='btn dark';formulaRestore.type='button';formulaRestore.textContent='RESTORE FORMULAS ONLY';
+  formulaTools.append(formulaSelect,formulaRefresh,formulaRestore);controls.after(formulaTools);
+  async function reloadFormulaVersions(){
+    try{
+      const versions=await listFormulaVersions();
+      formulaSelect.replaceChildren(...versions.map(version=>{const option=document.createElement('option');option.value=version.key;option.textContent=new Date(version.at).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})+' · '+version.count+' products';return option}));
+      if(!versions.length)formulaSelect.replaceChildren(new Option('No older formula revisions yet',''));
+    }catch(error){show('Formula versions: '+(error.message||error))}
+  }
+  formulaRefresh.onclick=reloadFormulaVersions;
+  formulaRestore.onclick=async()=>{
+    if(!formulaSelect.value){show('Select a formula version first.');return}
+    if(!confirm('Restore formula settings from '+formulaSelect.selectedOptions[0].textContent+'? Current rates and history will stay unchanged. A verified pre-restore backup is saved first.'))return;
+    formulaRestore.disabled=true;
+    try{show('Saving pre-restore backup and restoring formulas…');const safetyPath=await restoreFormulaVersion(formulaSelect.value);show('Formula version restored. Safety copy: '+safetyPath);alert('Formulas restored. Safety copy: '+safetyPath);location.reload()}
+    catch(error){show('Formula restore failed: '+(error.message||error));alert('Formula restore failed: '+(error.message||error))}
+    finally{formulaRestore.disabled=false}
+  };
+  window.addEventListener('vrcl:dashboard-ready',()=>{void reloadVersions();void reloadFormulaVersions()});
 }
 
 async function bootAdmin() {
