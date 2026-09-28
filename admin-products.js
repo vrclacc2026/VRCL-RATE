@@ -161,12 +161,20 @@ async function activateFallback(force=false){
 function scheduleFallback(delay=550){ clearTimeout(fallbackTimer); fallbackTimer=setTimeout(()=>void activateFallback(true),delay); }
 
 async function saveFormulaState(meta,cloudValue,session){
-  const value={...cloudValue,meta,locks:cloudValue?.locks||locks(),master_lock:typeof cloudValue?.master_lock==='boolean'?cloudValue.master_lock:masterLocked(),captured_at:new Date().toISOString()};
-  const {data,error}=await supabase.from('admin_state').upsert({key:CLOUDKEY,value,updated_by:session.user.id,updated_at:new Date().toISOString()},{onConflict:'key'}).select('key').single();
-  if(error)throw error;if(data?.key!==CLOUDKEY)throw new Error('Formula settings could not be saved.');
-  localStorage.setItem(META,JSON.stringify(meta));
+  const key=fallback?.key||selectedKey();
+  const {data:current,error:readError}=await supabase.from('admin_state').select('value,updated_at').eq('key',CLOUDKEY).single();
+  if(readError||!current?.value?.meta)throw readError||new Error('Formula state could not be read.');
+  // A delayed fallback editor must never replace another admin's edits.
+  if(fallback?.key===key&&JSON.stringify(current.value.meta[key]||{})!==JSON.stringify(fallback.cloudValue?.meta?.[key]||{}))
+    throw new Error('This product changed in another tab. Reload before editing.');
+  const stamp=new Date().toISOString();
+  const value={...current.value,meta:{...current.value.meta,[key]:meta[key]},captured_at:stamp};
+  const {data,error}=await supabase.from('admin_state').update({value,updated_by:session.user.id,updated_at:stamp}).eq('key',CLOUDKEY).eq('updated_at',current.updated_at).select('key').maybeSingle();
+  if(error||data?.key!==CLOUDKEY)throw error||new Error('Formula settings changed while saving. Reload and try again.');
+  localStorage.setItem(META,JSON.stringify(value.meta));
   localStorage.setItem('VRCL_ADMIN_SYNCED_FORMULA_STATE_V1',JSON.stringify(value));
-  localStorage.setItem('VRCL_ADMIN_STATE_UPDATED_AT',new Date().toISOString());
+  localStorage.setItem('VRCL_ADMIN_STATE_UPDATED_AT',stamp);
+  if(fallback?.key===key){fallback.cloudValue=value;fallback.meta=clone(value.meta)}
 }
 
 async function saveFallback(){
@@ -178,6 +186,8 @@ async function saveFallback(){
     const sourceKey=fallback.key;if(sourceKey!==selectedKey())throw new Error('Product selection changed.');
     const {data:cloud,error:ce}=await supabase.from('admin_state').select('value').eq('key',CLOUDKEY).maybeSingle();if(ce)throw ce;
     const cloudValue=cloud?.value||{},meta=clone(cloudValue.meta||{}),state=clone(meta[sourceKey]||fallback.state||{});
+    const missingSaved=fallback.rows.filter(row=>row.id&&!String(state.rows?.[row.packing]?.formula||'').trim());
+    if(missingSaved.length)throw new Error('Original formulas missing for '+missingSaved.map(row=>row.packing).join(', ')+'. Use the main editor to re-enter originals; fallback saving was blocked to protect current rates.');
     state.rows={};
     if(!state.looseReference)state.looseRate=$('looseRate')?.value??state.looseRate??'';
     state.masterFormula=$('pvFormula')?.value||state.masterFormula||'MASTER*1';state.masterRound=$('pvRound')?.value??state.masterRound??0;
