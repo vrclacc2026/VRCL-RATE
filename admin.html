@@ -350,6 +350,12 @@ $('saveAll').onclick=async()=>{
       if(!confirm('Ahmedabad / '+sourceProduct.name+': the original formulas were missing. Save your manually entered formulas and publish recalculated rates?\n'+preview+'\nThis may also update '+linked.length+' linked products. Cancel to keep all rates unchanged.'))throw new Error('Formula re-entry cancelled. No rates were changed.');
     }
     meta[sourceKey].rows=sourceState.rows;saveMeta();await syncStateToCloud();
+    if(missingSaved.length){
+      const {data:verified,error:verifyError}=await supabase.from('admin_state').select('value').eq('key','admin_formula_state_v1').single();
+      if(verifyError)throw verifyError;
+      const cloudRows=verified?.value?.meta?.[sourceKey]?.rows||{};
+      if(missingSaved.some(row=>['master','formula','extra','round'].some(field=>JSON.stringify(cloudRows[row.packing]?.[field])!==JSON.stringify(sourceState.rows[row.packing]?.[field]))))throw new Error('Formula settings changed while saving. No rates were published. Reload this product and review its formulas.');
+    }
     const{data,error}=await supabase.from('rates').upsert(payload,{onConflict:'city,product_id,packing'}).select('city,product_id,packing');
     if(error)throw error;
     if(data?.length!==payload.length)throw new Error('The server did not confirm every rate. Please check and save again.');
