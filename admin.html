@@ -310,6 +310,8 @@ $('saveAll').onclick=async()=>{
   rateSaving=true;button.disabled=true;renderLooseReference();renderPackingReference();
   try{
     if(!sourceState.packingRateReference){const resolution=looseResolution();if(resolution.error)throw new Error(resolution.error)}
+    const missingSaved=rows.filter(row=>row.id&&!sourceState.rows?.[row.packing]);
+    if(missingSaved.length)throw new Error('Saved formula settings are missing for '+missingSaved.map(row=>row.packing).join(', ')+'. Restore the formula backup before publishing rates.');
     sourceState.rows={...sourceState.rows};
     for(let i=0;i<rows.length;i++){
       const row=rows[i],packing=row.packing.trim(),value=currentEvaluation(i);
