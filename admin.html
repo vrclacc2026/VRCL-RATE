@@ -313,6 +313,7 @@ $('saveAll').onclick=async()=>{
     const missingSaved=rows.filter(row=>row.id&&!String(sourceState.rows?.[row.packing]?.formula||'').trim());
     const unresolved=missingSaved.filter(row=>city!=='Ahmedabad'||!row.formulaReentered||!String(row.formula||'').trim());
     if(unresolved.length)throw new Error('Original formula missing for '+unresolved.map(row=>row.packing).join(', ')+'. Ahmedabad: unlock FORMULA, re-enter the exact original formula for each highlighted packing, or restore a formula backup. No rates were changed.');
+    if(missingSaved.length&&!(Number(looseResolution().value)>0))throw new Error('Ahmedabad loose master is missing or zero. Restore or set the correct Rajkot loose reference before publishing rates. No rates were changed.');
     sourceState.rows={...sourceState.rows};
     for(let i=0;i<rows.length;i++){
       const row=rows[i],packing=row.packing.trim(),value=currentEvaluation(i);
