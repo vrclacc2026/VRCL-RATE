@@ -31,7 +31,7 @@ if (isAdminPage) {
   document.head.appendChild(udaanPhotoStyle);
 
   await import('./loose-reference-control.js?v=20260916-loose-ref-control-v3');
-  await import('./admin-products.js?v=20260916-rate-table-rescue-v5');
+  await import('./admin-products.js?v=20260928-ahd-manual-formulas-v1');
 }
 
 if (isAdminRateCheck) {
