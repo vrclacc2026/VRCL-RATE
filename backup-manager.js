@@ -460,7 +460,7 @@ async function restoreFormulaVersion(versionKey) {
 }
 function upgradeDashboardBackup() {
   const save = $('manifest'); if (!save || document.getElementById('vrclRestoreFull')) return;
-  save.textContent = 'SAVE BACKUP';
+  save.textContent = 'SAVE BACKUP + DOWNLOAD';
   const host = save.parentElement;
   const status = document.createElement('div');
   status.id = 'vrclBackupStatus';
@@ -469,19 +469,22 @@ function upgradeDashboardBackup() {
   const restore = document.createElement('button');
   restore.id = 'vrclRestoreFull'; restore.type = 'button'; restore.className = 'btn dark';
   restore.style.marginLeft = '8px'; restore.textContent = 'RESTORE LATEST BACKUP'; restore.disabled = true;
-  save.after(restore); host.append(status);
+  const download = document.createElement('button');
+  download.id = 'vrclDownloadFull'; download.type = 'button'; download.className = 'btn light';
+  download.style.marginLeft = '8px'; download.textContent = 'DOWNLOAD LATEST'; download.disabled = true;
+  save.after(download, restore); host.append(status);
   let latest = null;
   let busy = false;
   const show = message => { status.textContent = message; };
   async function loadLatest() {
     const names = await listCloudBackups();
     latest = names[0] || null;
-    restore.disabled = !latest || busy;
+    restore.disabled = !latest || busy; download.disabled = !latest || busy;
     if (!latest) { show('No saved backup yet. Click SAVE BACKUP.'); return; }
     const backup = await readCloudBackup(latest);
     const report = inspectFullBackup(backup);
     if (report.missing.length || backup.summary?.imageErrors?.length) {
-      restore.disabled = true;
+      restore.disabled = true; download.disabled = true;
       show('Saved backup is incomplete. Click SAVE BACKUP after correcting missing formulas or photos.');
       latest = null; return;
     }
@@ -490,17 +493,33 @@ function upgradeDashboardBackup() {
   }
   save.onclick = async () => {
     if (busy) return;
-    busy = true; save.disabled = true; restore.disabled = true;
+    busy = true; save.disabled = true; restore.disabled = true; download.disabled = true;
     save.textContent = 'SAVING…'; show('Saving and verifying your full backup. Please keep this page open.');
     try {
-      await saveLatestFullBackup(await buildFullBackup());
+      const backup = await buildFullBackup();
+      const cloudPath = await saveLatestFullBackup(backup);
+      const filename = 'vrcl-full-backup-'+backup.created_at.replace(/[:.]/g,'-')+'.json';
+      downloadJson(backup, filename);
       await loadLatest();
+      show(status.textContent+' Cloud: site-backups/'+cloudPath+' · Computer download started: '+filename+' (browser Downloads folder).');
     } catch (error) { show('Backup issue: '+(error.message || error)); }
-    finally { busy = false; save.disabled = false; save.textContent = 'SAVE BACKUP'; restore.disabled = !latest; }
+    finally { busy = false; save.disabled = false; save.textContent = 'SAVE BACKUP + DOWNLOAD'; restore.disabled = !latest; download.disabled = !latest; }
+  };
+  download.onclick = async () => {
+    if (busy || !latest) return;
+    busy = true; save.disabled = true; restore.disabled = true; download.disabled = true;
+    try {
+      const backup = await readCloudBackup(latest);
+      inspectFullBackup(backup);
+      const filename = 'vrcl-full-backup-'+backup.created_at.replace(/[:.]/g,'-')+'.json';
+      downloadJson(backup, filename);
+      show('Computer download started: '+filename+' (browser Downloads folder). Cloud copy: site-backups/full/'+latest+'.');
+    } catch (error) { show('Download issue: '+(error.message || error)); }
+    finally { busy = false; save.disabled = false; restore.disabled = !latest; download.disabled = !latest; }
   };
   restore.onclick = async () => {
     if (busy || !latest) return;
-    busy = true; save.disabled = true; restore.disabled = true;
+    busy = true; save.disabled = true; restore.disabled = true; download.disabled = true;
     try {
       const backup = await readCloudBackup(latest);
       if (!confirm('Restore the full backup from '+new Date(backup.created_at).toLocaleString('en-IN', {timeZone:'Asia/Kolkata'})+
@@ -510,7 +529,7 @@ function upgradeDashboardBackup() {
       alert('Backup restored and verified.'+(result.safetyPath ? ' Temporary safety copy retained: '+result.safetyPath : ''));
       location.reload();
     } catch (error) { show('Restore issue: '+(error.message || error)); }
-    finally { busy = false; save.disabled = false; restore.disabled = !latest; }
+    finally { busy = false; save.disabled = false; restore.disabled = !latest; download.disabled = !latest; }
   };
   window.addEventListener('vrcl:dashboard-ready', () => {
     if (!busy) loadLatest().catch(error => show('Backup check failed: '+(error.message || error)));
