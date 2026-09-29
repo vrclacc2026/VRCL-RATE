@@ -344,11 +344,39 @@ async function saveCloudBackup(backup, prefix = 'vrcl') {
   if (verifyError || !verified || await checksum(bytes) !== await checksum(await verified.arrayBuffer())) throw new Error('Cloud backup verification failed for '+name+'. Keep the downloaded file.');
   return name;
 }
+// Full backups are immutable during upload. Only verified replacements can retire old files.
 async function listCloudBackups() {
   if (!await isAdmin()) throw new Error('Admin access required.');
-  const { data, error } = await supabase.storage.from('site-backups').list('full', { limit:100, sortBy:{column:'name',order:'desc'} });
-  if (error) throw error;
-  return (data || []).filter(file => file.name?.endsWith('.json')).map(file => file.name);
+  const names = [];
+  for (let offset = 0; ; offset += 100) {
+    const { data, error } = await supabase.storage.from('site-backups').list('full', {
+      limit: 100, offset, sortBy: { column: 'name', order: 'desc' }
+    });
+    if (error) throw error;
+    names.push(...(data || []).filter(file => /^vrcl-[0-9TZ-]+\.json$/.test(file.name)).map(file => file.name));
+    if (!data || data.length < 100) return names.sort().reverse();
+  }
+}
+async function saveLatestFullBackup(backup) {
+  const report = inspectFullBackup(backup);
+  const imageErrors = Object.values(backup.images || {}).flatMap(images => Object.values(images).filter(image => image?.error));
+  if (!report.products || report.missing.length || imageErrors.length || backup.summary?.imageErrors?.length) {
+    throw new Error('Backup is incomplete. The previous cloud backup was kept. '+report.missing.join(', '));
+  }
+  // Capture predecessors before uploading, so a concurrent newer upload is never deleted.
+  const previous = await listCloudBackups();
+  const path = await saveCloudBackup(backup);
+  const name = path.slice('full/'.length);
+  const obsolete = previous.filter(old => old < name).map(old => 'full/'+old);
+  for (let offset = 0; offset < obsolete.length; offset += 100) {
+    const { error } = await supabase.storage.from('site-backups').remove(obsolete.slice(offset, offset+100));
+    if (error) throw new Error('New backup saved and verified, but the old backup could not be removed: '+error.message);
+  }
+  const remaining = await listCloudBackups();
+  if (obsolete.some(old => remaining.includes(old.slice('full/'.length)))) {
+    throw new Error('New backup saved and verified, but old backup cleanup was not confirmed.');
+  }
+  return path;
 }
 async function readCloudBackup(name) {
   if (!/^(?:vrcl|pre-restore)-[0-9TZ-]+\.json$/.test(name)) throw new Error('Invalid backup selection.');
@@ -379,7 +407,9 @@ async function restoreFullBackup(backup) {
     if (checkError || !sameValue(restored?.value?.meta,copy.local_admin_state?.meta)) throw new Error('Formula verification failed after restore. Pre-restore copy: '+safetyPath);
     applyLocalState(copy.local_admin_state);
     localStorage.setItem(SYNCED_STATE,JSON.stringify(restored.value));
-    return { ...data, safetyPath };
+    const { error: cleanupError } = await supabase.storage.from('site-backups').remove([safetyPath]);
+    if (cleanupError) console.error('Restore succeeded; temporary safety copy cleanup failed', cleanupError);
+    return { ...data, safetyPath: cleanupError ? safetyPath : null };
   } finally { restoreInProgress = false; }
 }
 
@@ -429,72 +459,62 @@ async function restoreFormulaVersion(versionKey) {
   return safetyPath;
 }
 function upgradeDashboardBackup() {
-  const old = $('manifest'); if (!old || document.getElementById('vrclRestoreFull')) return;
-  old.textContent = 'BACKUP NOW · DOWNLOAD + CLOUD';
-  const host=old.parentElement;
-  const status=document.createElement('div');status.id='vrclBackupStatus';status.style.cssText='font-size:10px;line-height:1.5;margin-top:9px;color:#475467';status.textContent='A complete backup includes product rates, formulas, history and images.';
-  const controls=document.createElement('div');controls.style.cssText='display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-top:10px';
-  const versions=document.createElement('select');versions.id='vrclBackupVersions';versions.style.cssText='max-width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px;background:#fff';
-  const refresh=document.createElement('button');refresh.type='button';refresh.className='btn light';refresh.textContent='REFRESH BACKUPS';
-  const restore=document.createElement('button');restore.id='vrclRestoreFull';restore.type='button';restore.className='btn dark';restore.textContent='RESTORE CLOUD VERSION';
-  const local=document.createElement('button');local.type='button';local.className='btn light';local.textContent='RESTORE FROM FILE';
-  const input=document.createElement('input');input.type='file';input.accept='.json,application/json';input.hidden=true;
-  const show=message=>{status.textContent=message};
-  host.append(status,controls,input);controls.append(versions,refresh,restore,local);
-  async function reloadVersions(){
-    try {const names=await listCloudBackups();versions.replaceChildren(...names.map(name=>{const option=document.createElement('option');option.value=name;option.textContent=name;return option}));if(!names.length)show('No cloud backup yet. Click BACKUP NOW.')}
-    catch(error){show('Cloud backup list: '+(error.message||error))}
+  const save = $('manifest'); if (!save || document.getElementById('vrclRestoreFull')) return;
+  save.textContent = 'SAVE BACKUP';
+  const host = save.parentElement;
+  const status = document.createElement('div');
+  status.id = 'vrclBackupStatus';
+  status.style.cssText = 'font-size:11px;line-height:1.6;margin-top:10px;color:#475467';
+  status.textContent = 'Checking latest cloud backup…';
+  const restore = document.createElement('button');
+  restore.id = 'vrclRestoreFull'; restore.type = 'button'; restore.className = 'btn dark';
+  restore.style.marginLeft = '8px'; restore.textContent = 'RESTORE LATEST BACKUP'; restore.disabled = true;
+  save.after(restore); host.append(status);
+  let latest = null;
+  let busy = false;
+  const show = message => { status.textContent = message; };
+  async function loadLatest() {
+    const names = await listCloudBackups();
+    latest = names[0] || null;
+    restore.disabled = !latest || busy;
+    if (!latest) { show('No saved backup yet. Click SAVE BACKUP.'); return; }
+    const backup = await readCloudBackup(latest);
+    const report = inspectFullBackup(backup);
+    if (report.missing.length || backup.summary?.imageErrors?.length) {
+      restore.disabled = true;
+      show('Saved backup is incomplete. Click SAVE BACKUP after correcting missing formulas or photos.');
+      latest = null; return;
+    }
+    show('Last backup: '+new Date(backup.created_at).toLocaleString('en-IN', {timeZone:'Asia/Kolkata'})+
+      ' IST · '+report.products+' products · '+report.rates+' packing rates · formulas and photos included.');
   }
-  refresh.onclick=reloadVersions;
-  old.onclick=async()=>{
-    old.disabled=true;old.textContent='PREPARING FULL BACKUP…';show('Reading current products, formulas, rates and all history…');
-    try{
-      const backup=await buildFullBackup(),report=backup.summary;
-      downloadJson(backup,'vrcl-'+(report.missing.length?'partial':'full')+'-'+backup.created_at.replace(/[:.]/g,'-')+'.json');
-      show('File downloaded. Verifying cloud copy…');
-      const path=await saveCloudBackup(backup);
-      const warning=report.missing.length?' INCOMPLETE: '+report.missing.join(', ')+'.':'';
-      const images=report.imageErrors.length?' Image errors: '+report.imageErrors.join(', ')+'.':'';
-      show('Downloaded + verified cloud '+path+'. '+report.products+' products, '+report.rates+' rates, '+report.history+' history rows, '+report.formulaProducts+' formula products.'+warning+images);
-      if(warning||images)alert('Backup saved, but a full restore is unsafe until these gaps are fixed:'+warning+images);
-      await reloadVersions();
-    }catch(error){show('Backup issue: '+(error.message||error));alert('Backup issue: '+(error.message||error))}
-    finally{old.disabled=false;old.textContent='BACKUP NOW · DOWNLOAD + CLOUD'}
+  save.onclick = async () => {
+    if (busy) return;
+    busy = true; save.disabled = true; restore.disabled = true;
+    save.textContent = 'SAVING…'; show('Saving and verifying your full backup. Please keep this page open.');
+    try {
+      await saveLatestFullBackup(await buildFullBackup());
+      await loadLatest();
+    } catch (error) { show('Backup issue: '+(error.message || error)); }
+    finally { busy = false; save.disabled = false; save.textContent = 'SAVE BACKUP'; restore.disabled = !latest; }
   };
-  async function runRestore(backup, label){
-    const report=inspectFullBackup(backup);
-    if(report.missing.length||backup.summary?.imageErrors?.length){show('Restore blocked: backup has missing formulas or images.');throw new Error('Incomplete backup: '+report.missing.join(', '))}
-    const message='Restore '+label+' from '+backup.created_at+'? This replaces '+report.products+' products, '+report.rates+' rates and '+report.history+' history records. A verified pre-restore cloud backup is created first.';
-    if(!confirm(message))return;
-    restore.disabled=true;local.disabled=true;show('Saving and verifying a pre-restore backup…');
-    try{const result=await restoreFullBackup(backup);show('Restore verified. Safety copy: '+result.safetyPath);alert('Full site restored and verified. Safety copy: '+result.safetyPath);location.reload()}
-    finally{restore.disabled=false;local.disabled=false}
-  }
-  restore.onclick=async()=>{if(!versions.value){show('Select a cloud version first.');return}try{await runRestore(await readCloudBackup(versions.value),versions.value)}catch(error){show('Restore failed: '+(error.message||error));alert('Restore failed: '+(error.message||error))}};
-  local.onclick=()=>input.click();
-  input.onchange=async()=>{const file=input.files?.[0];if(!file)return;try{await runRestore(await readFileJson(file),file.name)}catch(error){show('Restore failed: '+(error.message||error));alert('Restore failed: '+(error.message||error))}finally{input.value=''}};
-  const formulaTools=document.createElement('div');formulaTools.style.cssText='display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid #e1e7ec';
-  const formulaSelect=document.createElement('select');formulaSelect.style.cssText=versions.style.cssText;
-  const formulaRefresh=document.createElement('button');formulaRefresh.className='btn light';formulaRefresh.type='button';formulaRefresh.textContent='FORMULA VERSIONS';
-  const formulaRestore=document.createElement('button');formulaRestore.className='btn dark';formulaRestore.type='button';formulaRestore.textContent='RESTORE FORMULAS ONLY';
-  formulaTools.append(formulaSelect,formulaRefresh,formulaRestore);controls.after(formulaTools);
-  async function reloadFormulaVersions(){
-    try{
-      const versions=await listFormulaVersions();
-      formulaSelect.replaceChildren(...versions.map(version=>{const option=document.createElement('option');option.value=version.key;option.textContent=new Date(version.at).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})+' · '+version.count+' products';return option}));
-      if(!versions.length)formulaSelect.replaceChildren(new Option('No older formula revisions yet',''));
-    }catch(error){show('Formula versions: '+(error.message||error))}
-  }
-  formulaRefresh.onclick=reloadFormulaVersions;
-  formulaRestore.onclick=async()=>{
-    if(!formulaSelect.value){show('Select a formula version first.');return}
-    if(!confirm('Restore formula settings from '+formulaSelect.selectedOptions[0].textContent+'? Current rates and history will stay unchanged. A verified pre-restore backup is saved first.'))return;
-    formulaRestore.disabled=true;
-    try{show('Saving pre-restore backup and restoring formulas…');const safetyPath=await restoreFormulaVersion(formulaSelect.value);show('Formula version restored. Safety copy: '+safetyPath);alert('Formulas restored. Safety copy: '+safetyPath);location.reload()}
-    catch(error){show('Formula restore failed: '+(error.message||error));alert('Formula restore failed: '+(error.message||error))}
-    finally{formulaRestore.disabled=false}
+  restore.onclick = async () => {
+    if (busy || !latest) return;
+    busy = true; save.disabled = true; restore.disabled = true;
+    try {
+      const backup = await readCloudBackup(latest);
+      if (!confirm('Restore the full backup from '+new Date(backup.created_at).toLocaleString('en-IN', {timeZone:'Asia/Kolkata'})+
+        '? Current products, packaging rates, formulas and history will be replaced.')) return;
+      show('Restoring your saved backup…');
+      const result = await restoreFullBackup(backup);
+      alert('Backup restored and verified.'+(result.safetyPath ? ' Temporary safety copy retained: '+result.safetyPath : ''));
+      location.reload();
+    } catch (error) { show('Restore issue: '+(error.message || error)); }
+    finally { busy = false; save.disabled = false; restore.disabled = !latest; }
   };
-  window.addEventListener('vrcl:dashboard-ready',()=>{void reloadVersions();void reloadFormulaVersions()});
+  window.addEventListener('vrcl:dashboard-ready', () => {
+    if (!busy) loadLatest().catch(error => show('Backup check failed: '+(error.message || error)));
+  });
 }
 
 async function bootAdmin() {
