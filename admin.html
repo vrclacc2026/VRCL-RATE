@@ -3,6 +3,18 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Vishwas Rate Admin</title>
+<!-- Fetch editor modules together; their existing execution and save order stays intact. -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://rdmgzkxroydsuantzbwn.supabase.co" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm" crossorigin>
+<link rel="modulepreload" href="./supabase-config.js?v=20260928-ahd-manual-formulas-v1">
+<link rel="modulepreload" href="./supabase-config.js?v=20260912-rate-tools">
+<link rel="modulepreload" href="./backup-manager.js?v=20260928-backup-safe-v5">
+<link rel="modulepreload" href="./product-delete-control.js?v=20260916-product-delete-v3">
+<link rel="modulepreload" href="./packing-delete-guard.js?v=20260916-master-delete-guard-v2">
+<link rel="modulepreload" href="./udaan-rate-system.js?v=20260916-udaan-core-delete-v1">
+<link rel="modulepreload" href="./loose-reference-control.js?v=20260916-loose-ref-control-v3">
+<link rel="modulepreload" href="./admin-products.js?v=20260928-ahd-manual-formulas-v1">
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f3f6f8;color:#101828}.hidden{display:none!important}
 .topbar{position:sticky;top:0;z-index:50;background:#101827;color:#fff;padding:13px 20px;display:flex;justify-content:space-between;align-items:center;gap:14px;box-shadow:0 5px 25px #0002}.brand{font-size:20px;font-weight:950}.sub{font-size:11px;color:#cbd5e1;margin-top:3px}.flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.navIcon{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;text-decoration:none;background:linear-gradient(145deg,#fff,#e8edf3);color:#101827;box-shadow:0 5px 0 #aeb6c1}.navIcon svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.rateCheck{height:38px;display:inline-flex;align-items:center;padding:0 14px;border-radius:10px;text-decoration:none;background:linear-gradient(145deg,#0b927f,#087f70);color:#fff;font-size:10px;font-weight:950;box-shadow:0 5px 0 #045d52}.btn{border:0;border-radius:9px;padding:10px 15px;font-weight:900;cursor:pointer}.green{background:#087f70;color:#fff}.dark{background:#101827;color:#fff}.red{background:#b42318;color:#fff}.light{background:#f5f7f9;border:1px solid #ccd4dc;color:#111827}
