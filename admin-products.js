@@ -245,7 +245,7 @@ function installFallbackEvents(){
   body.addEventListener('change',e=>{if(!fallbackActive())return;const el=e.target.closest('[data-i]');if(!el)return;e.stopImmediatePropagation();const row=fallback.rows[+el.dataset.i];if(row){row[el.dataset.f]=el.value;refreshFallback()}},true);
   document.addEventListener('input',e=>{if(!fallbackActive())return;if(e.target===$('looseRate')&&!fallback.state.looseReference&&!masterLocked()){e.stopImmediatePropagation();fallback.state.looseRate=e.target.value;fallback.meta[fallback.key]=fallback.state;refreshFallback()}else if(e.target===$('pvFormula')&&!masterLocked()){e.stopImmediatePropagation();fallback.state.masterFormula=e.target.value;fallback.meta[fallback.key]=fallback.state;refreshFallback()}else if(e.target===$('pvRound')&&!masterLocked()){e.stopImmediatePropagation();fallback.state.masterRound=e.target.value;fallback.meta[fallback.key]=fallback.state;refreshFallback()}},true);
   document.addEventListener('click',e=>{
-    if(e.target.closest('.productBtn')||e.target.closest('.city')){fallback=null;scheduleFallback(650);return}
+    if(e.target.closest('.productBtn')||e.target.closest('.city')){fallback=null;return}
     if(!fallbackActive())return;
     const del=e.target.closest('[data-fb-del]');if(del){e.preventDefault();e.stopImmediatePropagation();void deleteFallbackRow(+del.dataset.fbDel);return}
     if(e.target.closest('#addPacking')){e.preventDefault();e.stopImmediatePropagation();fallback.rows.push({id:null,packing:'',oldRate:0,master:'LOOSE OIL RATE',formula:'MASTER*1',extra:0,round:0,sort_order:fallback.rows.length+1});renderFallback();return}
@@ -255,7 +255,8 @@ function installFallbackEvents(){
 
 if(area){
   installFallbackEvents();
-  scheduleFallback(900);setTimeout(()=>scheduleFallback(0),2200);
+  // The main editor owns initial loading and saving. Starting a second editor on a
+  // timer raced its first database read and could replace freshly added packings.
 
   const card=area.closest('.card'),title=card?.querySelector('.title');
   if(!document.querySelector('.productManageBar')){
