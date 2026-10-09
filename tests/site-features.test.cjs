@@ -18,6 +18,19 @@ test('all changed browser modules have valid module syntax', () => {
   new vm.SourceTextModule(read('packing-rate-reference.js'));
 });
 
+test('admin packing preview evaluates in strict browser module mode', () => {
+  const admin=read('admin.html');
+  const source=admin.slice(admin.indexOf('function evaluate('),admin.indexOf('function preview()'));
+  const context=vm.createContext({
+    rows:[{master:'LOOSE OIL RATE',formula:'MASTER*1.5',extra:123.224,round:1}],
+    masterValue:()=>({value:1407,error:null}),st:()=>({}),findPacking:()=>-1,
+    isUdaanPalm:()=>false,calcFormula:(_formula,master)=>master*1.5,
+    applyExtraCost:(value,extra)=>value+extra,roundPackingValue:value=>Math.round(value)
+  });
+  vm.runInContext('"use strict";'+source+'\nthis.previewRate=evaluate(0).rate;',context);
+  assert.equal(context.previewRate,2234);
+});
+
 test('admin exposes percentage and operator costing without changing stored field names', () => {
   const admin = read('admin.html');
   assert.match(admin, /import\{calcFormula,applyExtraCost,roundPackingValue,roundLooseValue\}/);

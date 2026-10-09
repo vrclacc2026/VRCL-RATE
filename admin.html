@@ -107,7 +107,7 @@ function masterValue(r,visited){
 }
 function evaluate(i,visited=new Set()){
   const r=rows[i];if(!r)return{rate:0,cycle:false};if(r.missingFormula&&!String(r.formula||'').trim())return{rate:0,cycle:false,sourceError:'FORMULA MISSING — re-enter original formula'};if(visited.has(i))return{rate:0,cycle:true};
-  const chain=new Set(visited);chain.add(i),master=masterValue(r,chain);
+  const chain=new Set(visited);chain.add(i);const master=masterValue(r,chain);
   if(master.error)return{rate:0,cycle:false,sourceError:master.error};if(master.cycle)return{rate:0,cycle:true};
   if(!st().packingRateReference&&r.master!=='LOOSE OIL RATE'){const idx=findPacking(r.master);if(idx>=0&&evaluate(idx,chain).cycle)return{rate:0,cycle:true}}
   const raw=isUdaanPalm()?master.value*1.05:applyExtraCost(calcFormula(r.formula||'MASTER*1',master.value),r.extra);
