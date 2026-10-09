@@ -775,6 +775,19 @@ test('renaming an existing packing keeps its row id and moves its formula settin
   assert.match(a.document.getElementById('toast').textContent,/RATE UPDATE SAVED/);
 });
 
+test('renaming a packing also preserves rows that use it as their master', async () => {
+  const a=app();
+  a.local.setItem(META,JSON.stringify(metadata()));
+  a.window.dispatchEvent(new Event('vrcl:admin-state-applied'));
+  await a.editor.select('Ahmedabad',B);
+  a.editor.editRow(0,'packing','1 LTR');
+  assert.equal(a.editor.rows()[1].master,'1 LTR');
+  await a.document.getElementById('saveAll').onclick();
+  assert.equal(a.db.rates.find(r=>r.id==='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb').packing,'1 LTR');
+  assert.equal(a.db.rates.find(r=>r.id==='cccccccc-cccc-4ccc-8ccc-cccccccccccc').rate,600);
+  assert.equal(a.db.admin_state[0].value.meta[keyB].rows['5 L'].master,'1 LTR');
+});
+
 test('full backup and restore retain loose reference configuration and its lock', async () => {
   const a=await referenceApp();await linkTo(a,'Ahmedabad',B,'Rajkot',A);await a.document.getElementById('looseRefLock').onclick();
   const snapshot=clone(await a.backup.buildFullBackup());
