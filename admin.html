@@ -383,10 +383,14 @@ $('saveAll').onclick=async()=>{
   if(activePackingDraft()){toast('Select the packing source product first, or choose Own product masters.');return}
   if(rateSaving||referenceSaving||!currentProduct()||loadedRateKey!==key()){toast('Wait for the selected product to finish loading.');return}
   const sourceKey=key(),sourceProduct={...currentProduct()},narr=$('narration').value;
-  const snapshot=JSON.parse(JSON.stringify(meta)),sourceState=snapshot[sourceKey],sourceRates=[],names=new Set();
+  const sourceRates=[],names=new Set();
   const button=$('saveAll');
   rateSaving=true;button.disabled=true;renderLooseReference();renderPackingReference();
   try{
+    // A browser tab may still hold an incomplete formula copy after the product loaded.
+    await recoverPublishedFormulas(rows.filter(row=>row.id),sourceKey,rateLoadSerial);
+    if(key()!==sourceKey)throw new Error('Product selection changed. Click SAVE ALL again.');
+    const snapshot=JSON.parse(JSON.stringify(meta)),sourceState=snapshot[sourceKey];
     if(!sourceState.packingRateReference){const resolution=looseResolution();if(resolution.error)throw new Error(resolution.error)}
     const missingSaved=rows.filter(row=>row.id&&!String(sourceState.rows?.[row.packing]?.formula||'').trim());
     const unresolved=missingSaved.filter(row=>!row.formulaReentered||!String(row.formula||'').trim());
@@ -447,7 +451,7 @@ $('saveAll').onclick=async()=>{
     }
     toast(historyError?'Rates saved. History could not be saved.':'✅ RATE UPDATE SAVED'+(linked.length?' + '+linked.length+' LINKED PRODUCTS':''));
     if(key()===sourceKey){await loadRates();await loadHistory()}
-  }catch(error){toast('Rates not saved: '+(error.message||error))}
+  }catch(error){toast('Rates not saved ('+sourceProduct.city+' / '+sourceProduct.name+'): '+(error.message||error))}
   finally{rateSaving=false;button.disabled=false;renderLooseReference();renderPackingReference()}
 };
 $('saveNote').onclick=async()=>{const narr=$('narration').value;for(const r of rows)if(r.id)await supabase.from('rates').update({narration:narr}).eq('id',r.id);toast('✅ NARRATION SAVED')};

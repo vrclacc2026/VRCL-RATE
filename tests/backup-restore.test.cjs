@@ -735,6 +735,21 @@ test('a saved packing with a missing browser formula recovers only its cloud for
   assert.equal(a.db.rateWrites||0,0);
 });
 
+test('a new Ahmedabad packing saves without requiring a prior formula', async () => {
+  const a=app();
+  a.local.setItem(META,JSON.stringify(metadata()));
+  a.window.dispatchEvent(new Event('vrcl:admin-state-applied'));
+  await a.editor.select('Ahmedabad',B);
+  a.editor.addRow();
+  a.editor.editRow(2,'packing','5 LTR JAR');
+  a.editor.editRow(2,'formula','MASTER/10000*4550');
+  a.editor.editRow(2,'extra','67.55');
+  a.editor.editRow(2,'round','0.5');
+  await a.document.getElementById('saveAll').onclick();
+  assert.equal(a.db.rateWrites,1,a.document.getElementById('toast').textContent);
+  assert.equal(a.db.rates.find(r=>r.product_id===B&&r.packing==='5 LTR JAR')?.rate,613.5);
+});
+
 test('full backup and restore retain loose reference configuration and its lock', async () => {
   const a=await referenceApp();await linkTo(a,'Ahmedabad',B,'Rajkot',A);await a.document.getElementById('looseRefLock').onclick();
   const snapshot=clone(await a.backup.buildFullBackup());
