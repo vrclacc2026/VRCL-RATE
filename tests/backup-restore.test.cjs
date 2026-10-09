@@ -73,6 +73,7 @@ function app({ db = fixture(), local = storage(), session = storage() } = {}) {
     order(column) { this.sorts.push(column); return this; }
     limit() { return this; }
     upsert(payload) { this.payload = clone(payload); return this; }
+    update(payload) { this.payload = clone(payload); this.updateOnly = true; return this; }
     insert(payload) { this.payload = clone(payload); this.insertOnly = true; return this; }
     async execute(single) {
       if (this.table === 'rates' && db.rateGate) await db.rateGate;
@@ -81,6 +82,12 @@ function app({ db = fixture(), local = storage(), session = storage() } = {}) {
       if (this.payload) {
         if (this.table === 'rates') {
           if (db.failRates) return { data: null, error: new Error('Rate storage unavailable') };
+          if (this.updateOnly) {
+            const updated = db.rates.filter(row => this.filters.every(fn => fn(row)));
+            for (const row of updated) Object.assign(row, clone(this.payload));
+            db.rateWrites = (db.rateWrites || 0) + 1;
+            return { data: clone(single ? updated[0] || null : updated), error: null };
+          }
           const values = Array.isArray(this.payload) ? this.payload : [this.payload];
           const next = clone(db.rates);
           for (const row of values) {
@@ -748,6 +755,37 @@ test('a new Ahmedabad packing saves without requiring a prior formula', async ()
   await a.document.getElementById('saveAll').onclick();
   assert.equal(a.db.rateWrites,1,a.document.getElementById('toast').textContent);
   assert.equal(a.db.rates.find(r=>r.product_id===B&&r.packing==='5 LTR JAR')?.rate,613.5);
+});
+
+test('renaming an existing packing keeps its row id and moves its formula settings', async () => {
+  const a=app();
+  a.local.setItem(META,JSON.stringify(metadata()));
+  a.window.dispatchEvent(new Event('vrcl:admin-state-applied'));
+  await a.editor.select('Ahmedabad',B);
+  a.editor.editRow(1,'packing','5 LTR JAR');
+  await a.document.getElementById('saveAll').onclick();
+  const renamed=a.db.rates.filter(r=>r.product_id===B&&r.packing==='5 LTR JAR');
+  assert.equal(renamed.length,1,a.document.getElementById('toast').textContent);
+  assert.equal(renamed[0].id,'cccccccc-cccc-4ccc-8ccc-cccccccccccc');
+  assert.equal(a.db.rates.some(r=>r.product_id===B&&r.packing==='5 L'),false);
+  assert.equal(a.db.rates.filter(r=>r.product_id===B).length,2,'rename must not add a duplicate rate row');
+  const saved=a.db.admin_state[0].value.meta[keyB].rows;
+  assert.deepEqual(saved['5 LTR JAR'],{master:'1 L',formula:'MASTER*5',extra:2,round:5});
+  assert.equal(saved['5 L'],undefined);
+  assert.match(a.document.getElementById('toast').textContent,/RATE UPDATE SAVED/);
+});
+
+test('renaming a packing also preserves rows that use it as their master', async () => {
+  const a=app();
+  a.local.setItem(META,JSON.stringify(metadata()));
+  a.window.dispatchEvent(new Event('vrcl:admin-state-applied'));
+  await a.editor.select('Ahmedabad',B);
+  a.editor.editRow(0,'packing','1 LTR');
+  assert.equal(a.editor.rows()[1].master,'1 LTR');
+  await a.document.getElementById('saveAll').onclick();
+  assert.equal(a.db.rates.find(r=>r.id==='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb').packing,'1 LTR');
+  assert.equal(a.db.rates.find(r=>r.id==='cccccccc-cccc-4ccc-8ccc-cccccccccccc').rate,600);
+  assert.equal(a.db.admin_state[0].value.meta[keyB].rows['5 L'].master,'1 LTR');
 });
 
 test('full backup and restore retain loose reference configuration and its lock', async () => {

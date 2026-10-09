@@ -318,11 +318,11 @@ async function loadRates(){
   if(error&&requestedKey===key()&&loadSerial===rateLoadSerial)({data,error}=await readRates());
   if(requestedKey!==key()||loadSerial!==rateLoadSerial)return;if(error){packingLoadError('Packaging could not load: '+error.message);toast('Rate load failed');return}
   const s=st(),published=data||[];
-  rows=published.map((r,i)=>{const m=s.rows?.[r.packing]||{},missingFormula=!String(m.formula||'').trim();return{id:r.id,packing:r.packing,oldRate:r.rate,master:m.master||'LOOSE OIL RATE',formula:missingFormula?'':m.formula||'MASTER*1',extra:m.extra??0,round:m.round??0,sort_order:r.sort_order??i,missingFormula,formulaReentered:false}});
+  rows=published.map((r,i)=>{const m=s.rows?.[r.packing]||{},missingFormula=!String(m.formula||'').trim();return{id:r.id,packing:r.packing,originalPacking:r.packing,oldRate:r.rate,master:m.master||'LOOSE OIL RATE',formula:missingFormula?'':m.formula||'MASTER*1',extra:m.extra??0,round:m.round??0,sort_order:r.sort_order??i,missingFormula,formulaReentered:false}});
   const seen=new Set(rows.map(r=>normalizedPacking(r.packing)));
   for(const[packing,m]of Object.entries(s.rows||{})){
     const normalized=normalizedPacking(packing);if(!normalized||seen.has(normalized))continue;
-    rows.push({id:null,packing,oldRate:0,master:m?.master||'LOOSE OIL RATE',formula:m?.formula||'MASTER*1',extra:m?.extra??0,round:m?.round??0,sort_order:rows.length+1,recoveredFromFormula:true});seen.add(normalized);
+    rows.push({id:null,packing,originalPacking:null,oldRate:0,master:m?.master||'LOOSE OIL RATE',formula:m?.formula||'MASTER*1',extra:m?.extra??0,round:m?.round??0,sort_order:rows.length+1,recoveredFromFormula:true});seen.add(normalized);
   }
   // Show the saved packaging immediately. Auxiliary references and previews may
   // fail independently, but must never leave the packing table on a spinner.
@@ -368,7 +368,7 @@ function renderMasterState(){const on=masterLocked();$('masterLock').textContent
 function renderLocks(){const l=locks();document.querySelectorAll('[data-lock]').forEach(b=>{const on=!!l[b.dataset.lock];b.textContent=on?'🔒':'🔓';b.classList.toggle('on',on)})}
 function packingMasterLabel(r){try{const resolved=packingResolution();return resolved.error||packingReferenceLoadError?'SOURCE ERROR':resolved.source.city+' / '+resolved.source.name+' / '+(r.packing||'SAME PACKING')}catch(error){console.error('Packing source preview failed',error);return 'SOURCE ERROR'}}
 function renderTable(){const recovery=$('formulaRecovery');if(recovery){const missing=rows.filter(r=>r.missingFormula).map(r=>r.packing);recovery.hidden=!missing.length;recovery.textContent=missing.length?'Original formulas missing for '+missing.join(', ')+'. Enter the exact originals in the highlighted fields, then review rates before SAVE ALL. A backup is safer. Unlock FORMULA above if the fields are grey.':''}if(!rows.length){$('rateBody').innerHTML='<tr><td colspan="8" class="empty">No packing yet. Click ADD PACKING.</td></tr>';return}const l=locks(),packingLinked=!!st().packingRateReference;$('rateBody').innerHTML=rows.map((r,i)=>{const opts=rows.map((x,j)=>j!==i&&x.packing?`<option value="${esc(x.packing)}" ${r.master===x.packing?'selected':''}>${esc(x.packing)}</option>`:'').join(''),masterControl=packingLinked?`<select class="sourceMaster" disabled title="Same packing from the referenced product is MASTER"><option>${esc(packingMasterLabel(r))}</option></select>`:`<select data-i="${i}" data-f="master" ${l.master?'disabled':''}><option value="LOOSE OIL RATE" ${r.master==='LOOSE OIL RATE'?'selected':''}>LOOSE OIL RATE</option>${opts}</select>`,ev=currentEvaluation(i),issue=ev.sourceError||ev.cycle;return`<tr data-packing-row="${i}"><td><div class="packingCell"><button type="button" class="packingDrag" draggable="${!l.packing}" data-drag="${i}" aria-label="Drag ${esc(r.packing||'packing')} to reorder" title="${l.packing?'Unlock PACKING to reorder':'Drag to change packing order'}" ${l.packing?'disabled':''}>⠿</button><input class="packingField" data-i="${i}" data-f="packing" value="${esc(r.packing)}" ${l.packing?'disabled':''}></div></td><td>${masterControl}</td><td><input class="oldRateField" value="${Number(r.oldRate||0).toFixed(2)}" ${l.old?'disabled':''} data-i="${i}" data-f="oldRate"></td><td><input data-i="${i}" data-f="formula" value="${esc(r.formula)}" placeholder="${r.missingFormula?'RE-ENTER ORIGINAL FORMULA':'MASTER*1.365 or +5%'}" title="${r.missingFormula?'Original formula is missing. Enter the exact formula before saving.':'Packing rate formula'}" ${r.missingFormula?'style="border:2px solid #d97706;background:#fffaf0"':''} ${l.formula?'disabled':''}></td><td><input type="text" inputmode="decimal" data-i="${i}" data-f="extra" value="${esc(r.extra)}" placeholder="+15 / *1.05 / +5%" title="Use +, -, *, / or %. A plain number keeps the old add-cost behaviour." ${l.extra?'disabled':''}></td><td><input type="number" data-i="${i}" data-f="round" value="${r.round}" ${l.round?'disabled':''}></td><td><input class="newRate ${issue?'cycle':''}" data-new="${i}" value="${ev.sourceError?'SOURCE ERROR':ev.cycle?'CYCLE':ev.rate.toFixed(2)}" title="${esc(ev.sourceError||'')}" disabled></td><td><button class="btn light" data-del="${i}">🗑️</button></td></tr>`}).join('');if(recovery&&recovery.hidden){const issue=rows.map((_,i)=>currentEvaluation(i).sourceError).find(Boolean);if(issue){recovery.hidden=false;recovery.textContent='NEW RATE calculation: '+issue+'. Saved rates have not changed.'}}document.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{const i=+b.dataset.del,r=rows[i];if(r.id){const{error}=await supabase.from('rates').delete().eq('id',r.id);if(error){toast(error.message);return}}rows.splice(i,1);renderTable()})}
-function sync(el){const r=rows[+el.dataset.i];if(r){r[el.dataset.f]=el.value;if(el.dataset.f==='formula'&&r.missingFormula)r.formulaReentered=!!el.value.trim()}}function refresh(){rows.forEach((r,i)=>{const e=document.querySelector(`[data-new="${i}"]`),v=currentEvaluation(i);if(e){e.value=v.sourceError?'SOURCE ERROR':v.cycle?'CYCLE':v.rate.toFixed(2);e.classList.toggle('cycle',!!(v.cycle||v.sourceError))}})}
+function sync(el){const r=rows[+el.dataset.i];if(r){const field=el.dataset.f,previous=r[field];r[field]=el.value;if(field==='packing'&&previous!==el.value)for(const linked of rows)if(linked!==r&&linked.master===previous)linked.master=el.value;if(field==='formula'&&r.missingFormula)r.formulaReentered=!!el.value.trim()}}function refresh(){rows.forEach((r,i)=>{const e=document.querySelector(`[data-new="${i}"]`),v=currentEvaluation(i);if(e){e.value=v.sourceError?'SOURCE ERROR':v.cycle?'CYCLE':v.rate.toFixed(2);e.classList.toggle('cycle',!!(v.cycle||v.sourceError))}})}
 let draggedPacking=-1;
 $('rateBody').addEventListener('dragstart',e=>{const handle=e.target.closest('[data-drag]');if(!handle)return;if(locks().packing){e.preventDefault();draggedPacking=-1;return}draggedPacking=Number(handle.dataset.drag);e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',String(draggedPacking))});
 $('rateBody').addEventListener('dragover',e=>{const target=e.target.closest('[data-packing-row]');if(!target||draggedPacking<0||locks().packing)return;e.preventDefault();e.dataTransfer.dropEffect='move';target.classList.add('dragOver')});
@@ -376,7 +376,7 @@ $('rateBody').addEventListener('dragleave',e=>{e.target.closest('[data-packing-r
 $('rateBody').addEventListener('drop',e=>{const target=e.target.closest('[data-packing-row]');if(!target||draggedPacking<0||locks().packing){draggedPacking=-1;return}e.preventDefault();const to=Number(target.dataset.packingRow);if(draggedPacking!==to){rows.splice(to,0,rows.splice(draggedPacking,1)[0]);renderTable()}draggedPacking=-1});
 $('rateBody').addEventListener('dragend',()=>{draggedPacking=-1;document.querySelectorAll('#rateBody .dragOver').forEach(el=>el.classList.remove('dragOver'))});
 $('rateBody').addEventListener('input',e=>{const el=e.target.closest('[data-i]');if(!el)return;sync(el);refresh()});$('rateBody').addEventListener('change',e=>{const el=e.target.closest('[data-i]');if(!el)return;sync(el);refresh()});$('looseRate').oninput=e=>{if(masterLocked()||st().looseReference)return;st().looseRate=e.target.value;saveMeta();preview();refresh()};$('pvFormula').oninput=e=>{if(masterLocked())return;st().masterFormula=e.target.value;saveMeta();preview()};$('pvRound').oninput=e=>{if(masterLocked())return;st().masterRound=e.target.value;saveMeta();preview()};$('masterLock').onclick=()=>{localStorage.setItem(MASTERKEY,masterLocked()?'0':'1');renderMasterState();toast(masterLocked()?'🔒 MASTER LOCKED':'🔓 MASTER UNLOCKED')};document.addEventListener('click',e=>{const b=e.target.closest('[data-lock]');if(!b)return;const l=locks();l[b.dataset.lock]=!l[b.dataset.lock];saveLocks(l);renderLocks();renderTable()});
-$('addPacking').onclick=()=>{rows.push({id:null,packing:'',oldRate:0,master:'LOOSE OIL RATE',formula:'MASTER*1',extra:0,round:0});renderTable()};
+$('addPacking').onclick=()=>{rows.push({id:null,packing:'',originalPacking:null,oldRate:0,master:'LOOSE OIL RATE',formula:'MASTER*1',extra:0,round:0});renderTable()};
 $('saveAll').onclick=async()=>{
   if(masterLocked()){toast('🔒 MASTER LOCKED');return}
   if(activeLooseDraft()){toast('Select the source product first, or choose Manual entry.');return}
@@ -392,7 +392,8 @@ $('saveAll').onclick=async()=>{
     if(key()!==sourceKey)throw new Error('Product selection changed. Click SAVE ALL again.');
     const snapshot=JSON.parse(JSON.stringify(meta)),sourceState=snapshot[sourceKey];
     if(!sourceState.packingRateReference){const resolution=looseResolution();if(resolution.error)throw new Error(resolution.error)}
-    const missingSaved=rows.filter(row=>row.id&&!String(sourceState.rows?.[row.packing]?.formula||'').trim());
+    const settingsName=row=>row.originalPacking||row.packing;
+    const missingSaved=rows.filter(row=>row.id&&!String(sourceState.rows?.[settingsName(row)]?.formula||'').trim());
     const unresolved=missingSaved.filter(row=>!row.formulaReentered||!String(row.formula||'').trim());
     if(unresolved.length)throw new Error('Original formula missing for '+unresolved.map(row=>row.packing).join(', ')+'. Unlock FORMULA and re-enter the exact original formula for each highlighted packing, or restore a formula backup. No rates were changed.');
     if(missingSaved.length&&!(Number(looseResolution().value)>0))throw new Error('Loose master is missing or zero. Restore or set the correct loose reference before publishing rates. No rates were changed.');
@@ -402,8 +403,9 @@ $('saveAll').onclick=async()=>{
       if(value.cycle||value.sourceError)throw new Error(value.sourceError||'MASTER LINK CYCLE FOUND');
       if(!packing)continue;
       if(names.has(packing))throw new Error('Packaging names must be unique.');names.add(packing);
+      if(row.originalPacking&&row.originalPacking.trim()!==packing)delete sourceState.rows[row.originalPacking];
       sourceState.rows[packing]={master:row.master,formula:row.formula,extra:row.extra,round:row.round};
-      sourceRates.push({city:sourceProduct.city,product_id:sourceProduct.id,packing,rate:value.rate,narration:narr,sort_order:i+1});
+      sourceRates.push({id:row.id||null,originalPacking:row.originalPacking||null,city:sourceProduct.city,product_id:sourceProduct.id,packing,rate:value.rate,narration:narr,sort_order:i+1});
     }
     const groupsByKey=new Map([[sourceKey,{product:sourceProduct,rates:sourceRates}]]),publishedByKey=new Map([[sourceKey,sourceRates]]);
     const dependants=looseRateDependants(snapshot,sourceKey,allProducts).filter(product=>!snapshot[product.city+'|'+product.id]?.packingRateReference);
@@ -422,13 +424,13 @@ $('saveAll').onclick=async()=>{
       const group={product,rates:calculated};groupsByKey.set(groupKey,group);publishedByKey.set(groupKey,calculated);
     }
     // Every linked product is validated before this one atomic rates write.
-    const groups=[...groupsByKey.values()].filter(group=>group.rates.length),linked=groups.filter(group=>group.product.city+'|'+group.product.id!==sourceKey),payload=groups.flatMap(group=>group.rates);
+    const groups=[...groupsByKey.values()].filter(group=>group.rates.length),linked=groups.filter(group=>group.product.city+'|'+group.product.id!==sourceKey),payload=groups.flatMap(group=>group.rates),renamed=sourceRates.filter(row=>row.id&&row.originalPacking&&row.originalPacking.trim()!==row.packing);
     if(key()!==sourceKey)throw new Error('Product selection changed. Click SAVE ALL again.');
     if(!payload.length){toast('No packing rates to save.');return}
     if(missingSaved.length){
       const {data:live,error:liveError}=await supabase.from('admin_state').select('value').eq('key','admin_formula_state_v1').single();
       if(liveError)throw liveError;
-      if(missingSaved.some(row=>typeof live?.value?.meta?.[sourceKey]?.rows?.[row.packing]?.formula==='string'))throw new Error('Original formulas are available in the cloud now. Reload this page instead of replacing them.');
+      if(missingSaved.some(row=>typeof live?.value?.meta?.[sourceKey]?.rows?.[settingsName(row)]?.formula==='string'))throw new Error('Original formulas are available in the cloud now. Reload this page instead of replacing them.');
       const preview=rows.filter(row=>row.id&&Number(row.oldRate||0)!==Number(sourceRates.find(rate=>rate.packing===row.packing)?.rate||0)).map(row=>row.packing+': '+Number(row.oldRate||0).toFixed(2)+' → '+Number(sourceRates.find(rate=>rate.packing===row.packing)?.rate||0).toFixed(2)).join('\n')||'No rate difference in this product.';
       if(!confirm(sourceProduct.city+' / '+sourceProduct.name+': the original formulas were missing. Save your manually entered formulas and publish recalculated rates?\n'+preview+'\nThis may also update '+linked.length+' linked products. Cancel to keep all rates unchanged.'))throw new Error('Formula re-entry cancelled. No rates were changed.');
     }
@@ -439,9 +441,11 @@ $('saveAll').onclick=async()=>{
       const cloudRows=verified?.value?.meta?.[sourceKey]?.rows||{};
       if(missingSaved.some(row=>['master','formula','extra','round'].some(field=>JSON.stringify(cloudRows[row.packing]?.[field])!==JSON.stringify(sourceState.rows[row.packing]?.[field]))))throw new Error('Formula settings changed while saving. No rates were published. Reload this product and review its formulas.');
     }
-    const{data,error}=await supabase.from('rates').upsert(payload,{onConflict:'city,product_id,packing'}).select('city,product_id,packing');
+    for(const row of renamed){const{data,error}=await supabase.from('rates').update({packing:row.packing,rate:row.rate,narration:row.narration,sort_order:row.sort_order}).eq('id',row.id).eq('city',row.city).eq('product_id',row.product_id).select('id,packing').single();if(error||data?.packing!==row.packing)throw error||new Error('Packaging rename was not confirmed')}
+    const renamedIds=new Set(renamed.map(row=>row.id)),upsertPayload=payload.filter(row=>!renamedIds.has(row.id)).map(({id,originalPacking,...row})=>row);
+    const{data,error}=upsertPayload.length?await supabase.from('rates').upsert(upsertPayload,{onConflict:'city,product_id,packing'}).select('city,product_id,packing'):{data:[],error:null};
     if(error)throw error;
-    if(data?.length!==payload.length)throw new Error('The server did not confirm every rate. Please check and save again.');
+    if((data?.length||0)+renamed.length!==payload.length)throw new Error('The server did not confirm every rate. Please check and save again.');
     const{data:{session}}=await supabase.auth.getSession();
     let historyError=null;
     if(session){
