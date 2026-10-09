@@ -719,6 +719,22 @@ test('a broken local packing master recovers without changing packing formulas',
   assert.equal(a.db.rateWrites||0,0);
 });
 
+test('a saved packing with a missing browser formula recovers only its cloud formula', async () => {
+  const a=await referenceApp();
+  const state=metadata();
+  delete state[keyA].rows['15 KG'].formula;
+  state[keyA].rows['15 KG'].extra=25;
+  a.local.setItem(META,JSON.stringify(state));
+  a.window.dispatchEvent(new Event('vrcl:admin-state-applied'));
+  await a.editor.select('Rajkot',A);
+  const restored=JSON.parse(a.local.getItem(META));
+  assert.equal(restored[keyA].rows['15 KG'].formula,'MASTER*1.5');
+  assert.equal(restored[keyA].rows['15 KG'].extra,25);
+  assert.equal(a.editor.rows()[0].missingFormula,false);
+  assert.equal(JSON.parse(a.local.getItem('VRCL_ADMIN_FORMULA_RECOVERY_V1')).meta[keyA].rows['15 KG'].formula,undefined);
+  assert.equal(a.db.rateWrites||0,0);
+});
+
 test('full backup and restore retain loose reference configuration and its lock', async () => {
   const a=await referenceApp();await linkTo(a,'Ahmedabad',B,'Rajkot',A);await a.document.getElementById('looseRefLock').onclick();
   const snapshot=clone(await a.backup.buildFullBackup());

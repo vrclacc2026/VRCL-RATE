@@ -263,6 +263,20 @@ async function repairInvalidLocalSources(selectedKey){
   meta[selectedKey]=updated;saveMeta();toast('Invalid local rate source restored from saved settings.');
 }
 async function loadProductsInner(){const requestedCity=city,loadSerial=++productLoadSerial;$('rateBody').innerHTML='<tr><td colspan="8" class="empty">Loading products and packaging…</td></tr>';const{data,error}=await readWithin(supabase.from('products').select('id,code,name,sort_order,ingredient_image_url,city,customer_visible').eq('active',true).order('sort_order'));if(requestedCity!==city||loadSerial!==productLoadSerial)return;if(error){packingLoadError('Products could not load: '+error.message);toast('Products load failed');return}allProducts=data||[];products=allProducts.filter(p=>p.city===city);if(!products.some(p=>p.id===productId))productId=products[0]?.id||'';await repairInvalidLocalSources(key());if(requestedCity!==city||loadSerial!==productLoadSerial)return;renderCities();renderProducts();showPhoto();await Promise.all([loadRates(),loadHistory()]);renderLooseReference();renderPackingReference()}
+async function recoverPublishedFormulas(published,requestedKey,loadSerial){
+  const state=meta[requestedKey];if(!state)return;
+  const missing=published.filter(r=>!String(state.rows?.[r.packing]?.formula||'').trim());if(!missing.length)return;
+  const{data,error}=await readWithin(supabase.from('admin_state').select('value').eq('key','admin_formula_state_v1').maybeSingle());
+  if(error||requestedKey!==key()||loadSerial!==rateLoadSerial)return;
+  const saved=data?.value?.meta?.[requestedKey]?.rows||{};
+  const found=missing.filter(r=>String(saved[r.packing]?.formula||'').trim());if(!found.length)return;
+  const recoveryKey='VRCL_ADMIN_FORMULA_RECOVERY_V1';
+  try{const recovery=JSON.parse(localStorage.getItem(recoveryKey)||'{"meta":{}}');recovery.meta ||= {};recovery.meta[requestedKey]=JSON.parse(JSON.stringify(state));recovery.captured_at=new Date().toISOString();localStorage.setItem(recoveryKey,JSON.stringify(recovery))}
+  catch(error){console.error('Could not preserve local formula settings',error);return}
+  state.rows ||= {};
+  for(const r of found){state.rows[r.packing]={...(state.rows[r.packing]||{}),formula:saved[r.packing].formula};const editor=rows.find(x=>x.id===r.id);if(editor){editor.formula=saved[r.packing].formula;editor.missingFormula=false}}
+  saveMeta();renderTable();
+}
 function renderCities(){$('cityArea').innerHTML=['Rajkot','Ahmedabad','Udaan'].map(c=>`<button class="city ${c===city?'active':''}" data-city="${c}">${c}</button>`).join('');document.querySelectorAll('[data-city]').forEach(b=>b.onclick=async()=>{city=b.dataset.city;productId='';renderCustomerVisibility();renderCities();await loadProducts()})}
 function renderProducts(){
   $('productArea').innerHTML=products.map(p=>'<button class="productBtn '+(p.id===productId?'active':'')+'" data-product="'+p.id+'"><span>'+esc(p.name)+'</span><span class="productStatus" aria-hidden="true"></span></button>').join('');
@@ -314,6 +328,7 @@ async function loadRates(){
   // fail independently, but must never leave the packing table on a spinner.
   try{renderTable();loadedRateKey=requestedKey}catch(error){console.error('Packaging display failed',error);packingLoadError('Packaging display failed: '+(error.message||error));return}
   try{
+    await recoverPublishedFormulas(published,requestedKey,loadSerial);if(requestedKey!==key()||loadSerial!==rateLoadSerial)return;
     await loadPackingSourceRates(requestedKey);if(requestedKey!==key()||loadSerial!==rateLoadSerial)return;
     $('narration').value=published[0]?.narration||'';$('looseRate').value=s.looseReference?(looseResolution().value??''):s.looseRate;$('pvFormula').value=s.masterFormula||'MASTER*1';$('pvRound').value=s.masterRound||0;
     preview();renderMasterState();renderLocks();renderTable();
