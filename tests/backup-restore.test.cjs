@@ -682,9 +682,41 @@ test('missing sources and reference cycles show a source error and cannot publis
     const a=await referenceApp(state,db);await a.editor.select('Ahmedabad',B);
     assert.equal(a.document.getElementById('pvDiff').textContent,'SOURCE ERROR');
     assert.match(a.document.getElementById('rateBody').innerHTML,/SOURCE ERROR/);
+    assert.match(a.document.getElementById('formulaRecovery').textContent,/NEW RATE calculation: Loose rate reference cycle|NEW RATE calculation: Loose rate source product is unavailable/);
     await a.document.getElementById('saveAll').onclick();
     assert.equal(a.db.rateWrites||0,0);
   }
+});
+
+test('a broken browser source recovers cloud source settings without replacing local formulas', async () => {
+  const a=await referenceApp();
+  const state=metadata();
+  state[keyA].looseReference={city:'Rajkot',productId:'missing-product'};
+  state[keyA].rows['15 KG'].formula='MASTER*1.6';
+  a.local.setItem(META,JSON.stringify(state));
+  a.window.dispatchEvent(new Event('vrcl:admin-state-applied'));
+  await a.editor.select('Rajkot',A);
+  const restored=JSON.parse(a.local.getItem(META));
+  assert.equal(restored[keyA].looseReference,undefined);
+  assert.equal(restored[keyA].looseRate,'1000');
+  assert.equal(restored[keyA].rows['15 KG'].formula,'MASTER*1.6');
+  assert.match(a.document.getElementById('rateBody').innerHTML,/1600\.00/);
+  assert.equal(JSON.parse(a.local.getItem('VRCL_ADMIN_FORMULA_RECOVERY_V1')).meta[keyA].looseReference.productId,'missing-product');
+  assert.equal(a.db.rateWrites||0,0);
+});
+
+test('a broken local packing master recovers without changing packing formulas', async () => {
+  const a=await referenceApp();
+  const state=metadata();
+  state[keyA].packingRateReference={city:'Ahmedabad',productId:'missing-product'};
+  a.local.setItem(META,JSON.stringify(state));
+  a.window.dispatchEvent(new Event('vrcl:admin-state-applied'));
+  await a.editor.select('Rajkot',A);
+  const restored=JSON.parse(a.local.getItem(META));
+  assert.equal(restored[keyA].packingRateReference,undefined);
+  assert.deepEqual(restored[keyA].rows,state[keyA].rows);
+  assert.match(a.document.getElementById('rateBody').innerHTML,/1500\.00/);
+  assert.equal(a.db.rateWrites||0,0);
 });
 
 test('full backup and restore retain loose reference configuration and its lock', async () => {
