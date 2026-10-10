@@ -72,6 +72,7 @@ function app({ db = fixture(), local = storage(), session = storage() } = {}) {
     gte() { return this; }
     order(column) { this.sorts.push(column); return this; }
     limit() { return this; }
+    range() { return this; }
     upsert(payload) { this.payload = clone(payload); return this; }
     update(payload) { this.payload = clone(payload); this.updateOnly = true; return this; }
     insert(payload) { this.payload = clone(payload); this.insertOnly = true; return this; }
@@ -97,6 +98,14 @@ function app({ db = fixture(), local = storage(), session = storage() } = {}) {
           db.rates = next; db.rateWrites = (db.rateWrites || 0) + 1;
           return { data: clone(values), error: null };
         }
+        if (this.updateOnly) {
+          if (db.failCloud) return { data: null, error: new Error('Formula storage unavailable') };
+          if (db.beforeCloudWrite) await db.beforeCloudWrite();
+          const updated = db[this.table].filter(row => this.filters.every(fn => fn(row)));
+          for (const row of updated) Object.assign(row, clone(this.payload));
+          db.cloudWrites++;
+          return { data: clone(single ? updated[0] || null : updated), error: null };
+        }
         if (this.table === 'rate_history') {
           const values = Array.isArray(this.payload) ? this.payload : [this.payload];
           db.rate_history.push(...values.map(row => ({...row, changed_at:new Date().toISOString()})));
@@ -111,21 +120,25 @@ function app({ db = fixture(), local = storage(), session = storage() } = {}) {
       }
       let result = db[this.table].filter(row => this.filters.every(fn => fn(row)));
       for (const column of this.sorts.toReversed()) result = [...result].sort((a, b) => a[column] > b[column] ? 1 : a[column] < b[column] ? -1 : 0);
-      return { data: clone(single ? result[0] || null : result), error: null };
+      return { data: clone(single ? result[0] || null : result), error: null, count: result.length };
     }
     single() { return this.execute(true); }
     maybeSingle() { return this.execute(true); }
     then(resolve, reject) { return this.execute(false).then(resolve, reject); }
   }
   const supabase = {
-    storage: { from(bucket) { return { async upload(name, bytes) { db.uploads.push({bucket,name,bytes:bytes.length}); return {error:null}; } }; } },
+    storage: { from(bucket) { return {
+      async upload(name, bytes) { const data=Uint8Array.from(bytes);db.uploads.push({bucket,name,bytes:data.length,data});return {error:null}; },
+      async download(name) { const file=[...db.uploads].reverse().find(item=>item.bucket===bucket&&item.name===name);return file?{data:{arrayBuffer:async()=>file.data.buffer.slice(file.data.byteOffset,file.data.byteOffset+file.data.byteLength)},error:null}:{data:null,error:new Error('Backup not found')}; },
+      async remove(names) { db.uploads=db.uploads.filter(item=>item.bucket!==bucket||!names.includes(item.name));return {error:null}; }
+    }; } },
     auth: { async getSession() { return { data: { session: db.signedIn ? { user: { id: 'admin-test' } } : null } }; } },
     from: table => new Query(table),
     async rpc(name, args) {
       db.rpcCalls++;
       if (name === 'restore_vrcl_full_backup') {
-        for (const key of ['products', 'rates', 'admin_state']) db[key] = clone(args.payload.data[key] || []);
-        return { data: { ok: true, products: db.products.length, rates: db.rates.length }, error: null };
+        for (const key of ['profiles','products','rates','rate_history','user_activity','header_assets','admin_state']) if (Array.isArray(args.payload.data[key])) db[key] = clone(args.payload.data[key]);
+        return { data: { ok: true, products: db.products.length, rates: db.rates.length, rate_history:db.rate_history.length }, error: null };
       }
       assert.equal(name, 'restore_vrcl_product_backup');
       const { product_payload: product, rates_payload: rates } = clone(args);
@@ -649,7 +662,7 @@ test('SAVE ALL atomically recalculates same-city and cross-city dependants with 
   a.document.getElementById('looseRate').oninput({target:{value:'1100'}});
   await a.document.getElementById('saveAll').onclick();
   assert.equal(a.db.rateWrites,1,'all product rate rows use one atomic upsert');
-  assert.equal(a.db.rates.find(r=>r.product_id===A).rate,1650);
+  assert.equal(a.db.rates.find(r=>r.product_id===A).rate,1650,a.document.getElementById('toast').textContent);
   assert.equal(a.db.rates.find(r=>r.product_id===C).rate,1665,'Visvita retains its own extra costing');
   assert.equal(a.db.rates.find(r=>r.product_id===B&&r.packing==='1 L').rate,110);
   assert.equal(a.db.rates.find(r=>r.product_id===B&&r.packing==='5 L').rate,550);
@@ -805,13 +818,19 @@ test('Udaan Palm uses Ahmedabad same-packing rates and source saves propagate ex
   db.rates=db.rates.filter(r=>r.product_id!==B);
   db.rates.push({id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',city:'Udaan',product_id:B,packing:'15 KG',rate:1575,narration:'Udaan terms',sort_order:1});
   state[keySource]=state[keyA];delete state[keyA];delete state[keyB];
-  state[keyU]={looseRate:'1200',masterFormula:'MASTER/10',masterRound:0,packingRateReference:{city:'Ahmedabad',productId:A},packingRateReferenceLocked:true,rows:{'15 KG':{master:'LOOSE OIL RATE',formula:'MASTER*1.5',extra:'+99',round:0}}};
+  state[keyU]={looseRate:'1200',masterFormula:'MASTER/10',masterRound:0,packingRateReference:{city:'Ahmedabad',productId:A},packingRateReferenceLocked:true,rows:{'15 KG':{master:'LOOSE OIL RATE',formula:'MASTER*1.5',extra:'+5%',round:0}}};
   const a=await referenceApp(state,db);
   await a.editor.select('Udaan',B);
   const formulasBefore=clone(a.db.admin_state[0].value.meta[keyU].rows);
   assert.deepEqual(a.db.admin_state[0].value.meta[keyU].packingRateReference,{city:'Ahmedabad',productId:A});
   assert.deepEqual(a.db.admin_state[0].value.meta[keyU].rows,formulasBefore,'fixed +5% does not rewrite formulas, extras or round-off');
-  assert.match(a.document.getElementById('packingRefStatus').textContent,/Ahmedabad \/ Palm Ahmedabad same packing \+5%/);
+  assert.equal(a.document.getElementById('packingRefCityField').hidden,false);
+  assert.equal(a.document.getElementById('packingRefProductField').hidden,false);
+  assert.equal(a.document.getElementById('packingRefCity').value,'Ahmedabad');
+  assert.match(a.document.getElementById('packingRefCity').innerHTML,/Ahmedabad/);
+  assert.match(a.document.getElementById('packingRefCity').innerHTML,/Rajkot/);
+  assert.doesNotMatch(a.document.getElementById('packingRefCity').innerHTML,/Udaan/);
+  assert.match(a.document.getElementById('packingRefStatus').textContent,/Ahmedabad \/ Palm Ahmedabad same packing/);
   assert.match(a.document.getElementById('rateBody').innerHTML,/Ahmedabad \/ Palm Ahmedabad \/ 15 KG/);
   await a.document.getElementById('saveAll').onclick();
   assert.equal(a.db.rates.find(r=>r.product_id===B).rate,1575);
@@ -822,6 +841,34 @@ test('Udaan Palm uses Ahmedabad same-packing rates and source saves propagate ex
   assert.equal(a.db.rates.find(r=>r.product_id===A).rate,1650);
   assert.equal(a.db.rates.find(r=>r.product_id===B).rate,1732.5,'Udaan stays exactly 5% above Rajkot');
   assert.match(a.document.getElementById('toast').textContent,/1 LINKED PRODUCTS/);
+});
+
+test('Udaan can switch from Ahmedabad to the matching Rajkot product without publishing or rewriting formulas', async () => {
+  const C='33333333-3333-4333-8333-333333333333',keyU='Udaan|'+B,keyAhmedabad='Ahmedabad|'+A,keyRajkot='Rajkot|'+C,db=fixture(),state=metadata();
+  db.products[0].city='Ahmedabad';db.products[0].code='palm';db.products[0].name='Palm Ahmedabad';
+  db.products[1].city='Udaan';db.products[1].code='palm';db.products[1].name='Palm Udaan';
+  db.products.push({id:C,city:'Rajkot',code:'palm-sep',name:'Palm Rajkot',active:true,sort_order:1});
+  db.rates=[
+    {id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',city:'Ahmedabad',product_id:A,packing:'15 KG',rate:1500,narration:'Ahmedabad terms',sort_order:1},
+    {id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',city:'Udaan',product_id:B,packing:'15 KG',rate:1575,narration:'Udaan terms',sort_order:1},
+    {id:'cccccccc-cccc-4ccc-8ccc-cccccccccccc',city:'Rajkot',product_id:C,packing:'15 KG',rate:1600,narration:'Rajkot terms',sort_order:1}
+  ];
+  state[keyAhmedabad]=state[keyA];delete state[keyA];delete state[keyB];
+  state[keyRajkot]={looseRate:'1100',masterFormula:'MASTER/10',masterRound:0,rows:{'15 KG':{master:'LOOSE OIL RATE',formula:'MASTER*1.45',extra:5,round:0}}};
+  state[keyU]={looseRate:'',masterFormula:'MASTER*1',masterRound:0,packingRateReference:{city:'Ahmedabad',productId:A},packingRateReferenceLocked:false,rows:{'15 KG':{master:'AHMEDABAD SAME PACKING',formula:'MASTER*1',extra:'+5%',round:0}}};
+  const a=await referenceApp(state,db);await a.editor.select('Udaan',B);
+  const ratesBefore=clone(a.db.rates),formulasBefore=clone(a.db.admin_state[0].value.meta[keyU].rows);
+  a.document.getElementById('packingRefCity').value='Rajkot';
+  a.document.getElementById('packingRefCity').onchange();
+  assert.match(a.document.getElementById('packingRefProduct').innerHTML,/Palm Rajkot/);
+  a.document.getElementById('packingRefProduct').value=C;
+  await a.document.getElementById('packingRefProduct').onchange();
+  assert.deepEqual(a.db.admin_state[0].value.meta[keyU].packingRateReference,{city:'Rajkot',productId:C},a.document.getElementById('toast').textContent);
+  assert.deepEqual(a.db.admin_state[0].value.meta[keyU].rows,formulasBefore);
+  assert.deepEqual(a.db.rates,ratesBefore,'choosing a source must not publish rates');
+  assert.equal(a.db.rateWrites||0,0);
+  assert.match(a.document.getElementById('packingRefStatus').textContent,/Rajkot \/ Palm Rajkot same packing/);
+  assert.match(a.document.getElementById('rateBody').innerHTML,/Rajkot \/ Palm Rajkot \/ 15 KG/);
 });
 
 test('formula-only packaging rows reappear in the admin and are published on SAVE ALL', async () => {
