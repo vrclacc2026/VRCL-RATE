@@ -110,7 +110,10 @@ function evaluate(i,visited=new Set()){
   const chain=new Set(visited);chain.add(i);const master=masterValue(r,chain);
   if(master.error)return{rate:0,cycle:false,sourceError:master.error};if(master.cycle)return{rate:0,cycle:true};
   if(!st().packingRateReference&&r.master!=='LOOSE OIL RATE'){const idx=findPacking(r.master);if(idx>=0&&evaluate(idx,chain).cycle)return{rate:0,cycle:true}}
-  const raw=isUdaanPalm()?master.value*1.05:applyExtraCost(calcFormula(r.formula||'MASTER*1',master.value),r.extra);
+  // A referenced Udaan rate always starts from the selected city's same
+  // packing. Keep the saved EXTRA/rounding rules, but never let an old local
+  // formula change the referenced rate.
+  const raw=isUdaanProduct()&&st().packingRateReference?applyExtraCost(master.value,r.extra):applyExtraCost(calcFormula(r.formula||'MASTER*1',master.value),r.extra);
   return{rate:roundPackingValue(raw,r.round??0),cycle:false,master:master.value};
 }
 function preview(){const s=st(),resolved=looseResolution();$('pvDiff').textContent=resolved.error?'SOURCE ERROR':roundLooseValue(calcFormula(s.masterFormula||'MASTER*1',resolved.value),s.masterRound||0).toFixed(2)}
@@ -177,33 +180,35 @@ $('looseRefLock').onclick=()=>{if(activeLooseDraft()){toast('Select the source p
 $('looseRefOpen').onclick=async()=>{const ref=st().looseReference;if(!ref)return;city=ref.city;productId=ref.productId;await loadProducts()};
 
 function productFamily(product){const text=((product?.code||'')+' '+(product?.name||'')).toLowerCase();return['palm','groundnut','cotton','mustard','soya','sun','corn','visvita'].find(name=>text.includes(name))||product?.code||''}
-function isUdaanPalm(product=currentProduct()){return product?.city==='Udaan'&&productFamily(product)==='palm'}
+function isUdaanProduct(product=currentProduct()){return product?.city==='Udaan'}
 function packingSources(sourceCity){
   const selected=currentProduct();
-  return allProducts.filter(p=>p.city===sourceCity&&canReferencePackingRates(meta,key(),p.city+'|'+p.id,allProducts)).sort((a,b)=>{
+  const candidates=allProducts.filter(p=>p.city===sourceCity&&canReferencePackingRates(meta,key(),p.city+'|'+p.id,allProducts));
+  const safeCandidates=isUdaanProduct(selected)?candidates.filter(p=>productFamily(p)===productFamily(selected)):candidates;
+  return safeCandidates.sort((a,b)=>{
     const aMatch=productFamily(a)===productFamily(selected)?0:1,bMatch=productFamily(b)===productFamily(selected)?0:1;
     return aMatch-bMatch||Number(a.sort_order||0)-Number(b.sort_order||0)||a.name.localeCompare(b.name);
   });
 }
-function packingReferenceLocked(){return isUdaanPalm()||masterLocked()||st().packingRateReferenceLocked===true||referenceSaving||rateSaving}
+function packingReferenceLocked(){return masterLocked()||st().packingRateReferenceLocked===true||referenceSaving||rateSaving}
 function activePackingDraft(){return packingReferenceDraft?.key===key()?packingReferenceDraft:null}
 function renderPackingReference(){
   const available=!!currentProduct(),state=available?st():{},draft=activePackingDraft(),ref=draft||state.packingRateReference,locked=state.packingRateReferenceLocked===true;
-  const fixed=isUdaanPalm();$('packingRefRow').hidden=!fixed;
-  if(!fixed){$('packingRefStatus').textContent='';return}
-  $('packingRefModeField').hidden=true;$('packingRefCityField').hidden=true;$('packingRefProductField').hidden=true;$('packingRefOpen').hidden=true;
+  const udaan=isUdaanProduct();$('packingRefRow').hidden=!udaan;
+  if(!udaan){$('packingRefStatus').textContent='';return}
+  const sourceCities=['Ahmedabad','Rajkot'],sourceCity=sourceCities.includes(ref?.city)?ref.city:(sourceCities.find(c=>packingSources(c).length)||'Ahmedabad');
+  $('packingRefModeField').hidden=true;$('packingRefCityField').hidden=false;$('packingRefProductField').hidden=false;
   $('packingRefMode').disabled=!available||packingReferenceLocked();$('packingRefLock').disabled=!available||masterLocked()||referenceSaving||rateSaving;
-  $('packingRefMode').value=ref?'reference':'own';$('packingRefLock').textContent='🔒 UDAAN +5% LOCKED';
-  $('packingRefLock').classList.add('on');$('packingRefLock').setAttribute('aria-pressed','true');
-  if(!available||!ref){$('packingRefStatus').textContent='Ahmedabad / PALMOLINE source is not configured.';$('packingRefStatus').classList.add('refError');return}
-  const source=allProducts.find(p=>p.id===ref.productId&&p.city===ref.city),resolution=packingResolution();
-  $('packingRefCity').innerHTML=['Rajkot','Ahmedabad','Udaan'].map(c=>'<option value="'+c+'"'+(packingSources(c).length?'':' disabled')+'>'+c+'</option>').join('');
-  $('packingRefCity').value=ref.city;
-  $('packingRefProduct').innerHTML=(draft?'<option value="">Select product…</option>':'')+packingSources(ref.city).map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>').join('');
-  if(!draft&&(!source||!packingSources(ref.city).some(p=>p.id===ref.productId)))$('packingRefProduct').innerHTML='<option value="'+esc(ref.productId)+'">Source unavailable — select another</option>'+$('packingRefProduct').innerHTML;
-  $('packingRefProduct').value=ref.productId||'';$('packingRefCity').disabled=packingReferenceLocked();$('packingRefProduct').disabled=packingReferenceLocked();$('packingRefOpen').disabled=!source;
-  const error=!draft&&(resolution.error||packingReferenceLoadError);
-  $('packingRefStatus').textContent=error?error:'UDAAN PALMOLINE = Ahmedabad / '+source.name+' same packing +5%';
+  $('packingRefMode').value='reference';$('packingRefLock').textContent=locked?'🔒 UDAAN SOURCE LOCKED':'🔓 UDAAN SOURCE UNLOCKED';
+  $('packingRefLock').classList.toggle('on',locked);$('packingRefLock').setAttribute('aria-pressed',String(locked));
+  $('packingRefCity').innerHTML=sourceCities.map(c=>'<option value="'+c+'"'+(packingSources(c).length?'':' disabled')+'>'+c+'</option>').join('');
+  $('packingRefCity').value=sourceCity;
+  const source=ref?.productId&&allProducts.find(p=>p.id===ref.productId&&p.city===ref.city),choices=packingSources(sourceCity);
+  $('packingRefProduct').innerHTML=(!ref?.productId||draft?'<option value="">Select product…</option>':'')+choices.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>').join('');
+  if(ref?.productId&&!draft&&(!source||!choices.some(p=>p.id===ref.productId)))$('packingRefProduct').innerHTML='<option value="'+esc(ref.productId)+'">Source unavailable — select another</option>'+$('packingRefProduct').innerHTML;
+  $('packingRefProduct').value=ref?.productId||'';$('packingRefCity').disabled=packingReferenceLocked();$('packingRefProduct').disabled=packingReferenceLocked();$('packingRefOpen').hidden=!source;$('packingRefOpen').disabled=!source;
+  const resolution=ref?.productId?packingResolution():null,error=!draft&&resolution&&(resolution.error||packingReferenceLoadError);
+  $('packingRefStatus').textContent=error?error:!source?'Select the same product from Ahmedabad or Rajkot. Published rates change only after SAVE ALL.':'UDAAN '+currentProduct().name+' = '+source.city+' / '+source.name+' same packing + saved EXTRA';
   $('packingRefStatus').classList.toggle('refError',!!error);
 }
 async function loadPackingSourceRates(requestedKey=key()){
@@ -358,11 +363,11 @@ function renderUdaanLooseInfo(){
   if(!info)return;info.hidden=!show;if(!show)return;
   const ref=st().packingRateReference;
   const source=ref&&allProducts.find(p=>p.id===ref.productId&&p.city===ref.city);
-  if(!source){info.textContent='Udaan mein separate loose input nahi hota. Ahmedabad source unavailable.';return}
+  if(!source){info.textContent='Udaan mein separate loose input nahi hota. Selected source unavailable.';return}
   const loose=resolveLooseRate(meta,source.city+'|'+source.id,allProducts);
   info.textContent=loose.error
-    ? 'Ahmedabad source loose rate unavailable: '+loose.error
-    : 'Ahmedabad source loose / 10 KG: ₹'+Number(loose.value).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})+'. Udaan mein separate loose input nahi hota.';
+    ? source.city+' source loose rate unavailable: '+loose.error
+    : source.city+' source loose / 10 KG: ₹'+Number(loose.value).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})+'. Udaan mein separate loose input nahi hota.';
 }
 function renderMasterState(){const on=masterLocked();$('masterLock').textContent=on?'🔒 MASTER LOCKED':'🔓 MASTER LOCK';$('masterLock').classList.toggle('on',on);$('looseRate').disabled=on;$('pvFormula').disabled=on;$('pvRound').disabled=on;$('photoInput').disabled=on;renderLooseReference();renderPackingReference();renderUdaanLooseInfo()}
 function renderLocks(){const l=locks();document.querySelectorAll('[data-lock]').forEach(b=>{const on=!!l[b.dataset.lock];b.textContent=on?'🔒':'🔓';b.classList.toggle('on',on)})}

@@ -24,7 +24,7 @@ test('admin packing preview evaluates in strict browser module mode', () => {
   const context=vm.createContext({
     rows:[{master:'LOOSE OIL RATE',formula:'MASTER*1.5',extra:123.224,round:1}],
     masterValue:()=>({value:1407,error:null}),st:()=>({}),findPacking:()=>-1,
-    isUdaanPalm:()=>false,calcFormula:(_formula,master)=>master*1.5,
+    isUdaanProduct:()=>false,calcFormula:(_formula,master)=>master*1.5,
     applyExtraCost:(value,extra)=>value+extra,roundPackingValue:value=>Math.round(value)
   });
   vm.runInContext('"use strict";'+source+'\nthis.previewRate=evaluate(0).rate;',context);

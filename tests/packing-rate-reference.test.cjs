@@ -54,6 +54,14 @@ test('the Udaan rule applies to non-Palm products too', () => {
   assert.equal(result[0].rate,2100);
 });
 
+test('Rajkot can be the Udaan source without rewriting saved formula settings', () => {
+  const meta={[keyB]:{packingRateReference:{city:'Rajkot',productId:C},rows:{'15 KG':{master:'AHMEDABAD SAME PACKING',formula:'MASTER*99',extra:'+5%',round:0}}}};
+  const before=JSON.parse(JSON.stringify(meta));
+  const result=reference.calculatePackingReferencedRates({meta,product:products[1],rates:[{city:'Udaan',product_id:B,packing:'15 KG',rate:0}],sourceRates:[{city:'Rajkot',product_id:C,packing:'15 KG',rate:2000}],...calculator});
+  assert.equal(result[0].rate,2100);
+  assert.deepEqual(JSON.parse(JSON.stringify(meta)),before);
+});
+
 test('packing dependants are returned in source-to-target calculation order', () => {
   const meta = {
     [keyA]: {},
