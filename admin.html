@@ -31,6 +31,7 @@
 
 .looseRefRow,.packingRefRow{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:10px;padding:10px 12px;border:1px solid #ead49a;border-radius:10px;background:#fff9ec}
 .packingRefRow{border-color:#a8cbe4;background:linear-gradient(135deg,#f3f9ff,#eaf5ff)}.packingRefRow[hidden]{display:none!important}
+.packingRefTitle{align-self:center;display:grid;gap:3px;min-width:150px}.packingRefTitle b{font-size:11px;color:#16567f}.packingRefTitle span{font-size:9px;font-weight:800;color:#526b7b}.packingSourceCities{display:flex;gap:7px;align-self:center}.packingSourceCity{min-height:35px;padding:7px 11px;border:1px solid #91bddc;border-radius:9px;background:#fff;color:#16567f;font-size:10px;font-weight:950;cursor:pointer}.packingSourceCity.active{background:#16567f;color:#fff;border-color:#16567f;box-shadow:0 3px 0 #0d3f60}.packingSourceCity:disabled{cursor:not-allowed;opacity:.55}.packingSourceCity:not(:disabled):active{transform:translateY(1px)}
 .looseRefRow [hidden],.packingRefRow [hidden]{display:none!important}.looseRefRow label,.packingRefRow label{display:grid;gap:5px;font-size:9px;font-weight:950}.looseRefRow select,.packingRefRow select{min-width:145px;max-width:100%;font-size:12px;font-weight:700}.looseRefRow #looseRefProduct,.packingRefRow #packingRefProduct{min-width:195px}.looseRefRow .btn,.packingRefRow .btn{font-size:10px;min-height:33px}.looseRefRow .hint,.packingRefRow .hint{align-self:center;font-size:10px;color:#087f70;overflow-wrap:anywhere}.looseRefRow .hint.refError,.packingRefRow .hint.refError{color:#b42318}.looseRefRow select:disabled,.packingRefRow select:disabled{opacity:.7;cursor:not-allowed}#looseRate[data-referenced="true"]{background:#e7f7ee;color:#087f70}
 #looseRefLock{padding:0 10px;min-width:154px;background:linear-gradient(145deg,#ede6ff,#ded0fa);border-color:#b5a0d4;color:#543885;box-shadow:0 3px 0 #b5a0d4}#looseRefLock.on{background:linear-gradient(145deg,#674699,#49316f);color:#fff;border-color:#49316f;box-shadow:0 3px 0 #31214d}
 #saveAll{background:linear-gradient(145deg,#3478df,#245dc0);color:#fff;box-shadow:0 3px 0 #19438c}#addPacking,#pmAdd{background:linear-gradient(145deg,#109782,#087566);color:#fff;box-shadow:0 3px 0 #045d52}#saveNote{background:linear-gradient(145deg,#fff0cc,#ffdea0);color:#774a06;border-color:#e7bc6d;box-shadow:0 3px 0 #d5b077}#pmEdit{background:linear-gradient(145deg,#e5efff,#c7dfff);color:#234f95;border-color:#98b9e8;box-shadow:0 3px 0 #97b3da}#pmDelete{background:linear-gradient(145deg,#fff1ee,#ffd8d2);color:#a52b20;border-color:#e7aaa3;box-shadow:0 3px 0 #d59891}
@@ -40,7 +41,7 @@
 @media(hover:hover){.btn:not(:disabled):hover,.city:hover,.productBtn:hover,.masterLock:not(:disabled):hover,.lockMini:hover,.productManageBar button:hover,#vrclProductBackupTools button:not(:disabled):hover{transform:translateY(-1px);filter:brightness(1.04)}}
 .btn:not(:disabled):active,.city:active,.productBtn:active,.masterLock:not(:disabled):active,.lockMini:active,.productManageBar button:active,#vrclProductBackupTools button:not(:disabled):active{transform:translateY(1px);filter:brightness(.97)}
 .btn:disabled,.masterLock:disabled{cursor:default;opacity:.65}.looseRefRow button:focus-visible,.packingRefRow button:focus-visible{outline:2px solid #245dc0;outline-offset:3px}
-@media(max-width:700px){.looseRefRow label,.packingRefRow label{width:100%}.looseRefRow select,.packingRefRow select{width:100%;min-width:0}.looseRefRow #looseRefProduct,.packingRefRow #packingRefProduct{min-width:0}}
+@media(max-width:700px){.looseRefRow label,.packingRefRow label{width:100%}.looseRefRow select,.packingRefRow select{width:100%;min-width:0}.looseRefRow #looseRefProduct,.packingRefRow #packingRefProduct{min-width:0}.packingRefTitle{width:100%}.packingSourceCities{width:100%}.packingSourceCity{flex:1}}
 @media(prefers-reduced-motion:reduce){.btn,.city,.productBtn,.masterLock,.lockMini,.productManageBar button,#vrclProductBackupTools button{transition:none;transform:none!important}}
 .historyActor{font-size:11px;color:#586775;margin-top:5px}.historyActor strong{color:#243d4b}.historyLoose{background:#fff0d2;color:#815811;border:1px solid #ecd3a1}
 </style>
@@ -60,9 +61,11 @@
   <span id="looseRefStatus" class="hint" role="status" aria-live="polite"></span>
 </div>
 <div class="packingRefRow" id="packingRefRow" hidden>
+  <div class="packingRefTitle"><b>UDAAN MASTER LINK</b><span>Select Ahmedabad or Rajkot master source</span></div>
+  <div id="packingRefCityChoices" class="packingSourceCities" role="group" aria-label="Udaan master source city"></div>
   <label id="packingRefModeField">PACKING RATE MASTER<select id="packingRefMode"><option value="own">Own product masters</option><option value="reference">Other city product</option></select></label>
-  <label id="packingRefCityField" hidden>SOURCE CITY<select id="packingRefCity"></select></label>
-  <label id="packingRefProductField" hidden>SOURCE PRODUCT<select id="packingRefProduct"></select></label>
+  <label id="packingRefCityField" hidden>MASTER CITY<select id="packingRefCity"></select></label>
+  <label id="packingRefProductField" hidden>MASTER PRODUCT<select id="packingRefProduct"></select></label>
   <button id="packingRefOpen" class="btn light" type="button" hidden>↗ OPEN SOURCE</button>
   <button id="packingRefLock" class="masterLock" type="button" aria-pressed="false">🔓 PACKING REF LOCK</button>
   <span id="packingRefStatus" class="hint" role="status" aria-live="polite">Use another city's same packing rate as MASTER.</span>
@@ -203,6 +206,8 @@ function renderPackingReference(){
   $('packingRefLock').classList.toggle('on',locked);$('packingRefLock').setAttribute('aria-pressed',String(locked));
   $('packingRefCity').innerHTML=sourceCities.map(c=>'<option value="'+c+'"'+(packingSources(c).length?'':' disabled')+'>'+c+'</option>').join('');
   $('packingRefCity').value=sourceCity;
+  const sourceLocked=packingReferenceLocked();
+  $('packingRefCityChoices').innerHTML=sourceCities.map(c=>'<button type="button" class="packingSourceCity'+(sourceCity===c?' active':'')+'" data-packing-source-city="'+c+'" aria-pressed="'+String(sourceCity===c)+'"'+(sourceLocked||!packingSources(c).length?' disabled':'')+'>'+c.toUpperCase()+' MASTER</button>').join('');
   const source=ref?.productId&&allProducts.find(p=>p.id===ref.productId&&p.city===ref.city),choices=packingSources(sourceCity);
   $('packingRefProduct').innerHTML=(!ref?.productId||draft?'<option value="">Select product…</option>':'')+choices.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>').join('');
   if(ref?.productId&&!draft&&(!source||!choices.some(p=>p.id===ref.productId)))$('packingRefProduct').innerHTML='<option value="'+esc(ref.productId)+'">Source unavailable — select another</option>'+$('packingRefProduct').innerHTML;
@@ -239,6 +244,7 @@ $('packingRefMode').onchange=async()=>{
   packingReferenceDraft={key:key(),city:preferred.city};renderPackingReference();
 };
 $('packingRefCity').onchange=()=>{if(!packingReferenceLocked()){packingReferenceDraft={key:key(),city:$('packingRefCity').value};renderPackingReference()}};
+$('packingRefCityChoices').onclick=event=>{const button=event.target.closest?.('[data-packing-source-city]');if(!button||packingReferenceLocked())return;$('packingRefCity').value=button.dataset.packingSourceCity;$('packingRefCity').onchange()};
 $('packingRefProduct').onchange=async()=>{if(packingReferenceLocked())return;const source=packingSources($('packingRefCity').value).find(p=>p.id===$('packingRefProduct').value);if(source)await changePackingReference(state=>{state.packingRateReference={city:source.city,productId:source.id}})};
 $('packingRefLock').onclick=()=>{if(activePackingDraft()){toast('Select the source product first, or choose Own product masters.');return}return changePackingReference(state=>{state.packingRateReferenceLocked=state.packingRateReferenceLocked!==true})};
 $('packingRefOpen').onclick=async()=>{const ref=st().packingRateReference;if(!ref)return;city=ref.city;productId=ref.productId;await loadProducts()};
