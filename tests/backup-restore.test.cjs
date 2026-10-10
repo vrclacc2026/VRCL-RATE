@@ -830,6 +830,8 @@ test('Udaan Palm uses Ahmedabad same-packing rates and source saves propagate ex
   assert.match(a.document.getElementById('packingRefCity').innerHTML,/Ahmedabad/);
   assert.match(a.document.getElementById('packingRefCity').innerHTML,/Rajkot/);
   assert.doesNotMatch(a.document.getElementById('packingRefCity').innerHTML,/Udaan/);
+  assert.match(a.document.getElementById('packingRefCityChoices').innerHTML,/AHMEDABAD MASTER/);
+  assert.match(a.document.getElementById('packingRefCityChoices').innerHTML,/RAJKOT MASTER/);
   assert.match(a.document.getElementById('packingRefStatus').textContent,/Ahmedabad \/ Palm Ahmedabad same packing/);
   assert.match(a.document.getElementById('rateBody').innerHTML,/Ahmedabad \/ Palm Ahmedabad \/ 15 KG/);
   await a.document.getElementById('saveAll').onclick();
