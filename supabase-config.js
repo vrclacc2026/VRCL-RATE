@@ -18,7 +18,7 @@ try {
 if (isAdminPage) {
   await import('./product-delete-control.js?v=20260916-product-delete-v3');
   await import('./packing-delete-guard.js?v=20260916-master-delete-guard-v2');
-  await import('./udaan-rate-system.js?v=20260916-udaan-core-delete-v1');
+  await import('./udaan-rate-system.js?v=20261012-udaan-city-package-source-v1');
 
   const udaanPhotoStyle = document.createElement('style');
   udaanPhotoStyle.id = 'vrclUdaanPhotoControls';
