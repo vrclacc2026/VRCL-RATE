@@ -184,7 +184,8 @@ function isUdaanProduct(product=currentProduct()){return product?.city==='Udaan'
 function packingSources(sourceCity){
   const selected=currentProduct();
   const candidates=allProducts.filter(p=>p.city===sourceCity&&canReferencePackingRates(meta,key(),p.city+'|'+p.id,allProducts));
-  const safeCandidates=isUdaanProduct(selected)?candidates.filter(p=>productFamily(p)===productFamily(selected)):candidates;
+  const familyMatches=candidates.filter(p=>productFamily(p)===productFamily(selected));
+const safeCandidates=isUdaanProduct(selected)&&familyMatches.length?familyMatches:candidates;
   return safeCandidates.sort((a,b)=>{
     const aMatch=productFamily(a)===productFamily(selected)?0:1,bMatch=productFamily(b)===productFamily(selected)?0:1;
     return aMatch-bMatch||Number(a.sort_order||0)-Number(b.sort_order||0)||a.name.localeCompare(b.name);
