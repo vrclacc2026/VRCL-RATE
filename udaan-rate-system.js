@@ -18,7 +18,19 @@ const exclusions=state=>new Set((Array.isArray(state?.excludedPackings)?state.ex
 function toast(message){const el=$('toast');if(!el)return;el.textContent=message;el.style.display='block';clearTimeout(window.__udaanToast);window.__udaanToast=setTimeout(()=>el.style.display='none',2400)}
 function identity(v){return String(v??'').toLowerCase().replace(/\b(udaan|ahmedabad|ahd|amd|rajkot)\b/g,' ').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ')}
 function family(p){const t=((p?.code||'')+' '+(p?.name||'')).toLowerCase();return['palm','groundnut','cotton','mustard','soya','sun','corn','visvita'].find(x=>t.includes(x))||''}
-function findAhmedabadSource(target,products){const list=(products||[]).filter(p=>p.active!==false&&p.city==='Ahmedabad');return list.find(p=>identity(p.name)===identity(target.name))||list.find(p=>identity(p.code)===identity(target.code))||(()=>{const f=family(target),same=f?list.filter(p=>family(p)===f):[];return same.length===1?same[0]:null})()}
+const productKey=p=>p?p.city+'|'+p.id:'';
+const sourceKey=p=>productKey(p);
+function sourceChoices(target,products){
+  const list=(products||[]).filter(p=>p.active!==false&&['Ahmedabad','Rajkot'].includes(p.city)&&p.id!==target?.id);
+  const f=family(target),same=f?list.filter(p=>family(p)===f):[];
+  const choices=same.length?same:list;
+  return choices.sort((a,b)=>{
+    const ac=a.city==='Ahmedabad'?0:1,bc=b.city==='Ahmedabad'?0:1;
+    return ac-bc||Number(a.sort_order||0)-Number(b.sort_order||0)||a.name.localeCompare(b.name);
+  });
+}
+function findDefaultSource(target,products){const choices=sourceChoices(target,products),ahd=choices.filter(p=>p.city==='Ahmedabad');return ahd.find(p=>identity(p.name)===identity(target.name))||ahd.find(p=>identity(p.code)===identity(target.code))||ahd[0]||choices[0]||null}
+function findSource(target,products,state){const ref=state?.packingRateReference,choices=sourceChoices(target,products);return choices.find(p=>p.city===ref?.city&&p.id===ref?.productId)||findDefaultSource(target,products)}
 async function requireAdmin(){const{data:{session}}=await supabase.auth.getSession();if(!session)throw new Error('Admin session expired.');const{data:p,error}=await supabase.from('profiles').select('role,active').eq('id',session.user.id).single();if(error||!p||p.role!=='admin'||!p.active)throw new Error('Active admin login required.');return session}
 function writeLocal(value){try{localStorage.setItem(META,JSON.stringify(value.meta||{}));localStorage.setItem('VRCL_ADMIN_SYNCED_FORMULA_STATE_V1',JSON.stringify(value));localStorage.setItem('VRCL_ADMIN_STATE_UPDATED_AT',new Date().toISOString())}catch{}}
 async function saveCloud(value,session){const{data,error}=await supabase.from('admin_state').upsert({key:CLOUDKEY,value,updated_by:session.user.id,updated_at:new Date().toISOString()},{onConflict:'key'}).select('key').single();if(error)throw error;if(data?.key!==CLOUDKEY)throw new Error('Udaan settings could not be saved.');writeLocal(value)}
@@ -34,10 +46,10 @@ async function normalizeCloudState(target,source,cloudValue,sourceRates,targetRa
   const existing=clone(meta[key]||{}),rows=clone(existing.rows||{}),excluded=exclusions(existing);
   for(const rate of sourceRates||[]){if(excluded.has(norm(rate.packing)))continue;rows[rate.packing]=normalizedSetting(rows[rate.packing])}
   for(const name of Object.keys(rows)){if(excluded.has(norm(name)))delete rows[name]}
-  const state={...existing,packingRateReference:{city:'Ahmedabad',productId:source.id},packingRateReferenceLocked:existing.packingRateReferenceLocked===true,udaanEditorVersion:3,rows};
+  const state={...existing,packingRateReference:{city:source.city,productId:source.id},packingRateReferenceLocked:existing.packingRateReferenceLocked===true,udaanEditorVersion:3,rows};
   delete state.looseReference;delete state.looseReferenceLocked;
   meta[key]=state;
-  const changed=existing.udaanEditorVersion!==3||existing.packingRateReference?.city!=='Ahmedabad'||existing.packingRateReference?.productId!==source.id||!!existing.looseReference||Object.prototype.hasOwnProperty.call(existing,'looseReferenceLocked');
+  const changed=existing.udaanEditorVersion!==3||existing.packingRateReference?.city!==source.city||existing.packingRateReference?.productId!==source.id||!!existing.looseReference||Object.prototype.hasOwnProperty.call(existing,'looseReferenceLocked');
   if(!changed)return{cloudValue,meta,state};
   const next={...cloudValue,meta,captured_at:new Date().toISOString()};const session=await requireAdmin();await saveCloud(next,session);return{cloudValue:next,meta,state};
 }
@@ -47,7 +59,7 @@ function evaluateRows(ctx){
   function one(i,seen=new Set()){
     if(cache.has(i))return cache.get(i);if(seen.has(i))return{rate:0,error:'MASTER LINK CYCLE'};
     const row=rows[i];if(!row)return{rate:0,error:'Missing row'};const next=new Set(seen);next.add(i);let master;
-    if(!row.master||row.master===AHD){master=ctx.sourceMap.get(norm(row.packing));if(!Number.isFinite(master))return{rate:0,error:'Ahmedabad has no matching '+row.packing}}
+    if(!row.master||row.master===AHD){master=ctx.sourceMap.get(norm(row.packing));if(!Number.isFinite(master))return{rate:0,error:ctx.source.city+' has no matching '+row.packing}}
     else{const j=names.get(row.master);if(j===undefined)return{rate:0,error:'Master packing missing: '+row.master};const linked=one(j,next);if(linked.error)return linked;master=linked.rate}
     const subtotal=calcFormula(row.formula||'MASTER*1',master),calculated=applyExtraCost(subtotal,row.extra),rate=roundPackingValue(calculated,row.round??0),out=Number.isFinite(rate)?{rate,master}:{rate:0,error:'Invalid rate'};cache.set(i,out);return out;
   }
@@ -58,12 +70,12 @@ function installModeStyle(){
   if(document.getElementById('vrclUdaanModeStyle'))return;
   const style=document.createElement('style');style.id='vrclUdaanModeStyle';style.textContent='.vrcl-udaan-mode .masterRow,.vrcl-udaan-mode #looseRefRow{display:none!important}.vrcl-udaan-mode #packingRefRow{display:flex!important}';document.head.appendChild(style)
 }
-function applyUdaanUi(){installModeStyle();const udaan=selectedCity()==='Udaan';document.body?.classList.toggle('vrcl-udaan-mode',udaan);if(!udaan)return;const loose=$('looseRate');if(loose){loose.disabled=true;loose.title='Not used for Udaan. Packing MASTER comes from Ahmedabad reference.'}}
+function applyUdaanUi(){installModeStyle();const udaan=selectedCity()==='Udaan';document.body?.classList.toggle('vrcl-udaan-mode',udaan);if(!udaan)return;const loose=$('looseRate');if(loose){loose.disabled=true;loose.title='Not used for Udaan. Packing MASTER comes from selected Ahmedabad/Rajkot reference.'}}
 function render(){
   if(!editor||editor.key!==selectedKey()||selectedCity()!=='Udaan')return;applyUdaanUi();
   const body=$('rateBody');if(!body)return;const values=evaluateRows(editor),locked=editor.state.packingRateReferenceLocked===true;
-  body.innerHTML=editor.rows.length?editor.rows.map((r,i)=>{const v=values[i],opts=editor.rows.filter((_,j)=>j!==i).map(x=>`<option value="${esc(x.packing)}" ${r.master===x.packing?'selected':''}>${esc(x.packing)}</option>`).join('');return`<tr data-udaan-row="1"><td><input class="packingField" value="${esc(r.packing)}" disabled></td><td><select data-udaan-i="${i}" data-udaan-f="master" ${locked?'disabled':''}><option value="${AHD}" ${!r.master||r.master===AHD?'selected':''}>Ahmedabad / ${esc(editor.source.name)} / SAME PACKING</option>${opts}</select></td><td><input class="oldRateField" value="${Number(r.oldRate||0).toFixed(2)}" disabled></td><td><input data-udaan-i="${i}" data-udaan-f="formula" value="${esc(r.formula||'MASTER*1')}" ${locked?'disabled':''}></td><td><input type="text" inputmode="decimal" data-udaan-i="${i}" data-udaan-f="extra" value="${esc(r.extra)}" placeholder="0 / +5% / +2% / +15" ${locked?'disabled':''}></td><td><input type="number" data-udaan-i="${i}" data-udaan-f="round" value="${esc(r.round)}" ${locked?'disabled':''}></td><td><input class="newRate ${v?.error?'cycle':''}" data-udaan-new="${i}" value="${v?.error?'SOURCE ERROR':Number(v.rate).toFixed(2)}" disabled></td><td><button class="btn light" type="button" data-udaan-delete="${i}" ${locked?'disabled':''}>🗑️</button></td></tr>`}).join(''):'<tr><td colspan="8" class="empty">No Udaan packing selected for this product.</td></tr>';
-  const refRow=$('packingRefRow');if(refRow){refRow.hidden=false;if($('packingRefModeField'))$('packingRefModeField').hidden=true;if($('packingRefCityField'))$('packingRefCityField').hidden=true;if($('packingRefProductField'))$('packingRefProductField').hidden=true;if($('packingRefOpen'))$('packingRefOpen').hidden=true;const lock=$('packingRefLock');if(lock){lock.hidden=false;lock.disabled=saving||locking;lock.textContent=locked?'🔒 UNLOCK':'🔓 LOCK';lock.classList.toggle('on',locked);lock.setAttribute('aria-pressed',String(locked))}const status=$('packingRefStatus');if(status){status.textContent=`Reference = Ahmedabad / ${editor.source.name}. Deleted Udaan packings stay deleted. MASTER, FORMULA, EXTRA and ROUND are editable when unlocked.`;status.classList.remove('refError')}}
+  body.innerHTML=editor.rows.length?editor.rows.map((r,i)=>{const v=values[i],sameSource=!r.master||r.master===AHD,sourceOptions=editor.sourceChoices.map(source=>`<option value="SOURCE:${esc(sourceKey(source))}" ${sameSource&&sourceKey(source)===sourceKey(editor.source)?'selected':''}>${esc(source.city+' / '+source.name+' / '+(r.packing||'SAME PACKING'))}</option>`).join(''),packageOptions=editor.rows.filter((_,j)=>j!==i).map(x=>`<option value="PACKING:${esc(x.packing)}" ${r.master===x.packing?'selected':''}>${esc(x.packing)}</option>`).join('');return`<tr data-udaan-row="1"><td><input class="packingField" value="${esc(r.packing)}" disabled></td><td><select data-udaan-master="${i}" ${locked?'disabled':''}>${sourceOptions}${packageOptions}</select></td><td><input class="oldRateField" value="${Number(r.oldRate||0).toFixed(2)}" disabled></td><td><input data-udaan-i="${i}" data-udaan-f="formula" value="${esc(r.formula||'MASTER*1')}" ${locked?'disabled':''}></td><td><input type="text" inputmode="decimal" data-udaan-i="${i}" data-udaan-f="extra" value="${esc(r.extra)}" placeholder="0 / +5% / +2% / +15" ${locked?'disabled':''}></td><td><input type="number" data-udaan-i="${i}" data-udaan-f="round" value="${esc(r.round)}" ${locked?'disabled':''}></td><td><input class="newRate ${v?.error?'cycle':''}" data-udaan-new="${i}" value="${v?.error?'SOURCE ERROR':Number(v.rate).toFixed(2)}" disabled></td><td><button class="btn light" type="button" data-udaan-delete="${i}" ${locked?'disabled':''}>🗑️</button></td></tr>`}).join(''):'<tr><td colspan="8" class="empty">No Udaan packing selected for this product.</td></tr>';
+  const refRow=$('packingRefRow');if(refRow){refRow.hidden=false;if($('packingRefModeField'))$('packingRefModeField').hidden=true;if($('packingRefCityField'))$('packingRefCityField').hidden=true;if($('packingRefProductField'))$('packingRefProductField').hidden=true;if($('packingRefOpen'))$('packingRefOpen').hidden=true;const lock=$('packingRefLock');if(lock){lock.hidden=false;lock.disabled=saving||locking;lock.textContent=locked?'🔒 UNLOCK':'🔓 LOCK';lock.classList.toggle('on',locked);lock.setAttribute('aria-pressed',String(locked))}const status=$('packingRefStatus');if(status){status.textContent=`Reference = ${editor.source.city} / ${editor.source.name}. Deleted Udaan packings stay deleted. FORMULA, EXTRA and ROUND are editable when unlocked.`;status.classList.remove('refError')}}
 }
 function refresh(){if(!editor)return;const values=evaluateRows(editor);values.forEach((v,i)=>{const el=document.querySelector(`[data-udaan-new="${i}"]`);if(el){el.value=v.error?'SOURCE ERROR':Number(v.rate).toFixed(2);el.classList.toggle('cycle',!!v.error)}})}
 
@@ -72,11 +84,11 @@ async function loadUdaan(){
   busy=true;const key=selectedKey(),id=selectedId();
   try{
     const[{data:products,error:pe},{data:cloud,error:ce},{data:targetRates,error:te}]=await Promise.all([supabase.from('products').select('id,code,name,city,active,sort_order').eq('active',true).order('sort_order'),supabase.from('admin_state').select('value').eq('key',CLOUDKEY).maybeSingle(),supabase.from('rates').select('id,packing,rate,narration,sort_order').eq('city','Udaan').eq('product_id',id).order('sort_order')]);
-    if(pe||ce||te||key!==selectedKey())return;const target=(products||[]).find(p=>p.id===id&&p.city==='Udaan');if(!target)return;const source=findAhmedabadSource(target,products||[]);if(!source){editor=null;toast('Ahmedabad matching product not found for '+target.name);return}
-    const{data:sourceRates,error:se}=await supabase.from('rates').select('packing,rate,sort_order').eq('city','Ahmedabad').eq('product_id',source.id).order('sort_order');if(se||key!==selectedKey())return;
+    if(pe||ce||te||key!==selectedKey())return;const target=(products||[]).find(p=>p.id===id&&p.city==='Udaan');if(!target)return;const existing=clone(cloud?.value?.meta?.[key]||{}),source=findSource(target,products||[],existing);if(!source){editor=null;toast('Ahmedabad/Rajkot source not found for '+target.name);return}
+    const{data:sourceRates,error:se}=await supabase.from('rates').select('packing,rate,sort_order').eq('city',source.city).eq('product_id',source.id).order('sort_order');if(se||key!==selectedKey())return;
     const ensured=await normalizeCloudState(target,source,cloud?.value||{},sourceRates||[],targetRates||[]);if(key!==selectedKey())return;const state=ensured.state,excluded=exclusions(state),sourceMap=new Map((sourceRates||[]).map(r=>[norm(r.packing),Number(r.rate)])),existingByPacking=new Map((targetRates||[]).map(r=>[norm(r.packing),r]));
     const rowSource=(sourceRates||[]).filter(src=>!excluded.has(norm(src.packing))).map((src,i)=>{const current=existingByPacking.get(norm(src.packing)),setting=normalizedSetting(state.rows?.[src.packing]||{});return{id:current?.id||null,packing:src.packing,oldRate:Number(current?.rate||0),master:setting.master,formula:setting.formula,extra:setting.extra,round:setting.round,sort_order:current?.sort_order??src.sort_order??i+1}});
-    editor={key,id,target,source,products:products||[],cloudValue:ensured.cloudValue,meta:ensured.meta,state,sourceMap,rows:rowSource,narration:targetRates?.[0]?.narration||''};render();refresh();
+    editor={key,id,target,source,sourceChoices:sourceChoices(target,products||[]),products:products||[],cloudValue:ensured.cloudValue,meta:ensured.meta,state,sourceMap,rows:rowSource,targetRates:targetRates||[],narration:targetRates?.[0]?.narration||''};render();refresh();
   }catch(error){console.error('Udaan editor load failed',error);toast('Udaan setup load failed: '+(error.message||error))}
   finally{busy=false;if(reloadRequested){reloadRequested=false;schedule(0)}}
 }
@@ -84,8 +96,33 @@ function schedule(delay=300){clearTimeout(timer);timer=setTimeout(()=>void loadU
 
 async function toggleUdaanLock(){
   if(!editor||locking||saving)return;locking=true;
-  try{const session=await requireAdmin(),{data:cloud,error}=await supabase.from('admin_state').select('value').eq('key',CLOUDKEY).maybeSingle();if(error)throw error;const value=cloud?.value||{},meta=clone(value.meta||{}),state=clone(meta[editor.key]||editor.state||{});state.packingRateReference={city:'Ahmedabad',productId:editor.source.id};state.packingRateReferenceLocked=state.packingRateReferenceLocked!==true;state.udaanEditorVersion=3;delete state.looseReference;delete state.looseReferenceLocked;meta[editor.key]=state;await saveCloud({...value,meta,captured_at:new Date().toISOString()},session);editor.state=state;editor.meta=meta;render();toast(state.packingRateReferenceLocked?'🔒 UDAAN EDITING LOCKED':'🔓 UDAAN EDITING UNLOCKED')}
+  try{const session=await requireAdmin(),{data:cloud,error}=await supabase.from('admin_state').select('value').eq('key',CLOUDKEY).maybeSingle();if(error)throw error;const value=cloud?.value||{},meta=clone(value.meta||{}),state=clone(meta[editor.key]||editor.state||{});state.packingRateReference={city:editor.source.city,productId:editor.source.id};state.packingRateReferenceLocked=state.packingRateReferenceLocked!==true;state.udaanEditorVersion=3;delete state.looseReference;delete state.looseReferenceLocked;meta[editor.key]=state;await saveCloud({...value,meta,captured_at:new Date().toISOString()},session);editor.state=state;editor.meta=meta;render();toast(state.packingRateReferenceLocked?'🔒 UDAAN EDITING LOCKED':'🔓 UDAAN EDITING UNLOCKED')}
   catch(error){toast('Lock not saved: '+(error.message||error))}finally{locking=false;render()}
+}
+
+async function changeUdaanSource(value){
+  if(!editor||saving||locking||editor.state.packingRateReferenceLocked===true)return;
+  const source=editor.sourceChoices.find(p=>sourceKey(p)===value);if(!source)return;
+  try{
+    const session=await requireAdmin(),{data:cloud,error}=await supabase.from('admin_state').select('value').eq('key',CLOUDKEY).maybeSingle();if(error)throw error;
+    const{data:sourceRates,error:se}=await supabase.from('rates').select('packing,rate,sort_order').eq('city',source.city).eq('product_id',source.id).order('sort_order');if(se)throw se;
+    const valueCloud=cloud?.value||{},meta=clone(valueCloud.meta||{}),state=clone(meta[editor.key]||editor.state||{}),excluded=exclusions(state),rows=clone(state.rows||{}),existingByPacking=new Map((editor.targetRates||[]).map(r=>[norm(r.packing),r]));
+    state.packingRateReference={city:source.city,productId:source.id};state.udaanEditorVersion=3;delete state.looseReference;delete state.looseReferenceLocked;
+    for(const rate of sourceRates||[]){if(!excluded.has(norm(rate.packing)))rows[rate.packing]=normalizedSetting(rows[rate.packing])}
+    state.rows=rows;meta[editor.key]=state;const next={...valueCloud,meta,captured_at:new Date().toISOString()};await saveCloud(next,session);
+    editor.source=source;editor.cloudValue=next;editor.meta=meta;editor.state=state;editor.sourceMap=new Map((sourceRates||[]).map(r=>[norm(r.packing),Number(r.rate)]));
+    editor.rows=(sourceRates||[]).filter(src=>!excluded.has(norm(src.packing))).map((src,i)=>{const current=existingByPacking.get(norm(src.packing)),setting=normalizedSetting(state.rows?.[src.packing]||{});return{id:current?.id||null,packing:src.packing,oldRate:Number(current?.rate||0),master:setting.master,formula:setting.formula,extra:setting.extra,round:setting.round,sort_order:current?.sort_order??src.sort_order??i+1}});
+    render();refresh();toast('✅ UDAAN SOURCE SAVED: '+source.city+' / '+source.name);
+  }catch(error){toast('Udaan source not saved: '+(error.message||error));render()}
+}
+
+async function changeUdaanMaster(select){
+  if(!editor||saving||locking||editor.state.packingRateReferenceLocked===true)return;
+  const row=editor.rows[Number(select.dataset.udaanMaster)];if(!row)return;
+  const value=String(select.value||'');
+  if(value.startsWith('SOURCE:')){row.master=AHD;await changeUdaanSource(value.slice(7));return}
+  if(value.startsWith('PACKING:')){row.master=value.slice(8);refresh();return}
+  render();
 }
 
 async function deleteRow(index){
@@ -104,7 +141,7 @@ async function saveUdaan(){
   if(!editor||editor.key!==selectedKey()||saving)return;saving=true;const btn=$('saveAll');if(btn)btn.disabled=true;
   try{
     const session=await requireAdmin(),{data:cloud,error:ce}=await supabase.from('admin_state').select('value').eq('key',CLOUDKEY).maybeSingle();if(ce)throw ce;const cloudValue=cloud?.value||{},meta=clone(cloudValue.meta||{}),state=clone(meta[editor.key]||editor.state||{}),excluded=exclusions(state),activeRows=editor.rows.filter(r=>!excluded.has(norm(r.packing))),ctx={...editor,rows:activeRows},values=evaluateRows(ctx);for(const v of values)if(v.error)throw new Error(v.error);
-    state.packingRateReference={city:'Ahmedabad',productId:editor.source.id};state.packingRateReferenceLocked=editor.state.packingRateReferenceLocked===true;state.udaanEditorVersion=3;delete state.looseReference;delete state.looseReferenceLocked;state.rows={};activeRows.forEach(r=>{state.rows[r.packing]={master:r.master||AHD,formula:r.formula||'MASTER*1',extra:r.extra??0,round:r.round??0}});meta[editor.key]=state;const next={...cloudValue,meta,captured_at:new Date().toISOString()};await saveCloud(next,session);
+    state.packingRateReference={city:editor.source.city,productId:editor.source.id};state.packingRateReferenceLocked=editor.state.packingRateReferenceLocked===true;state.udaanEditorVersion=3;delete state.looseReference;delete state.looseReferenceLocked;state.rows={};activeRows.forEach(r=>{state.rows[r.packing]={master:r.master||AHD,formula:r.formula||'MASTER*1',extra:r.extra??0,round:r.round??0}});meta[editor.key]=state;const next={...cloudValue,meta,captured_at:new Date().toISOString()};await saveCloud(next,session);
     if(excluded.size){const names=[...excluded];const del=await supabase.from('rates').delete().eq('city','Udaan').eq('product_id',editor.id).in('packing',names);if(del.error)throw del.error}
     const narration=$('narration')?.value??editor.narration??'',payload=activeRows.map((r,i)=>({city:'Udaan',product_id:editor.id,packing:r.packing,rate:values[i].rate,narration,sort_order:i+1}));
     if(payload.length){const{data,error}=await supabase.from('rates').upsert(payload,{onConflict:'city,product_id,packing'}).select('city,product_id,packing');if(error)throw error;if(data?.length!==payload.length)throw new Error('Server did not confirm all Udaan rates.')}
@@ -136,6 +173,7 @@ if($('rateBody')){
   installModeStyle();
   $('rateBody').addEventListener('input',e=>{if(selectedCity()!=='Udaan'||!editor)return;const el=e.target.closest('[data-udaan-i]');if(!el)return;e.stopImmediatePropagation();if(editor.state.packingRateReferenceLocked===true)return;const row=editor.rows[+el.dataset.udaanI];if(row){row[el.dataset.udaanF]=el.value;refresh()}},true);
   $('rateBody').addEventListener('change',e=>{if(selectedCity()!=='Udaan'||!editor)return;const el=e.target.closest('[data-udaan-i]');if(!el)return;e.stopImmediatePropagation();if(editor.state.packingRateReferenceLocked===true)return;const row=editor.rows[+el.dataset.udaanI];if(row){row[el.dataset.udaanF]=el.value;refresh()}},true);
+  $('rateBody').addEventListener('change',e=>{if(selectedCity()!=='Udaan'||!editor)return;const master=e.target.closest('[data-udaan-master]');if(!master)return;e.preventDefault();e.stopImmediatePropagation();void changeUdaanMaster(master)},true);
   document.addEventListener('click',e=>{
     const save=e.target.closest('#saveAll');if(save&&selectedCity()==='Udaan'){e.preventDefault();e.stopImmediatePropagation();if(!editor||editor.key!==selectedKey()){toast('Loading selected Udaan product rates…');reloadRequested=true;schedule(0);return}void saveUdaan();return}
     if(e.target.closest('.productBtn')||e.target.closest('.city')){editor=null;reloadRequested=true;setTimeout(applyUdaanUi,0);schedule(180);return}
