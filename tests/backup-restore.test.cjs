@@ -190,6 +190,7 @@ function app({ db = fixture(), local = storage(), session = storage() } = {}) {
       selection: () => ({city,product_id:productId}),
       rows: () => JSON.parse(JSON.stringify(rows)),
       editRow(i, field, value) { sync({dataset:{i, f:field},value}); },
+      async selectPackingSource(value) { await selectPackingMasterSource(value); },
       addRow() { $('addPacking').onclick(); }
     };
   `, editor);
@@ -824,14 +825,12 @@ test('Udaan Palm uses Ahmedabad same-packing rates and source saves propagate ex
   const formulasBefore=clone(a.db.admin_state[0].value.meta[keyU].rows);
   assert.deepEqual(a.db.admin_state[0].value.meta[keyU].packingRateReference,{city:'Ahmedabad',productId:A});
   assert.deepEqual(a.db.admin_state[0].value.meta[keyU].rows,formulasBefore,'fixed +5% does not rewrite formulas, extras or round-off');
-  assert.equal(a.document.getElementById('packingRefCityField').hidden,false);
-  assert.equal(a.document.getElementById('packingRefProductField').hidden,false);
+  assert.equal(a.document.getElementById('packingRefCityField').hidden,true);
+  assert.equal(a.document.getElementById('packingRefProductField').hidden,true);
   assert.equal(a.document.getElementById('packingRefCity').value,'Ahmedabad');
   assert.match(a.document.getElementById('packingRefCity').innerHTML,/Ahmedabad/);
   assert.match(a.document.getElementById('packingRefCity').innerHTML,/Rajkot/);
   assert.doesNotMatch(a.document.getElementById('packingRefCity').innerHTML,/Udaan/);
-  assert.match(a.document.getElementById('packingRefCityChoices').innerHTML,/AHMEDABAD MASTER/);
-  assert.match(a.document.getElementById('packingRefCityChoices').innerHTML,/RAJKOT MASTER/);
   assert.match(a.document.getElementById('packingRefStatus').textContent,/Ahmedabad \/ Palm Ahmedabad same packing/);
   assert.match(a.document.getElementById('rateBody').innerHTML,/Ahmedabad \/ Palm Ahmedabad \/ 15 KG/);
   await a.document.getElementById('saveAll').onclick();
@@ -860,11 +859,9 @@ test('Udaan can switch from Ahmedabad to the matching Rajkot product without pub
   state[keyU]={looseRate:'',masterFormula:'MASTER*1',masterRound:0,packingRateReference:{city:'Ahmedabad',productId:A},packingRateReferenceLocked:false,rows:{'15 KG':{master:'AHMEDABAD SAME PACKING',formula:'MASTER*1',extra:'+5%',round:0}}};
   const a=await referenceApp(state,db);await a.editor.select('Udaan',B);
   const ratesBefore=clone(a.db.rates),formulasBefore=clone(a.db.admin_state[0].value.meta[keyU].rows);
-  a.document.getElementById('packingRefCity').value='Rajkot';
-  a.document.getElementById('packingRefCity').onchange();
-  assert.match(a.document.getElementById('packingRefProduct').innerHTML,/Palm Rajkot/);
-  a.document.getElementById('packingRefProduct').value=C;
-  await a.document.getElementById('packingRefProduct').onchange();
+  assert.match(a.document.getElementById('rateBody').innerHTML,/Ahmedabad \/ Palm Ahmedabad \/ 15 KG/);
+  assert.match(a.document.getElementById('rateBody').innerHTML,/Rajkot \/ Palm Rajkot \/ 15 KG/);
+  await a.editor.selectPackingSource('Rajkot|'+C);
   assert.deepEqual(a.db.admin_state[0].value.meta[keyU].packingRateReference,{city:'Rajkot',productId:C},a.document.getElementById('toast').textContent);
   assert.deepEqual(a.db.admin_state[0].value.meta[keyU].rows,formulasBefore);
   assert.deepEqual(a.db.rates,ratesBefore,'choosing a source must not publish rates');
