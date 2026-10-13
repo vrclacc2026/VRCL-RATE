@@ -111,3 +111,15 @@ export function roundPackingValue(value, round) {
 }
 
 export const roundLooseValue = roundPackingValue;
+
+
+// Oil shortage is calculated after extra costing and before round-off.
+// Numeric values are direct per-unit shortage cost; formulas use MASTER as loose oil rate per 10 KG.
+export function applyOilShortage(value, shortage, looseRate) {
+  const base = Number(value) || 0;
+  const expression = String(shortage ?? '').trim();
+  if (!expression) return base;
+  if (/^[+\\-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)$/.test(expression)) return base + Number(expression);
+  const calculated = calcFormula(expression, looseRate);
+  return base + (Number.isFinite(calculated) ? calculated : 0);
+}
