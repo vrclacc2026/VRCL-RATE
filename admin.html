@@ -79,7 +79,7 @@ import{SUPABASE_URL,SUPABASE_ANON_KEY}from'./supabase-config.js?v=20261012-udaan
 import{hydrateStateFromCloud,syncStateToCloud}from'./backup-manager.js?v=20260928-backup-safe-v5';
 import{resolveLooseRate,canReferenceLooseRate,looseRateDependants,calculateReferencedRates}from'./loose-rate-reference.js?v=20260912-rate-tools';
 import{packingReferenceKey,resolvePackingReference,canReferencePackingRates,packingRateDependants,calculatePackingReferencedRates}from'./packing-rate-reference.js?v=20260915-udaan-palm';
-import{calcFormula,applyExtraCost,roundPackingValue,roundLooseValue}from'./rate-calculator.js?v=20260912-rate-tools';
+import{calcFormula,applyExtraCost,applyOilShortage,roundPackingValue,roundLooseValue}from'./rate-calculator.js?v=20260912-rate-tools';
 const supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'vrcl-admin-auth'}}),$=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let city='Rajkot',products=[],allProducts=[],productId='',rows=[];let referenceSaving=false,rateSaving=false,looseReferenceDraft=null,packingReferenceDraft=null,packingSourceRates=new Map(),packingReferenceLoadError='';const META='VISHWAS_RATE_ADMIN_META_V3',LOCKKEY='VRCL_ADMIN_COLUMN_LOCKS',MASTERKEY='VRCL_MASTER_LOCK';let meta={};try{meta=JSON.parse(localStorage.getItem(META)||'{}')}catch{}
@@ -114,7 +114,8 @@ function evaluate(i,visited=new Set()){
   // packing. Keep the saved EXTRA/rounding rules, but never let an old local
   // formula change the referenced rate.
   const raw=isUdaanProduct()&&st().packingRateReference?applyExtraCost(master.value,r.extra):applyExtraCost(calcFormula(r.formula||'MASTER*1',master.value),r.extra);
-  return{rate:roundPackingValue(raw,r.round??0),cycle:false,master:master.value};
+  const shortage=applyOilShortage(raw,r.shortage,looseResolution().value);
+  return{rate:roundPackingValue(shortage,r.round??0),cycle:false,master:master.value};
 }
 function preview(){const s=st(),resolved=looseResolution();$('pvDiff').textContent=resolved.error?'SOURCE ERROR':roundLooseValue(calcFormula(s.masterFormula||'MASTER*1',resolved.value),s.masterRound||0).toFixed(2)}
 function looseResolution(){return resolveLooseRate(meta,key(),allProducts)}
@@ -350,7 +351,7 @@ window.vrclAdminBackup={captureProduct(){
     if(seen.has(packing))throw new Error('Packaging names must be unique before taking a backup.');
     seen.add(packing);
     const calculated=currentEvaluation(i);if(calculated.sourceError)throw new Error(calculated.sourceError);if(calculated.cycle)throw new Error('Fix the master link cycle before taking a backup.');
-    snapshotRows[packing]={master:r.master,formula:r.formula,extra:r.extra,round:r.round};
+    snapshotRows[packing]={master:r.master,formula:r.formula,extra:r.extra,shortage:r.shortage,round:r.round};
     return{id:r.id||crypto.randomUUID(),city,product_id:productId,packing,rate:r.id?Number(r.oldRate)||0:calculated.rate,narration:$('narration').value,sort_order:i+1,updated_at:capturedAt};
   });
   return{city,product_id:productId,rates,formula_state:{...JSON.parse(JSON.stringify(st())),rows:snapshotRows}};
@@ -423,7 +424,7 @@ $('saveAll').onclick=async()=>{
       if(!packing)continue;
       if(names.has(packing))throw new Error('Packaging names must be unique.');names.add(packing);
       if(row.originalPacking&&row.originalPacking.trim()!==packing)delete sourceState.rows[row.originalPacking];
-      sourceState.rows[packing]={master:row.master,formula:row.formula,extra:row.extra,round:row.round};
+      sourceState.rows[packing]={master:row.master,formula:row.formula,extra:row.extra,shortage:row.shortage,round:row.round};
       sourceRates.push({id:row.id||null,originalPacking:row.originalPacking||null,city:sourceProduct.city,product_id:sourceProduct.id,packing,rate:value.rate,narration:narr,sort_order:i+1});
     }
     const groupsByKey=new Map([[sourceKey,{product:sourceProduct,rates:sourceRates}]]),publishedByKey=new Map([[sourceKey,sourceRates]]);
