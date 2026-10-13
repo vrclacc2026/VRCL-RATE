@@ -1,5 +1,5 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { calcFormula, applyExtraCost, roundPackingValue, roundLooseValue } from './rate-calculator.js?v=20260915-admin-exact-fallback';
+import { calcFormula, applyExtraCost, applyOilShortage, roundPackingValue, roundLooseValue } from './rate-calculator.js?v=20260915-admin-exact-fallback';
 import { resolveLooseRate, looseRateDependants, calculateReferencedRates } from './loose-rate-reference.js?v=20260915-admin-exact-fallback';
 import { packingReferenceKey, packingRateDependants, calculatePackingReferencedRates } from './packing-rate-reference.js?v=20260915-admin-exact-fallback';
 
@@ -44,7 +44,7 @@ window.vrclFallbackBackup={
       const packing=String(r.packing||'').trim(),key=norm(packing),result=values[i];
       if(!packing||seen.has(key))throw new Error('Packaging names must be present and unique.');
       if(result?.error||result?.cycle)throw new Error(result.error||'Packing master link cycle.');
-      seen.add(key);settings[packing]={master:r.master,formula:r.formula,extra:r.extra,round:r.round};
+      seen.add(key);settings[packing]={master:r.master,formula:r.formula,extra:r.extra,shortage:r.shortage,round:r.round};
       return{id:r.id||crypto.randomUUID(),city:fallback.city,product_id:fallback.id,packing,rate:r.id?Number(r.oldRate)||0:result.rate,narration:$('narration')?.value??fallback.narration,sort_order:i+1};
     });
     return{city:fallback.city,product_id:fallback.id,rates,formula_state:{...clone(fallback.state),rows:settings}};
@@ -100,7 +100,9 @@ function evaluateRows(ctx){
     }
     const subtotal=isUdaanPalm(product)&&state.packingRateReference ? master*1.05 : calcFormula(row.formula||'MASTER*1',master);
     const calculated=isUdaanPalm(product)&&state.packingRateReference ? subtotal : applyExtraCost(subtotal,row.extra);
-    const rate=roundPackingValue(calculated,row.round??0);
+    const looseForShortage=resolveLooseRate(meta,ctx.key,products);
+    const withShortage=applyOilShortage(calculated,row.shortage,looseForShortage.error?0:looseForShortage.value);
+    const rate=roundPackingValue(withShortage,row.round??0);
     const out=Number.isFinite(rate)?{rate,master}:{rate:0,error:'Invalid calculated rate'};
     cached.set(index,out); return out;
   }
@@ -116,7 +118,7 @@ function renderFallback(){
     const sourceLabel=fallback.sourceError?'SOURCE ERROR':`${esc(fallback.sourceProduct?.city||'SOURCE')} / ${esc(fallback.sourceProduct?.name||'PRODUCT')} / ${esc(r.packing||'SAME PACKING')}`;
     const masterControl=linked?`<select class="sourceMaster" disabled><option>${sourceLabel}</option></select>`:`<select data-i="${i}" data-f="master" ${l.master?'disabled':''}><option value="LOOSE OIL RATE" ${r.master==='LOOSE OIL RATE'?'selected':''}>LOOSE OIL RATE</option>${opts}</select>`;
     const ev=values[i]||{rate:0,error:'Calculation error'},issue=ev.error||ev.cycle;
-    return `<tr data-fallback-row="1"><td><input class="packingField" data-i="${i}" data-f="packing" value="${esc(r.packing)}" ${l.packing?'disabled':''}></td><td>${masterControl}</td><td><input class="oldRateField" data-i="${i}" data-f="oldRate" value="${Number(r.oldRate||0).toFixed(2)}" ${l.old?'disabled':''}></td><td><input data-i="${i}" data-f="formula" value="${esc(r.formula)}" ${l.formula?'disabled':''}></td><td><input type="text" inputmode="decimal" data-i="${i}" data-f="extra" value="${esc(r.extra)}" ${l.extra?'disabled':''}></td><td><input type="number" data-i="${i}" data-f="round" value="${esc(r.round)}" ${l.round?'disabled':''}></td><td><input class="newRate ${issue?'cycle':''}" data-new="${i}" value="${ev.error?'SOURCE ERROR':ev.cycle?'CYCLE':Number(ev.rate).toFixed(2)}" disabled></td><td><button class="btn light" type="button" data-fb-del="${i}">🗑️</button></td></tr>`;
+    return `<tr data-fallback-row="1"><td><input class="packingField" data-i="${i}" data-f="packing" value="${esc(r.packing)}" ${l.packing?'disabled':''}></td><td>${masterControl}</td><td><input class="oldRateField" data-i="${i}" data-f="oldRate" value="${Number(r.oldRate||0).toFixed(2)}" ${l.old?'disabled':''}></td><td><input data-i="${i}" data-f="formula" value="${esc(r.formula)}" ${l.formula?'disabled':''}></td><td><input type="text" inputmode="decimal" data-i="${i}" data-f="extra" value="${esc(r.extra)}" ${l.extra?'disabled':''}></td><td><input type="text" inputmode="decimal" data-i="${i}" data-f="shortage" value="${esc(r.shortage)}" ${l.extra?'disabled':''} placeholder="5.04 or MASTER/10*60/25000*15" title="Oil shortage cost; MASTER = loose rate per 10 KG"></td><td><input type="number" data-i="${i}" data-f="round" value="${esc(r.round)}" ${l.round?'disabled':''}></td><td><input class="newRate ${issue?'cycle':''}" data-new="${i}" value="${ev.error?'SOURCE ERROR':ev.cycle?'CYCLE':Number(ev.rate).toFixed(2)}" disabled></td><td><button class="btn light" type="button" data-fb-del="${i}">🗑️</button></td></tr>`;
   }).join(''):'<tr><td colspan="8" class="empty">No packing yet. Click ADD PACKING.</td></tr>';
 }
 
@@ -147,7 +149,7 @@ async function activateFallback(force=false){
     const product=(products||[]).find(p=>p.id===id&&p.city===city); if(!product)return;
     const cloudValue=cloud?.value||{},meta=clone(cloudValue.meta||{}),state=clone(meta[key]||{looseRate:'',masterFormula:'MASTER*1',masterRound:0,rows:{}});
     state.rows=state.rows&&typeof state.rows==='object'?state.rows:{};
-    const rows=(rates||[]).map((r,i)=>{const m=state.rows[r.packing]||{};return{id:r.id,packing:r.packing,oldRate:Number(r.rate)||0,master:m.master||'LOOSE OIL RATE',formula:m.formula||'MASTER*1',extra:m.extra??0,round:m.round??0,sort_order:r.sort_order??i};});
+    const rows=(rates||[]).map((r,i)=>{const m=state.rows[r.packing]||{};return{id:r.id,packing:r.packing,oldRate:Number(r.rate)||0,master:m.master||'LOOSE OIL RATE',formula:m.formula||'MASTER*1',extra:m.extra??0,shortage:m.shortage??0,round:m.round??0,sort_order:r.sort_order??i};});
     const source=await loadSourceMap(state,products||[]); if(key!==selectedKey())return;
     const sourceProduct=state.packingRateReference?(products||[]).find(p=>p.id===state.packingRateReference.productId&&p.city===state.packingRateReference.city):null;
     fallback={key,city,id,product,products:products||[],cloudValue,meta,state,rows,sourceMap:source.map,sourceError:source.error,sourceProduct,narration:rates[0]?.narration||''};
@@ -195,7 +197,7 @@ async function saveFallback(){
     for(const row of fallback.rows){
       const packing=String(row.packing||'').trim();if(!packing)throw new Error('Enter a name for every packaging row.');
       const key=norm(packing);if(names.has(key))throw new Error('Packaging names must be unique.');names.add(key);row.packing=packing;
-      state.rows[packing]={master:row.master||'LOOSE OIL RATE',formula:row.formula||'MASTER*1',extra:row.extra??0,round:row.round??0};
+      state.rows[packing]={master:row.master||'LOOSE OIL RATE',formula:row.formula||'MASTER*1',extra:row.extra??0,shortage:row.shortage??0,round:row.round??0};
     }
     meta[sourceKey]=state;
     const {data:products,error:pe}=await supabase.from('products').select('id,code,name,sort_order,city,active').eq('active',true).order('sort_order');if(pe)throw pe;
@@ -248,7 +250,7 @@ function installFallbackEvents(){
     if(e.target.closest('.productBtn')||e.target.closest('.city')){fallback=null;return}
     if(!fallbackActive())return;
     const del=e.target.closest('[data-fb-del]');if(del){e.preventDefault();e.stopImmediatePropagation();void deleteFallbackRow(+del.dataset.fbDel);return}
-    if(e.target.closest('#addPacking')){e.preventDefault();e.stopImmediatePropagation();fallback.rows.push({id:null,packing:'',oldRate:0,master:'LOOSE OIL RATE',formula:'MASTER*1',extra:0,round:0,sort_order:fallback.rows.length+1});renderFallback();return}
+    if(e.target.closest('#addPacking')){e.preventDefault();e.stopImmediatePropagation();fallback.rows.push({id:null,packing:'',oldRate:0,master:'LOOSE OIL RATE',formula:'MASTER*1',extra:0,shortage:0,round:0,sort_order:fallback.rows.length+1});renderFallback();return}
     if(e.target.closest('#saveAll')){e.preventDefault();e.stopImmediatePropagation();void saveFallback();}
   },true);
 }
