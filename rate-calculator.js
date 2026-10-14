@@ -1,7 +1,7 @@
 const NUMBER = /^(?:\d+(?:\.\d*)?|\.\d+)/;
 
 function parseExpression(source, master) {
-  const input = String(source ?? '').trim().toUpperCase().replace(/MASTER\s*RATE/g, 'MASTER');
+  const input = String(source ?? '').trim().replace(/^=\s*/, '').toUpperCase().replace(/MASTER\s*RATE/g, 'MASTER');
   if (!input || input.length > 240) return null;
   let index = 0;
   const skip = () => { while (/\s/.test(input[index] || '')) index += 1; };
