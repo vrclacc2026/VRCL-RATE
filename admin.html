@@ -458,7 +458,7 @@ $('saveAll').onclick=async()=>{
     if(missingSaved.length){
       const {data:live,error:liveError}=await supabase.from('admin_state').select('value').eq('key','admin_formula_state_v1').single();
       if(liveError)throw liveError;
-      if(missingSaved.some(row=>typeof live?.value?.meta?.[sourceKey]?.rows?.[settingsName(row)]?.formula==='string'))throw new Error('Original formulas are available in the cloud now. Reload this page instead of replacing them.');
+      if(missingSaved.some(row=>String(live?.value?.meta?.[sourceKey]?.rows?.[settingsName(row)]?.formula||'').trim()))throw new Error('Original formulas are available in the cloud now. Reload this page instead of replacing them.');
       const preview=rows.filter(row=>row.id&&Number(row.oldRate||0)!==Number(sourceRates.find(rate=>rate.packing===row.packing)?.rate||0)).map(row=>row.packing+': '+Number(row.oldRate||0).toFixed(2)+' → '+Number(sourceRates.find(rate=>rate.packing===row.packing)?.rate||0).toFixed(2)).join('\n')||'No rate difference in this product.';
       if(!confirm(sourceProduct.city+' / '+sourceProduct.name+': the original formulas were missing. Save your manually entered formulas and publish recalculated rates?\n'+preview+'\nThis may also update '+linked.length+' linked products. Cancel to keep all rates unchanged.'))throw new Error('Formula re-entry cancelled. No rates were changed.');
     }
