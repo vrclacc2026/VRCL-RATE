@@ -61,5 +61,5 @@ test('revoked access clears old rates while a temporary connection issue does no
 test('customer refreshes immediately when a background tab becomes visible or focused',async()=>{
   const a=await app();assert.equal(a.state.reads,1);a.state.rate=1680;a.document.hidden=false;a.documentHandlers.visibilitychange();await settle();
   assert.equal(a.state.reads,2);assert.match(a.document.getElementById('grid').innerHTML,/1,680.00/);
-  a.state.rate=1725;a.windowHandlers.focus();await settle();assert.equal(a.state.reads,3);assert.match(a.document.getElementById('grid').innerHTML,/1,725.00/);
+  a.advance(1100);a.state.rate=1725;a.windowHandlers.focus();await settle();assert.equal(a.state.reads,3);assert.match(a.document.getElementById('grid').innerHTML,/1,725.00/);
 });
