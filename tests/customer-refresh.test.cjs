@@ -25,8 +25,7 @@ async function app(){
   class Clock extends Date{static now(){return now}}
   const timeouts=[];
   const context=vm.createContext({document,window:{addEventListener(name,fn){windowHandlers[name]=fn}},Date:Clock,console:{error(){},warn(){}},location:{origin:'http://localhost',reload(){throw Error('Unexpected page reload')}},createClient:()=>supabase,SUPABASE_URL:'test',SUPABASE_ANON_KEY:'test',setInterval(fn,ms){intervals.push({fn,ms})},setTimeout(fn){timeouts.push(fn);return timeouts.length},clearTimeout(){},innerWidth:1400,innerHeight:900});
-  const source=fs.readFileSync(path.join(__dirname,'../customer.js'),'utf8').replace(/^import.*
-/gm,'');
+  const source=fs.readFileSync(path.join(__dirname,'../customer.js'),'utf8').replace(/^import.*\n/gm,'');
   await vm.runInContext('(async()=>{'+source+';this.api={refreshRates,refreshClock};})()',context);
   return {state,document,api:context.api,advance(ms){now+=ms},intervals,windowHandlers,documentHandlers,flushTimeouts(){for(const fn of timeouts.splice(0))fn()}};
 }
