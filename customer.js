@@ -98,6 +98,8 @@ async function selectCity(next){
   finally{refreshBusy=false}
 }
 function refreshClock(){if(profile&&Date.now()>=nextRefreshAt)refreshRates({permissions:true})}
+let lastForegroundRefreshAt=0;
+function refreshOnReturn(){if(!profile||document.hidden||Date.now()-lastForegroundRefreshAt<1000)return;lastForegroundRefreshAt=Date.now();void refreshRates({permissions:true})}
 async function check(){
   const{data:{session}}=await supabase.auth.getSession();if(!session)return false;
   const{data:userProfile,error}=await supabase.from('profiles').select('id,display_name,login_id,role,city,allowed_cities,active').eq('id',session.user.id).single();
@@ -108,7 +110,7 @@ async function check(){
 $('loginBtn').onclick=async()=>{$('loginMsg').textContent='';const uid=$('uid').value.trim().toLowerCase();if(!uid||!$('pass').value){$('loginMsg').textContent='User ID and password required.';return}const{error}=await supabase.auth.signInWithPassword({email:uid+'@users.vrcl.in',password:$('pass').value});if(error){$('loginMsg').textContent='Invalid user ID or password.';return}if(!await check())$('loginMsg').textContent='Access denied.'};
 $('pass').addEventListener('keydown',event=>{if(event.key==='Enter')$('loginBtn').click()});
 $('power').onclick=async()=>{await supabase.auth.signOut({scope:'local'});location.reload()};
-try{await check()}catch(error){$('loginMsg').textContent='Could not load rates. Please check your connection and try again.';nextRefreshAt=Date.now()+60000}refreshClock();setInterval(refreshClock,1000);setInterval(beat,60000);window.addEventListener('focus',()=>{beat();if(profile&&Date.now()>=nextRefreshAt)refreshRates({permissions:true})});
+try{await check()}catch(error){$('loginMsg').textContent='Could not load rates. Please check your connection and try again.';nextRefreshAt=Date.now()+60000}refreshClock();setInterval(refreshClock,1000);setInterval(beat,60000);window.addEventListener('focus',()=>{beat();refreshOnReturn()});
 
 window.addEventListener('online',()=>{if(profile)refreshRates({permissions:true})});
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshClock()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshClock();refreshOnReturn()}});
