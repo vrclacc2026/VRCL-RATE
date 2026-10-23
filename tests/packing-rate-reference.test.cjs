@@ -23,7 +23,7 @@ const products = [
   { id:C, city:'Rajkot', code:'palm', name:'Palm Rajkot', active:true }
 ];
 
-test('Udaan uses Ahmedabad same-packing rate as MASTER and applies only editable EXTRA COSTING', () => {
+test('Udaan linked recalculation applies the saved formula and EXTRA COSTING', () => {
   const meta = {
     [keyA]: { rows:{} },
     [keyB]: { packingRateReference:{city:'Ahmedabad',productId:A}, rows:{
@@ -43,22 +43,22 @@ test('Udaan uses Ahmedabad same-packing rate as MASTER and applies only editable
     { city:'Ahmedabad', product_id:A, packing:'1 L', rate:100 }
   ];
   const result = reference.calculatePackingReferencedRates({meta,product:products[1],rates,sourceRates,...calculator});
-  assert.deepEqual(JSON.parse(JSON.stringify(result.map(r=>r.rate))),[1000,525,102]);
+  assert.deepEqual(JSON.parse(JSON.stringify(result.map(r=>r.rate))),[9000,3675,408]);
   assert.equal(result[0].narration,'Udaan terms');
 });
 
-test('the Udaan rule applies to non-Palm products too', () => {
+test('Udaan linked recalculation honors formula for non-Palm products too', () => {
   const product={ id:B, city:'Udaan', code:'g-n-udaan', name:'GROUNDNUT OIL', active:true };
   const meta={[keyB]:{packingRateReference:{city:'Ahmedabad',productId:A},rows:{'15 KG':{formula:'MASTER*99',extra:'+5%',round:0}}}};
   const result=reference.calculatePackingReferencedRates({meta,product,rates:[{city:'Udaan',product_id:B,packing:'15 KG',rate:0}],sourceRates:[{packing:'15 KG',rate:2000}],...calculator});
-  assert.equal(result[0].rate,2100);
+  assert.equal(result[0].rate,2173.5);
 });
 
 test('Rajkot can be the Udaan source without rewriting saved formula settings', () => {
   const meta={[keyB]:{packingRateReference:{city:'Rajkot',productId:C},rows:{'15 KG':{master:'AHMEDABAD SAME PACKING',formula:'MASTER*99',extra:'+5%',round:0}}}};
   const before=JSON.parse(JSON.stringify(meta));
   const result=reference.calculatePackingReferencedRates({meta,product:products[1],rates:[{city:'Udaan',product_id:B,packing:'15 KG',rate:0}],sourceRates:[{city:'Rajkot',product_id:C,packing:'15 KG',rate:2000}],...calculator});
-  assert.equal(result[0].rate,2100);
+  assert.equal(result[0].rate,2173.5);
   assert.deepEqual(JSON.parse(JSON.stringify(meta)),before);
 });
 
@@ -77,4 +77,17 @@ test('missing same-packing source rate fails instead of publishing zero', () => 
   assert.throws(()=>reference.calculatePackingReferencedRates({
     meta,product:products[1],rates:[{city:'Udaan',product_id:B,packing:'15 KG',rate:0}],sourceRates:[{packing:'5 L',rate:500}],...calculator
   }),/source has no matching rate for 15 KG/);
+});
+
+test('Udaan Rajkot source uses the same Formula plus Extra calculation as its admin preview', () => {
+  const meta={[keyB]:{packingRateReference:{city:'Rajkot',productId:C},rows:{
+    '15 KG NEW TIN':{master:'AHMEDABAD SAME PACKING',formula:'+3.5%',extra:'+5%',round:0}
+  }}};
+  const result=reference.calculatePackingReferencedRates({
+    meta,product:products[1],
+    rates:[{city:'Udaan',product_id:B,packing:'15 KG NEW TIN',rate:2394,narration:'Terms',sort_order:1}],
+    sourceRates:[{city:'Rajkot',product_id:C,packing:'15 KG NEW TIN',rate:2280,sort_order:1}],
+    ...calculator
+  });
+  assert.equal(result[0].rate,2477.79);
 });
