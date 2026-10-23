@@ -8,7 +8,7 @@ async function app(){
   function node(){const classes=new Set();return {innerHTML:'',textContent:'',value:'',dataset:{},style:{setProperty(){}},classList:{add:x=>classes.add(x),remove:x=>classes.delete(x),contains:x=>classes.has(x),toggle(x,on){on?classes.add(x):classes.delete(x)}},addEventListener(){},getBoundingClientRect(){return {left:0,top:0,width:400,height:400}}}}
   const windowHandlers={},documentHandlers={};
   const document={getElementById(id){if(!nodes.has(id))nodes.set(id,node());return nodes.get(id)},querySelector:()=>node(),querySelectorAll:()=>[],addEventListener(name,fn){documentHandlers[name]=fn},body:node(),hidden:false};
-  const state={rate:1500,reads:0,signouts:0,sessionReads:0,fail:false,rateHandler:null,profile:{id:'customer',role:'wholesaler',active:true,display_name:'Test Customer',city:'Rajkot',allowed_cities:['Rajkot','Ahmedabad']}};
+  const state={rate:1500,reads:0,rateReads:0,deferRates:false,pendingRateReads:[],signouts:0,sessionReads:0,fail:false,rateHandler:null,profile:{id:'customer',role:'wholesaler',active:true,display_name:'Test Customer',city:'Rajkot',allowed_cities:['Rajkot','Ahmedabad']}};
   class Query{
     constructor(table){this.table=table}
     select(){return this}eq(){return this}order(){return this}upsert(){return this}single(){return this}
@@ -17,7 +17,7 @@ async function app(){
       if(state.fail&&this.table==='profiles')result={data:null,error:{message:'Network unavailable'}};
       else if(this.table==='profiles')result.data=structuredClone(state.profile);
       else if(this.table==='products'){state.reads++;result.data=[{id:'palm',code:'palm',name:'Palm',city:'Rajkot'}]}
-      else if(this.table==='rates')result.data=[{product_id:'palm',packing:'15 KG',rate:state.rate,updated_at:'2026-09-14T10:00:00Z'}];
+      else if(this.table==='rates'){state.rateReads++;result.data=[{product_id:'palm',packing:'15 KG',rate:state.rate,updated_at:'2026-09-14T10:00:00Z'}];if(state.deferRates)return new Promise(done=>state.pendingRateReads.push(()=>done(result))).then(resolve,reject)}
       return Promise.resolve(result).then(resolve,reject);
     }
   }
@@ -62,4 +62,12 @@ test('customer refreshes immediately when a background tab becomes visible or fo
   const a=await app();assert.equal(a.state.reads,1);a.state.rate=1680;a.document.hidden=false;a.documentHandlers.visibilitychange();await settle();
   assert.equal(a.state.reads,2);assert.match(a.document.getElementById('grid').innerHTML,/1,680.00/);
   a.advance(1100);a.state.rate=1725;a.windowHandlers.focus();await settle();assert.equal(a.state.reads,3);assert.match(a.document.getElementById('grid').innerHTML,/1,725.00/);
+});
+
+test('rate-change refresh arriving during a busy load is queued and applied afterward',async()=>{
+  const a=await app();a.state.deferRates=true;a.state.rate=1600;
+  const first=a.api.refreshRates();await settle();assert.equal(a.state.rateReads,2);
+  a.state.rate=1650;await a.api.refreshRates();a.state.deferRates=false;
+  a.state.pendingRateReads.shift()();await first;a.flushTimeouts();await settle();
+  assert.equal(a.state.reads,3);assert.match(a.document.getElementById('grid').innerHTML,/1,650.00/);
 });
