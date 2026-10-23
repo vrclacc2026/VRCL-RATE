@@ -1,21 +1,30 @@
-# VRCL-RATE
+# VRCL Rate Portal
 
-Daily rate website for Vishwas Refoils & Consumer Limited.
+Daily wholesale rate portal for Vishwas Refoils & Consumer Limited.
 
-## Live daily-rate flow
+## Pages
 
-- `admin.html` — existing rate editor and formula setup.
-- `admin-live.html` — opens the existing admin and adds **LOAD ONLINE** / **PUBLISH ONLINE** controls.
-- `rates.json` — shared published rate data.
-- `live.html` — customer page that reads `rates.json` and checks for updates every 60 seconds.
+- `index.html` — customer rate portal.
+- `admin.html` — authorized rate, formula, and packaging editor.
+- `users.html` — customer account and city access management.
+- `dashboard.html` — admin activity, backup, and system checks.
+- `customer-check.html` — admin-only view for reviewing customer rate cards.
 
-## Daily use
+## Rate publishing
 
-1. Open `admin-live.html`.
-2. Use **LOAD ONLINE** when working from another PC/device.
-3. Edit rates in the admin panel and click **SAVE ALL**.
-4. Enter a GitHub fine-grained token with repository **Contents: Read and write** permission.
-5. Click **PUBLISH ONLINE**.
-6. Customers opening `live.html` receive the latest published rates.
+1. Open `admin.html`, sign in, and select the city and product.
+2. Edit the intended rates or formula settings, then review the calculated rates.
+3. Select **SAVE ALL** and wait for the success message. If saving fails, the editor shows the error and keeps the published rates unchanged.
+4. Customer sessions receive rate changes through Supabase Realtime. The customer page also checks for updates every three minutes as a fallback.
 
-The GitHub token is stored only in browser `sessionStorage`, not in repository code or `localStorage`.
+Rajkot and Ahmedabad have their own rates. Udaan uses its selected city/product source and configured formulas. Review the source and formula fields before saving linked products.
+
+## Development checks
+
+Run the repository tests with:
+
+```bash
+NODE_OPTIONS=--experimental-vm-modules node --test tests/*.cjs
+```
+
+Supabase schema and migration files are under `supabase/`. Never put a service-role key or database password in browser code.
