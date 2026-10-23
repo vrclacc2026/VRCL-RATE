@@ -3,7 +3,7 @@ import{SUPABASE_URL,SUPABASE_ANON_KEY}from'./supabase-config.js?v=20260912-rate-
 const supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'vrcl-customer-auth'}}),$=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const CITIES=['Rajkot','Ahmedabad','Udaan'];
 const REFRESH_INTERVAL=180000;
-let profile=null,currentCity='',refreshBusy=false,nextRefreshAt=Date.now()+REFRESH_INTERVAL,ratesChannel=null,realtimeRefreshTimer=null;
+let profile=null,currentCity='',refreshBusy=false,refreshQueued=false,refreshQueuedPermissions=false,nextRefreshAt=Date.now()+REFRESH_INTERVAL,ratesChannel=null,realtimeRefreshTimer=null;
 const colors={palm:'#6d43c1',visvita:'#b71c1c',sunflower:'#dc8a00',groundnut:'#ef6c00',cotton:'#1167c7',mustard:'#0b6b43',soya:'#d32f2f'};
 
 try{if(window.parent!==window)window.parent.postMessage({type:'vrcl-runtime',page:'customer',ok:true,ts:Date.now()},location.origin)}catch{}
@@ -82,20 +82,22 @@ async function refreshProfile(){
   if(!permittedCities(data).length){const denied=new Error('No city permission is available.');denied.permissionDenied=true;throw denied;}
   profile=data;renderCityChooser();updateCustomerIdentity();
 }
+function runQueuedRefresh(){if(refreshBusy||!refreshQueued||!profile)return;const permissions=refreshQueuedPermissions;refreshQueued=false;refreshQueuedPermissions=false;setTimeout(()=>void refreshRates({permissions}),0)}
 async function refreshRates({permissions=false}={}){
-  if(!profile||refreshBusy)return;
+  if(!profile||!currentCity)return;
+  if(refreshBusy){refreshQueued=true;refreshQueuedPermissions=refreshQueuedPermissions||permissions;return}
   refreshBusy=true;
   try{if(permissions)await refreshProfile();await load();await beat();nextRefreshAt=Date.now()+REFRESH_INTERVAL}
   catch(error){console.error('Rate refresh failed',error);$('grid').classList.remove('citySwitching');if(error.permissionDenied)$('grid').innerHTML='<div class="noRates">City access is no longer active. Please contact your administrator.</div>';
     $('live').classList.add('stale');$('refreshStatus').classList.add('error');$('refreshStatus').textContent=error.permissionDenied?'City access needs administrator attention.':'Refresh delayed · Last loaded rates shown. Retrying in 1 minute.';nextRefreshAt=Date.now()+60000}
-  finally{refreshBusy=false}
+  finally{refreshBusy=false;runQueuedRefresh()}
 }
 async function selectCity(next){
   if(refreshBusy||next===currentCity||!permittedCities(profile).includes(next))return;
   const previous=currentCity;currentCity=next;renderCityChooser();updateCustomerIdentity();refreshBusy=true;
   try{await load();await beat();nextRefreshAt=Date.now()+REFRESH_INTERVAL}
   catch(error){console.error('City switch failed',error);currentCity=previous;renderCityChooser();updateCustomerIdentity();$('grid').classList.remove('citySwitching')}
-  finally{refreshBusy=false}
+  finally{refreshBusy=false;runQueuedRefresh()}
 }
 function refreshClock(){if(profile&&Date.now()>=nextRefreshAt)refreshRates({permissions:true})}
 let lastForegroundRefreshAt=0;
