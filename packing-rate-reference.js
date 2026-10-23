@@ -104,11 +104,11 @@ export function calculatePackingReferencedRates({ meta, product, rates, sourceRa
     const chain = new Set(seen); chain.add(index);
     let master,formula;
     const masterName = setting.master;
-    if (udaan) {
+    const usesSamePackingSource = udaan && (!masterName || masterName === 'AHMEDABAD SAME PACKING');
+    if (usesSamePackingSource) {
       const key = packingKey(row.packing);
       if (!sourceByPacking.has(key)) throw new Error(product.name + ': source has no matching rate for ' + row.packing);
       master = sourceByPacking.get(key);
-      formula = 'MASTER*1';
     } else if (masterName && masterName !== 'LOOSE OIL RATE') {
       if (!names.has(masterName)) throw new Error(product.name + ': packing master is missing for ' + row.packing);
       master = evaluate(names.get(masterName), chain);
@@ -117,7 +117,7 @@ export function calculatePackingReferencedRates({ meta, product, rates, sourceRa
       if (!sourceByPacking.has(key)) throw new Error(product.name + ': source has no matching rate for ' + row.packing);
       master = sourceByPacking.get(key);
     }
-    formula ??= typeof setting.formula === 'string' ? setting.formula : 'MASTER*1';
+    formula = typeof setting.formula === 'string' ? setting.formula : 'MASTER*1';
     if (!udaan && typeof setting.formula !== 'string') throw new Error(product.name + ': saved formula missing for ' + row.packing);
     const subtotal = calcFormula(formula || 'MASTER*1', master);
     const calculated = applyExtraCost ? applyExtraCost(subtotal, setting.extra) : subtotal + Number(setting.extra || 0);
