@@ -49,13 +49,13 @@ test('Udaan linked recalculation applies the saved formula and EXTRA COSTING', (
 
 test('Udaan linked recalculation honors formula for non-Palm products too', () => {
   const product={ id:B, city:'Udaan', code:'g-n-udaan', name:'GROUNDNUT OIL', active:true };
-  const meta={[keyB]:{packingRateReference:{city:'Ahmedabad',productId:A},rows:{'15 KG':{formula:'MASTER*99',extra:'+5%',round:0}}}};
+  const meta={[keyB]:{packingRateReference:{city:'Ahmedabad',productId:A},rows:{'15 KG':{formula:'+3.5%',extra:'+5%',round:0}}}};
   const result=reference.calculatePackingReferencedRates({meta,product,rates:[{city:'Udaan',product_id:B,packing:'15 KG',rate:0}],sourceRates:[{packing:'15 KG',rate:2000}],...calculator});
   assert.equal(result[0].rate,2173.5);
 });
 
 test('Rajkot can be the Udaan source without rewriting saved formula settings', () => {
-  const meta={[keyB]:{packingRateReference:{city:'Rajkot',productId:C},rows:{'15 KG':{master:'AHMEDABAD SAME PACKING',formula:'MASTER*99',extra:'+5%',round:0}}}};
+  const meta={[keyB]:{packingRateReference:{city:'Rajkot',productId:C},rows:{'15 KG':{master:'AHMEDABAD SAME PACKING',formula:'+3.5%',extra:'+5%',round:0}}}};
   const before=JSON.parse(JSON.stringify(meta));
   const result=reference.calculatePackingReferencedRates({meta,product:products[1],rates:[{city:'Udaan',product_id:B,packing:'15 KG',rate:0}],sourceRates:[{city:'Rajkot',product_id:C,packing:'15 KG',rate:2000}],...calculator});
   assert.equal(result[0].rate,2173.5);
