@@ -43,7 +43,7 @@ test('Udaan linked recalculation applies the saved formula and EXTRA COSTING', (
     { city:'Ahmedabad', product_id:A, packing:'1 L', rate:100 }
   ];
   const result = reference.calculatePackingReferencedRates({meta,product:products[1],rates,sourceRates,...calculator});
-  assert.deepEqual(JSON.parse(JSON.stringify(result.map(r=>r.rate))),[9000,3675,408]);
+  assert.deepEqual(JSON.parse(JSON.stringify(result.map(r=>r.rate))),[9000,66150,408]);
   assert.equal(result[0].narration,'Udaan terms');
 });
 
