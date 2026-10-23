@@ -22,10 +22,10 @@ test('admin packing preview evaluates in strict browser module mode', () => {
   const admin=read('admin.html');
   const source=admin.slice(admin.indexOf('function evaluate('),admin.indexOf('function preview()'));
   const context=vm.createContext({
-    rows:[{master:'LOOSE OIL RATE',formula:'MASTER*1.5',extra:123.224,round:1}],
-    masterValue:()=>({value:1407,error:null}),st:()=>({}),findPacking:()=>-1,
+    rows:[{master:'LOOSE OIL RATE',formula:'MASTER*1.5',extra:123.224,shortage:0,round:1}],
+    masterValue:()=>({value:1407,error:null}),st:()=>({}),findPacking:()=>-1,looseResolution:()=>({value:0}),
     isUdaanProduct:()=>false,calcFormula:(_formula,master)=>master*1.5,
-    applyExtraCost:(value,extra)=>value+extra,roundPackingValue:value=>Math.round(value)
+    applyExtraCost:(value,extra)=>value+extra,applyOilShortage:value=>value,roundPackingValue:value=>Math.round(value)
   });
   vm.runInContext('"use strict";'+source+'\nthis.previewRate=evaluate(0).rate;',context);
   assert.equal(context.previewRate,2234);
@@ -33,7 +33,7 @@ test('admin packing preview evaluates in strict browser module mode', () => {
 
 test('admin exposes percentage and operator costing without changing stored field names', () => {
   const admin = read('admin.html');
-  assert.match(admin, /import\{calcFormula,applyExtraCost,roundPackingValue,roundLooseValue\}/);
+  assert.match(admin, /import\{calcFormula,applyExtraCost,applyOilShortage,roundPackingValue,roundLooseValue\}/);
   assert.match(admin, /data-f="formula"[^>]+\+5%/);
   assert.match(admin, /type="text" inputmode="decimal" data-i="\$\{i\}" data-f="extra"/);
   assert.match(admin, /class="packingField"/);

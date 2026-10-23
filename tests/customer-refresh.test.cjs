@@ -7,7 +7,7 @@ async function app(){
   let now=Date.now();const nodes=new Map(),intervals=[];
   function node(){const classes=new Set();return {innerHTML:'',textContent:'',value:'',dataset:{},style:{setProperty(){}},classList:{add:x=>classes.add(x),remove:x=>classes.delete(x),contains:x=>classes.has(x),toggle(x,on){on?classes.add(x):classes.delete(x)}},addEventListener(){},getBoundingClientRect(){return {left:0,top:0,width:400,height:400}}}}
   const document={getElementById(id){if(!nodes.has(id))nodes.set(id,node());return nodes.get(id)},querySelector:()=>node(),querySelectorAll:()=>[],addEventListener(){},body:node(),hidden:false};
-  const state={rate:1500,reads:0,signouts:0,sessionReads:0,fail:false,profile:{id:'customer',role:'wholesaler',active:true,display_name:'Test Customer',city:'Rajkot',allowed_cities:['Rajkot','Ahmedabad']}};
+  const state={rate:1500,reads:0,signouts:0,sessionReads:0,fail:false,rateHandler:null,profile:{id:'customer',role:'wholesaler',active:true,display_name:'Test Customer',city:'Rajkot',allowed_cities:['Rajkot','Ahmedabad']}};
   class Query{
     constructor(table){this.table=table}
     select(){return this}eq(){return this}order(){return this}upsert(){return this}single(){return this}
@@ -20,12 +20,13 @@ async function app(){
       return Promise.resolve(result).then(resolve,reject);
     }
   }
-  const supabase={auth:{async getSession(){state.sessionReads++;return {data:{session:{user:{id:'customer'}}}}},async signOut(){state.signouts++}},from:table=>new Query(table)};
+  const supabase={auth:{async getSession(){state.sessionReads++;return {data:{session:{user:{id:'customer'}}}}},async signOut(){state.signouts++}},from:table=>new Query(table),channel(){return{on(_type,_filter,handler){state.rateHandler=handler;return this},subscribe(){return this}}}};
   class Clock extends Date{static now(){return now}}
-  const context=vm.createContext({document,window:{addEventListener(){}},Date:Clock,console:{error(){}},location:{origin:'http://localhost',reload(){throw Error('Unexpected page reload')}},createClient:()=>supabase,SUPABASE_URL:'test',SUPABASE_ANON_KEY:'test',setInterval(fn,ms){intervals.push({fn,ms})},setTimeout(){},innerWidth:1400,innerHeight:900});
+  const timeouts=[];
+  const context=vm.createContext({document,window:{addEventListener(){}},Date:Clock,console:{error(){},warn(){}},location:{origin:'http://localhost',reload(){throw Error('Unexpected page reload')}},createClient:()=>supabase,SUPABASE_URL:'test',SUPABASE_ANON_KEY:'test',setInterval(fn,ms){intervals.push({fn,ms})},setTimeout(fn){timeouts.push(fn);return timeouts.length},clearTimeout(){},innerWidth:1400,innerHeight:900});
   const source=fs.readFileSync(path.join(__dirname,'../customer.js'),'utf8').replace(/^import.*\n/gm,'');
   await vm.runInContext('(async()=>{'+source+';this.api={refreshRates,refreshClock};})()',context);
-  return {state,document,api:context.api,advance(ms){now+=ms},intervals};
+  return {state,document,api:context.api,advance(ms){now+=ms},intervals,flushTimeouts(){for(const fn of timeouts.splice(0))fn()}};
 }
 const settle=()=>new Promise(resolve=>setImmediate(resolve));
 test('customer refreshes at 3 minutes with no reload or logout and retains rates on a transient failure',async()=>{
@@ -41,6 +42,12 @@ test('customer refreshes at 3 minutes with no reload or logout and retains rates
   a.state.fail=false;a.state.rate=1600;a.advance(60000);a.api.refreshClock();await settle();
   assert.match(a.document.getElementById('grid').innerHTML,/1,600.00/);
   assert.equal(a.document.getElementById('live').classList.contains('stale'),false);
+});
+test('customer refreshes the active city immediately after a published rate change',async()=>{
+  const a=await app();assert.equal(a.state.reads,1);assert.equal(typeof a.state.rateHandler,'function');
+  a.state.rate=1575;a.state.rateHandler({new:{city:'Rajkot'},old:{city:'Rajkot'}});a.flushTimeouts();await settle();
+  assert.equal(a.state.reads,2);assert.match(a.document.getElementById('grid').innerHTML,/1,575.00/);
+  const reads=a.state.reads;a.state.rateHandler({new:{city:'Ahmedabad'},old:{city:'Ahmedabad'}});a.flushTimeouts();await settle();assert.equal(a.state.reads,reads);
 });
 test('revoked access clears old rates while a temporary connection issue does not sign the user out',async()=>{
   const a=await app();a.state.profile.active=false;
