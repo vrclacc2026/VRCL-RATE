@@ -3,7 +3,7 @@ import{SUPABASE_URL,SUPABASE_ANON_KEY}from'./supabase-config.js?v=20260912-rate-
 const supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'vrcl-customer-auth'}}),$=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const CITIES=['Rajkot','Ahmedabad','Udaan'];
 const REFRESH_INTERVAL=180000;
-let profile=null,currentCity='',refreshBusy=false,nextRefreshAt=Date.now()+REFRESH_INTERVAL;
+let profile=null,currentCity='',refreshBusy=false,nextRefreshAt=Date.now()+REFRESH_INTERVAL,ratesChannel=null,realtimeRefreshTimer=null;
 const colors={palm:'#6d43c1',visvita:'#b71c1c',sunflower:'#dc8a00',groundnut:'#ef6c00',cotton:'#1167c7',mustard:'#0b6b43',soya:'#d32f2f'};
 
 try{if(window.parent!==window)window.parent.postMessage({type:'vrcl-runtime',page:'customer',ok:true,ts:Date.now()},location.origin)}catch{}
@@ -25,6 +25,20 @@ login.addEventListener('pointermove',event=>{if(login.classList.contains('hidden
 login.addEventListener('pointerleave',()=>box.style.transform='');
 
 function permittedCities(value){const allowed=Array.isArray(value?.allowed_cities)?value.allowed_cities.filter(city=>CITIES.includes(city)):[];return allowed.length?CITIES.filter(city=>allowed.includes(city)):(CITIES.includes(value?.city)?[value.city]:[])}
+function watchRateChanges(){
+  if(!profile||ratesChannel)return;
+  const channel=supabase.channel('customer-rates-'+profile.id)
+    .on('postgres_changes',{event:'*',schema:'public',table:'rates'},payload=>{
+      const changedCity=payload.new?.city||payload.old?.city;
+      if(!profile||changedCity!==currentCity)return;
+      clearTimeout(realtimeRefreshTimer);
+      realtimeRefreshTimer=setTimeout(()=>{
+        if(profile&&changedCity===currentCity)void refreshRates();
+      },300);
+    })
+    .subscribe((status,error)=>{if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')console.warn('Live rate updates unavailable; periodic refresh remains active.',error||'')});
+  ratesChannel=channel;
+}
 function updateCustomerIdentity(){
   if(!profile)return;
   $('pname').textContent=profile.display_name||profile.login_id||'Customer';
@@ -88,7 +102,7 @@ async function check(){
   const{data:{session}}=await supabase.auth.getSession();if(!session)return false;
   const{data:userProfile,error}=await supabase.from('profiles').select('id,display_name,login_id,role,city,allowed_cities,active').eq('id',session.user.id).single();
   if(error||!userProfile||!userProfile.active||userProfile.role!=='wholesaler'){$('loginMsg').textContent=userProfile?.role==='admin'?'Customer account required on this page.':'Login required.';return false}
-  profile=userProfile;currentCity=permittedCities(profile).includes(profile.city)?profile.city:permittedCities(profile)[0]||'';
+  profile=userProfile;currentCity=permittedCities(profile).includes(profile.city)?profile.city:permittedCities(profile)[0]||'';watchRateChanges();
   $('login').classList.add('hidden');renderCityChooser();updateCustomerIdentity();await load();await beat();nextRefreshAt=Date.now()+REFRESH_INTERVAL;refreshClock();return true
 }
 $('loginBtn').onclick=async()=>{$('loginMsg').textContent='';const uid=$('uid').value.trim().toLowerCase();if(!uid||!$('pass').value){$('loginMsg').textContent='User ID and password required.';return}const{error}=await supabase.auth.signInWithPassword({email:uid+'@users.vrcl.in',password:$('pass').value});if(error){$('loginMsg').textContent='Invalid user ID or password.';return}if(!await check())$('loginMsg').textContent='Access denied.'};
