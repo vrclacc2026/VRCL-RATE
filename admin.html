@@ -418,7 +418,9 @@ $('saveAll').onclick=async()=>{
     // A browser tab may still hold an incomplete formula copy after the product loaded.
     await recoverPublishedFormulas(rows.filter(row=>row.id),sourceKey,rateLoadSerial);
     if(key()!==sourceKey)throw new Error('Product selection changed. Click SAVE ALL again.');
-    const snapshot=JSON.parse(JSON.stringify(meta)),sourceState=snapshot[sourceKey];
+    const {data:latestFormulaState,error:latestFormulaError}=await supabase.from('admin_state').select('value').eq('key','admin_formula_state_v1').maybeSingle();
+    if(latestFormulaError)throw latestFormulaError;
+    const latestMeta=latestFormulaState?.value?.meta||{},snapshot={...latestMeta,[sourceKey]:meta[sourceKey]||latestMeta[sourceKey]||{}},sourceState=snapshot[sourceKey];
     if(!sourceState.packingRateReference){const resolution=looseResolution();if(resolution.error)throw new Error(resolution.error)}
     const settingsName=row=>row.originalPacking||row.packing;
     const missingSaved=rows.filter(row=>row.id&&!String(sourceState.rows?.[settingsName(row)]?.formula||'').trim());
