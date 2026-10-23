@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 13739)
+Total output lines: 899
+
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -38,10 +41,10 @@ function fixture() {
 }
 function metadata() {
   return {
-    [keyA]: { looseRate: '1000', masterFormula: 'MASTER/10', masterRound: 5, rows: { '15 KG': { master: 'LOOSE OIL RATE', formula: 'MASTER*1.5', extra: 0, round: 1 } } },
+    [keyA]: { looseRate: '1000', masterFormula: 'MASTER/10', masterRound: 5, rows: { '15 KG': { master: 'LOOSE OIL RATE', formula: 'MASTER*1.5', extra: 0, shortage: 0, round: 1 } } },
     [keyB]: { looseRate: '1200', masterFormula: 'MASTER/10', masterRound: 2, rows: {
-      '1 L': { master: 'LOOSE OIL RATE', formula: 'MASTER/10', extra: 0, round: 1 },
-      '5 L': { master: '1 L', formula: 'MASTER*5', extra: 2, round: 5 }
+      '1 L': { master: 'LOOSE OIL RATE', formula: 'MASTER/10', extra: 0, shortage: 0, round: 1 },
+      '5 L': { master: '1 L', formula: 'MASTER*5', extra: 2, shortage: 0, round: 5 }
     } }
   };
 }
@@ -155,6 +158,7 @@ function app({ db = fixture(), local = storage(), session = storage() } = {}) {
     crypto: webcrypto, TextEncoder, createClient: () => supabase, SUPABASE_URL: 'test', SUPABASE_ANON_KEY: 'test',
     location: { pathname: '/test.html', reload() {} },
     setTimeout: () => 0, clearTimeout() {}, setInterval: () => 0,
+    requestAnimationFrame: callback => callback(),
     fetch: async () => ({ ok: true, text: async () => '' })
   };
   const manager = vm.createContext({ ...shared });
@@ -170,7 +174,7 @@ function app({ db = fixture(), local = storage(), session = storage() } = {}) {
   vm.runInContext(fs.readFileSync(path.join(root,'packing-rate-reference.js'),'utf8').replace(/^export /gm,''),packingReferenceModule);
   const calculatorModule = vm.createContext({});
   vm.runInContext(fs.readFileSync(path.join(root,'rate-calculator.js'),'utf8').replace(/^export const /gm,'const ').replace(/^export /gm,'')+
-    '\nthis.calculatorTest={calcFormula,applyExtraCost,roundPackingValue,roundLooseValue};',calculatorModule);
+    '\nthis.calculatorTest={calcFormula,applyExtraCost,applyOilShortage,roundPackingValue,roundLooseValue};',calculatorModule);
   const calculator = calculatorModule.calculatorTest;
   const editor = vm.createContext({ ...shared, hydrateStateFromCloud: manager.backupTest.hydrateStateFromCloud, syncStateToCloud:manager.backupTest.syncStateToCloud,
     resolveLooseRate:referenceModule.resolveLooseRate,canReferenceLooseRate:referenceModule.canReferenceLooseRate,
@@ -178,7 +182,7 @@ function app({ db = fixture(), local = storage(), session = storage() } = {}) {
     packingReferenceKey:packingReferenceModule.packingReferenceKey,resolvePackingReference:packingReferenceModule.resolvePackingReference,
     canReferencePackingRates:packingReferenceModule.canReferencePackingRates,packingRateDependants:packingReferenceModule.packingRateDependants,
     calculatePackingReferencedRates:packingReferenceModule.calculatePackingReferencedRates,
-    calcFormula:calculator.calcFormula,applyExtraCost:calculator.applyExtraCost,
+    calcFormula:calculator.calcFormula,applyExtraCost:calculator.applyExtraCost,applyOilShortage:calculator.applyOilShortage,
     roundPackingValue:calculator.roundPackingValue,roundLooseValue:calculator.roundLooseValue });
   const adminSource = fs.readFileSync(path.join(root, 'admin.html'), 'utf8')
     .match(/<script type="module">([\s\S]*?)<\/script>/)[1]
@@ -320,274 +324,7 @@ test('a direct Udaan save records the product, actor and published rate in histo
     from(table){
       const q={
         select(){return this},eq(){return this},maybeSingle(){return Promise.resolve({data:{value:{meta:{}}},error:null})},
-        single(){return Promise.resolve({data:table==='profiles'?{role:'admin',active:true,display_name:'Admin One'}:{key:CLOUD},error:null})},
-        upsert(rows){if(table==='rates')savedRates.push(...rows);return this},
-        insert(row){history.push(row);return Promise.resolve({data:row,error:null})},
-        then(resolve,reject){return Promise.resolve({data:table==='rates'?savedRates:[],error:null}).then(resolve,reject)}
-      };return q;
-    }
-  };
-  const saveButton={disabled:false},narration={value:'Delivery terms'},local=storage();
-  const document={
-    getElementById(key){return key==='saveAll'?saveButton:key==='narration'?narration:key==='vrclUdaanModeStyle'?{}:null},
-    querySelector(key){return key.includes('city.active')?{dataset:{city:'Udaan'}}:{dataset:{product:id}}}
-  };
-  let refreshes=0;
-  const context=vm.createContext({document,window:{vrclAdminHistory:{async refresh(){refreshes++;}}},localStorage:local,
-    createClient:()=>supabase,calcFormula:(_,rate)=>rate,applyExtraCost:(rate,extra)=>rate+Number(extra),
-    roundPackingValue:rate=>rate,crypto:webcrypto,console,setTimeout,clearTimeout});
-  const source=fs.readFileSync(path.join(root,'udaan-rate-system.js'),'utf8').replace(/^import .*\n/gm,'');
-  vm.runInContext(source+`
-    editor={key:'Udaan|${id}',id:'${id}',target:{name:'COTTONSEED OIL'},source:{id:'source-id'},
-      state:{},sourceMap:new Map([['15 KG',1000]]),
-      rows:[{packing:'15 KG',master:'AHMEDABAD SAME PACKING',formula:'MASTER*1',extra:5,round:0,oldRate:1000}],narration:'Delivery terms'};
-    loadUdaan=async()=>{};this.runSave=saveUdaan;
-  `,context);
-  await context.runSave();
-  assert.equal(savedRates.length,1);
-  assert.equal(history.length,1);
-  assert.equal(history[0].changed_by,'admin-test');
-  assert.equal(history[0].snapshot.changed_by_name,'Admin One');
-  assert.equal(history[0].snapshot.rates[0].rate,1005);
-  assert.equal(refreshes,1);
-});
-
-test('an admin logging in on a fresh browser loads cloud formulas before rendering packaging', async () => {
-  const a = app();
-  a.db.admin_state = [{ key: CLOUD, value: { meta: metadata(), locks: { formula: true }, master_lock: true }, updated_at: '2026-09-11T09:00:00Z' }];
-  a.db.signedIn = false;
-  await a.backup.hydrateStateFromCloud();
-  a.db.signedIn = true;
-  assert.equal(await a.editor.check(), true);
-  assert.equal(a.editor.rows()[0].formula, 'MASTER*1.5');
-  assert.equal(a.document.getElementById('looseRate').value, '1000');
-  assert.equal(a.local.getItem('VRCL_MASTER_LOCK'), '1');
-  assert.equal(a.db.cloudWrites, 0, 'login must not overwrite cloud formulas with empty browser state');
-});
-
-test('saved cloud formulas replace an old browser cache that contains a loose rate but no packing formulas', async () => {
-  const a = app();
-  const cached = metadata();
-  cached[keyA].rows = {};
-  a.local.setItem(META, JSON.stringify(cached));
-  a.db.admin_state = [{ key: CLOUD, value: { meta: metadata(), locks: {}, master_lock: false }, updated_at: '2026-09-11T12:37:05Z' }];
-  assert.equal(await a.editor.check(), true);
-  assert.equal(a.editor.rows()[0].formula, 'MASTER*1.5');
-  assert.equal(a.editor.rows()[0].master, 'LOOSE OIL RATE');
-  assert.equal(a.db.cloudWrites, 0);
-});
-
-test('a browser clock ahead of the server cannot hide restored formulas', async () => {
-  const a = app();
-  const cached = metadata();
-  cached[keyA].rows['15 KG'].formula = 'MASTER*1';
-  a.local.setItem(META, JSON.stringify(cached));
-  a.local.setItem('VRCL_ADMIN_STATE_UPDATED_AT', '2099-01-01T00:00:00Z');
-  a.db.admin_state = [{ key: CLOUD, value: { meta: metadata(), locks: {}, master_lock: false }, updated_at: '2026-09-11T12:37:05Z' }];
-  assert.equal(await a.editor.check(), true);
-  assert.equal(a.editor.rows()[0].formula, 'MASTER*1.5');
-  assert.equal(a.db.cloudWrites, 0);
-  assert.equal(JSON.parse(a.local.getItem('VRCL_ADMIN_FORMULA_RECOVERY_V1')).meta[keyA].rows['15 KG'].formula, 'MASTER*1');
-});
-
-test('an unsynced edit to another product is retained while restored server formulas are loaded', async () => {
-  const a = app();
-  const previous = metadata();
-  previous[keyA].rows = {};
-  const synced = { meta: previous, locks: {}, master_lock: false };
-  a.local.setItem('VRCL_ADMIN_SYNCED_FORMULA_STATE_V1', JSON.stringify(synced));
-  const local = clone(previous);
-  local[keyB].looseRate = '1250';
-  a.local.setItem(META, JSON.stringify(local));
-  a.local.setItem('VRCL_ADMIN_STATE_UPDATED_AT', '2026-09-11T12:40:00Z');
-  a.db.admin_state = [{ key: CLOUD, value: { meta: metadata(), locks: {}, master_lock: false }, updated_at: '2026-09-11T12:37:05Z' }];
-  assert.equal(await a.editor.check(), true);
-  assert.equal(a.editor.rows()[0].formula, 'MASTER*1.5');
-  assert.equal(JSON.parse(a.local.getItem(META))[keyB].looseRate, '1250');
-  await a.backup.syncStateToCloud();
-  assert.equal(a.db.admin_state[0].value.meta[keyA].rows['15 KG'].formula, 'MASTER*1.5');
-  assert.equal(a.db.admin_state[0].value.meta[keyB].looseRate, '1250');
-});
-
-test('a confirmed local formula edit survives reload before the next cloud save', async () => {
-  const a = app();
-  a.db.admin_state = [{ key: CLOUD, value: { meta: metadata(), locks: {}, master_lock: false }, updated_at: '2026-09-11T12:37:05Z' }];
-  assert.equal(await a.editor.check(), true);
-  const local = JSON.parse(a.local.getItem(META));
-  local[keyA].rows['15 KG'].formula = 'MASTER*1.75';
-  a.local.setItem(META, JSON.stringify(local));
-  const reload = app({ db: a.db, local: a.local, session: a.session });
-  assert.equal(await reload.editor.check(), true);
-  assert.equal(reload.editor.rows()[0].formula, 'MASTER*1.75');
-});
-
-test('complete older V1 product backups remain compatible and cannot replace another product formula', async () => {
-  const a = app();
-  a.local.setItem(META, JSON.stringify(metadata()));
-  const old = { format: 'VRCL_PRODUCT_BACKUP_V1', product: clone(a.db.products[1]), rates: clone(a.db.rates.filter(r => r.product_id === B)), formula_state: { meta: metadata(), locks: {}, master_lock: false } };
-  old.formula_state.meta[keyA].looseRate = '1';
-  const result = await a.backup.restoreProductBackup(old);
-  assert.equal(result.formulas_included, true);
-  assert.equal(a.db.rates.filter(r => r.product_id === B).length, 2);
-  assert.equal(JSON.parse(a.local.getItem(META))[keyA].looseRate, '1000');
-});
-
-test('incomplete or mixed-product backups are rejected before any restore write', async () => {
-  const a = app();
-  const before = clone(a.db.rates);
-  const backup = { format: 'VRCL_PRODUCT_BACKUP_V1', product: clone(a.db.products[1]), formula_state: { meta: metadata() } };
-  await assert.rejects(a.backup.restoreProductBackup(backup), /missing packaging/);
-  backup.rates = [];
-  await assert.rejects(a.backup.restoreProductBackup(backup), /no saved packaging/);
-  backup.rates = [clone(a.db.rates[0])];
-  await assert.rejects(a.backup.restoreProductBackup(backup), /invalid packaging/);
-  assert.equal(a.db.rpcCalls, 0);
-  assert.deepEqual(a.db.rates, before);
-});
-
-test('formula persistence failure is reported, rather than a successful restore', async () => {
-  const a = app();
-  a.db.failCloud = true;
-  const backup = { format: 'VRCL_PRODUCT_BACKUP_V1', product: clone(a.db.products[1]), rates: clone(a.db.rates.filter(r => r.product_id === B)), formula_state: { meta: metadata() } };
-  await assert.rejects(a.backup.restoreProductBackup(backup), /Formula storage unavailable/);
-  assert.equal(a.session.getItem(FOCUS), null);
-});
-
-test('full backup and full restore retain cloud formula settings on a fresh dashboard', async () => {
-  const a = app();
-  a.db.admin_state = [{ key: CLOUD, value: { meta: metadata(), locks: { packing: true }, master_lock: false }, updated_at: '2026-09-11T09:00:00Z' }];
-  const backup = clone(await a.backup.buildFullBackup());
-  assert.equal(backup.local_admin_state.meta[keyB].rows['5 L'].formula, 'MASTER*5');
-  a.local.removeItem(META);
-  a.db.rates = [];
-  await a.backup.restoreFullBackup(backup);
-  assert.equal(a.db.rates.length, 3);
-  assert.equal(JSON.parse(a.local.getItem(META))[keyB].rows['5 L'].formula, 'MASTER*5');
-});
-
-test('a queued older cloud save finishes before restored formulas are saved', async () => {
-  const a = app();
-  let release;
-  const blocked = new Promise(resolve => { release = resolve; });
-  let entered;
-  const started = new Promise(resolve => { entered = resolve; });
-  a.db.beforeCloudWrite = async () => { delete a.db.beforeCloudWrite; entered(); await blocked; };
-  const oldSave = a.backup.syncStateToCloud({ meta: {}, locks: {}, master_lock: false });
-  await started;
-  const restoring = a.backup.restoreProductBackup({ format: 'VRCL_PRODUCT_BACKUP_V1', product: clone(a.db.products[1]), rates: clone(a.db.rates.filter(r => r.product_id === B)), formula_state: { meta: metadata() } });
-  release();
-  await Promise.all([oldSave, restoring]);
-  assert.equal(a.db.admin_state[0].value.meta[keyB].rows['5 L'].formula, 'MASTER*5');
-  assert.equal(a.db.cloudWrites, 2);
-  await settle();
-});
-
-test('a backup restores into the selected product and keeps its name, city and source data', async () => {
-  const a = app();
-  a.db.products[0].name = 'Palm - SPOT';
-  Object.assign(a.db.products[1], { name: 'Palm - September', code: 'palm-september', customer_visible: false, ingredient_image_url: 'september.webp', header_image_url: 'september-header.webp' });
-  a.local.setItem(META, JSON.stringify(metadata()));
-  a.window.dispatchEvent(new Event('vrcl:admin-state-applied'));
-  const targetBefore = clone(a.db.products[1]);
-  const sourceBefore = clone(a.db.products[0]);
-  const sourceRates = clone(a.db.rates.filter(r => r.product_id === A));
-  const sourceFormula = clone(metadata()[keyA]);
-  const backup = { format: 'VRCL_PRODUCT_BACKUP_V1', product: sourceBefore, rates: sourceRates, formula_state: { meta: metadata() } };
-  const fileBefore = clone(backup);
-  await a.editor.select('Ahmedabad', B);
-  const result = await a.backup.restoreProductBackup(backup);
-  assert.equal(result.product_id, B);
-  assert.equal(result.product_name, 'Palm - September');
-  assert.equal(result.formulas_included, true);
-  assert.deepEqual(a.db.products.find(p => p.id === B), targetBefore);
-  assert.deepEqual(a.db.products.find(p => p.id === A), sourceBefore);
-  assert.deepEqual(a.db.rates.filter(r => r.product_id === A), sourceRates);
-  const copied = a.db.rates.filter(r => r.product_id === B);
-  assert.equal(copied.length, sourceRates.length);
-  assert.equal(copied[0].city, 'Ahmedabad');
-  assert.equal(copied[0].packing, sourceRates[0].packing);
-  assert.equal(copied[0].rate, sourceRates[0].rate);
-  assert.equal(copied[0].narration, sourceRates[0].narration);
-  assert.notEqual(copied[0].id, sourceRates[0].id);
-  assert.deepEqual(a.db.admin_state[0].value.meta[keyB], sourceFormula);
-  assert.deepEqual(JSON.parse(a.local.getItem(META))[keyA], sourceFormula);
-  assert.deepEqual(backup, fileBefore);
-  const reload = app({ db: a.db, local: a.local, session: a.session });
-  assert.equal(await reload.editor.check(), true);
-  assert.equal(reload.editor.selection().product_id, B);
-  assert.equal(reload.editor.rows()[0].formula, 'MASTER*1.5');
-  assert.equal(reload.document.getElementById('looseRate').value, '1000');
-});
-
-test('restoring a product after renaming it keeps the current name and code', async () => {
-  const a = app();
-  const backup = { format: 'VRCL_PRODUCT_BACKUP_V1', product: clone(a.db.products[0]), rates: clone(a.db.rates.filter(r => r.product_id === A)), formula_state: { meta: metadata() } };
-  a.db.products[0].name = 'Palm - September';
-  a.db.products[0].code = 'palm-september';
-  await a.editor.select('Rajkot', A);
-  const result = await a.backup.restoreProductBackup(backup);
-  assert.equal(result.product_name, 'Palm - September');
-  assert.equal(a.db.products.find(p => p.id === A).code, 'palm-september');
-  assert.equal(a.db.rates.find(r => r.product_id === A).id, backup.rates[0].id);
-  assert.equal(a.db.admin_state[0].value.meta[keyA].rows['15 KG'].formula, 'MASTER*1.5');
-});
-
-test('the confirmation identifies the frozen destination and cancellation does not restore anything', async () => {
-  const a = app();
-  const backup = { format: 'VRCL_PRODUCT_BACKUP_V1', product: clone(a.db.products[0]), rates: clone(a.db.rates.filter(r => r.product_id === A)), formula_state: { meta: metadata() } };
-  await a.editor.select('Ahmedabad', B);
-  const target = clone(a.editor.selection());
-  await a.editor.select('Rajkot', A);
-  let prompt;
-  a.manager.confirm = message => { prompt = message; return false; };
-  const before = clone(a.db.rates);
-  const result = await a.backup.restoreProductBackup(backup, target, { confirmRestore: true });
-  assert.equal(result, null);
-  assert.match(prompt, /"Groundnut" backup into "Cotton" \(Ahmedabad\)/);
-  assert.equal(a.db.rpcCalls, 0);
-  assert.equal(a.db.cloudWrites, 0);
-  assert.deepEqual(a.db.rates, before);
-});
-
-test('a removed destination never falls back to overwriting the backup source product', async () => {
-  const a = app();
-  const backup = { format: 'VRCL_PRODUCT_BACKUP_V1', product: clone(a.db.products[0]), rates: clone(a.db.rates.filter(r => r.product_id === A)), formula_state: { meta: metadata() } };
-  await a.editor.select('Ahmedabad', B);
-  const target = clone(a.editor.selection());
-  a.db.products[1].active = false;
-  await assert.rejects(a.backup.restoreProductBackup(backup, target), /no longer available/);
-  assert.equal(a.db.rpcCalls, 0);
-});
-
-async function referenceApp(state = metadata(), db = fixture()) {
-  db.admin_state = [{ key:CLOUD, value:{meta:clone(state),locks:{},master_lock:false}, updated_at:'2026-09-12T08:00:00Z' }];
-  const a=app({db});
-  assert.equal(await a.editor.check(),true);
-  return a;
-}
-async function linkTo(a, city, productId, sourceCity, sourceId) {
-  await a.editor.select(city,productId);
-  a.document.getElementById('looseRefMode').value='reference';
-  await a.document.getElementById('looseRefMode').onchange();
-  a.document.getElementById('looseRefCity').value=sourceCity;
-  await a.document.getElementById('looseRefCity').onchange();
-  a.document.getElementById('looseRefProduct').value=sourceId;
-  await a.document.getElementById('looseRefProduct').onchange();
-}
-async function linkPackingTo(a, city, productId, sourceCity, sourceId) {
-  await a.editor.select(city,productId);
-  a.document.getElementById('packingRefMode').value='reference';
-  await a.document.getElementById('packingRefMode').onchange();
-  a.document.getElementById('packingRefCity').value=sourceCity;
-  a.document.getElementById('packingRefCity').onchange();
-  a.document.getElementById('packingRefProduct').value=sourceId;
-  await a.document.getElementById('packingRefProduct').onchange();
-}
-
-test('reference selection waits for an explicit product and preserves both products formulas', async () => {
-  const a=await referenceApp();
-  await a.editor.select('Ahmedabad',B);
-  const before=clone(a.db.admin_state[0].value.meta);
+…3739 tokens truncated….value.meta);
   a.document.getElementById('looseRefMode').value='reference';
   await a.document.getElementById('looseRefMode').onchange();
   assert.equal(a.db.cloudWrites,0);
@@ -784,7 +521,7 @@ test('renaming an existing packing keeps its row id and moves its formula settin
   assert.equal(a.db.rates.some(r=>r.product_id===B&&r.packing==='5 L'),false);
   assert.equal(a.db.rates.filter(r=>r.product_id===B).length,2,'rename must not add a duplicate rate row');
   const saved=a.db.admin_state[0].value.meta[keyB].rows;
-  assert.deepEqual(saved['5 LTR JAR'],{master:'1 L',formula:'MASTER*5',extra:2,round:5});
+  assert.deepEqual(saved['5 LTR JAR'],{master:'1 L',formula:'MASTER*5',extra:2,shortage:0,round:5});
   assert.equal(saved['5 L'],undefined);
   assert.match(a.document.getElementById('toast').textContent,/RATE UPDATE SAVED/);
 });
