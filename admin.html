@@ -7,12 +7,12 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://rdmgzkxroydsuantzbwn.supabase.co" crossorigin>
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm" crossorigin>
-<link rel="modulepreload" href="./supabase-config.js?v=20261012-udaan-cache-v1">
+<link rel="modulepreload" href="./supabase-config.js?v=20261027-packing-names-v1">
 <link rel="modulepreload" href="./supabase-config.js?v=20260912-rate-tools">
 <link rel="modulepreload" href="./backup-manager.js?v=20260928-backup-safe-v5">
 <link rel="modulepreload" href="./product-delete-control.js?v=20260916-product-delete-v3">
 <link rel="modulepreload" href="./packing-delete-guard.js?v=20260916-master-delete-guard-v2">
-<link rel="modulepreload" href="./udaan-rate-system.js?v=20261012-udaan-city-package-source-v1">
+<link rel="modulepreload" href="./udaan-rate-system.js?v=20261027-packing-names-v1">
 <link rel="modulepreload" href="./loose-reference-control.js?v=20260916-loose-ref-control-v3">
 <link rel="modulepreload" href="./admin-products.js?v=20261008-packing-editor-v1">
 <style>
@@ -75,10 +75,10 @@
 <script>setTimeout(()=>{const body=document.getElementById('rateBody');if(body&&/Loading (?:products and )?packaging/i.test(body.textContent)&&!body.querySelector('#retryPackaging')){body.innerHTML='<tr><td colspan="8" class="empty">Loading is taking too long. <button type="button" id="retryPackaging">Retry loading</button></td></tr>';document.getElementById('retryPackaging').onclick=()=>location.reload()}},18000)</script>
 <script type="module">
 import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import{SUPABASE_URL,SUPABASE_ANON_KEY}from'./supabase-config.js?v=20261012-udaan-cache-v1';
+import{SUPABASE_URL,SUPABASE_ANON_KEY}from'./supabase-config.js?v=20261027-packing-names-v1';
 import{hydrateStateFromCloud,syncStateToCloud}from'./backup-manager.js?v=20260928-backup-safe-v5';
 import{resolveLooseRate,canReferenceLooseRate,looseRateDependants,calculateReferencedRates}from'./loose-rate-reference.js?v=20260912-rate-tools';
-import{packingReferenceKey,resolvePackingReference,canReferencePackingRates,packingRateDependants,calculatePackingReferencedRates}from'./packing-rate-reference.js?v=20260915-udaan-palm';
+import{packingKey,createPackingSourceMap,packingSourceName,packingReferenceKey,resolvePackingReference,canReferencePackingRates,packingRateDependants,calculatePackingReferencedRates}from'./packing-rate-reference.js?v=20261027-packing-names-v1';
 import{calcFormula,applyExtraCost,applyOilShortage,roundPackingValue,roundLooseValue}from'./rate-calculator.js?v=20260912-rate-tools';
 const supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'vrcl-admin-auth'}}),$=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -98,7 +98,7 @@ function masterValue(r,visited){
   if(st().packingRateReference){
     const resolved=packingResolution();if(resolved.error)return{value:0,error:resolved.error};
     if(packingReferenceLoadError)return{value:0,error:packingReferenceLoadError};
-    const value=packingSourceRates.get(normalizedPacking(r.packing));
+    const value=Number(packingSourceRates.get(packingKey(packingSourceName(r,r)))?.rate);
     return Number.isFinite(value)?{value,error:null}:{value:0,error:'Source has no matching rate for '+(r.packing||'this packing')};
   }
   if(!r.master||r.master==='LOOSE OIL RATE')return{value:looseResolution().value||0,error:null};
@@ -219,7 +219,7 @@ async function loadPackingSourceRates(requestedKey=key()){
   const resolution=resolvePackingReference(meta,requestedKey,allProducts);if(resolution.error){packingReferenceLoadError=resolution.error;return}
   const{data,error}=await readWithin(supabase.from('rates').select('packing,rate').eq('city',ref.city).eq('product_id',ref.productId).order('sort_order'));
   if(requestedKey!==key())return;if(error){packingReferenceLoadError='Packing source rates could not be loaded';return}
-  for(const row of data||[]){const name=normalizedPacking(row.packing),value=Number(row.rate);if(!name||packingSourceRates.has(name)||!Number.isFinite(value)){packingReferenceLoadError='Packing source contains invalid or duplicate rows';packingSourceRates=new Map();return}packingSourceRates.set(name,value)}
+  try{packingSourceRates=createPackingSourceMap(data||[],meta[packingReferenceKey(ref)]?.rows||{})}catch(error){packingReferenceLoadError=error.message;return}
   if(!packingSourceRates.size)packingReferenceLoadError='Packing source has no saved rates';
 }
 async function changePackingReference(change){
@@ -326,7 +326,7 @@ async function loadRates(){
   if(error&&requestedKey===key()&&loadSerial===rateLoadSerial)({data,error}=await readRates());
   if(requestedKey!==key()||loadSerial!==rateLoadSerial)return;if(error){packingLoadError('Packaging could not load: '+error.message);toast('Rate load failed');return}
   const s=st(),published=data||[];
-  rows=published.map((r,i)=>{const m=s.rows?.[r.packing]||{},missingFormula=!String(m.formula||'').trim();return{id:r.id,packing:r.packing,originalPacking:r.packing,oldRate:r.rate,master:m.master||'LOOSE OIL RATE',formula:missingFormula?'':m.formula||'MASTER*1',extra:m.extra??0,shortage:m.shortage??0,round:m.round??0,sort_order:r.sort_order??i,missingFormula,formulaReentered:false}});
+  rows=published.map((r,i)=>{const m=s.rows?.[r.packing]||{},missingFormula=!String(m.formula||'').trim();return{id:r.id,packing:r.packing,originalPacking:r.packing,sourcePacking:m.sourcePacking||r.packing,packingAliases:m.packingAliases||[],oldRate:r.rate,master:m.master||'LOOSE OIL RATE',formula:missingFormula?'':m.formula||'MASTER*1',extra:m.extra??0,shortage:m.shortage??0,round:m.round??0,sort_order:r.sort_order??i,missingFormula,formulaReentered:false}});
   const seen=new Set(rows.map(r=>normalizedPacking(r.packing)));
   for(const[packing,m]of Object.entries(s.rows||{})){
     const normalized=normalizedPacking(packing);if(!normalized||seen.has(normalized))continue;
@@ -434,7 +434,7 @@ $('saveAll').onclick=async()=>{
       if(!packing)continue;
       if(names.has(packing))throw new Error('Packaging names must be unique.');names.add(packing);
       if(row.originalPacking&&row.originalPacking.trim()!==packing)delete sourceState.rows[row.originalPacking];
-      sourceState.rows[packing]={master:row.master,formula:row.formula,extra:row.extra,shortage:row.shortage,round:row.round};
+      sourceState.rows[packing]={master:row.master,formula:row.formula,extra:row.extra,shortage:row.shortage,round:row.round,sourcePacking:row.sourcePacking||row.originalPacking||packing,packingAliases:[...new Set([...(row.packingAliases||[]),row.originalPacking].filter(Boolean))]};
       sourceRates.push({id:row.id||null,originalPacking:row.originalPacking||null,city:sourceProduct.city,product_id:sourceProduct.id,packing,rate:value.rate,narration:narr,sort_order:i+1});
     }
     const groupsByKey=new Map([[sourceKey,{product:sourceProduct,rates:sourceRates}]]),publishedByKey=new Map([[sourceKey,sourceRates]]);

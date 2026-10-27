@@ -10,7 +10,7 @@ const load = (file, suffix) => {
   vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8').replace(/^export const /gm, 'const ').replace(/^export /gm, '') + suffix, context);
   return context.exports;
 };
-const reference = load('packing-rate-reference.js', '\nthis.exports={packingReferenceKey,resolvePackingReference,canReferencePackingRates,packingRateDependants,calculatePackingReferencedRates};');
+const reference = load('packing-rate-reference.js', '\nthis.exports={packingKey,createPackingSourceMap,packingSourceName,mergeReferencedPackings,packingReferenceKey,resolvePackingReference,canReferencePackingRates,packingRateDependants,calculatePackingReferencedRates};');
 const calculator = load('rate-calculator.js', '\nthis.exports={calcFormula,applyExtraCost,roundPackingValue};');
 
 const A = '11111111-1111-4111-8111-111111111111';
@@ -90,4 +90,49 @@ test('Udaan Rajkot source uses the same Formula plus Extra calculation as its ad
     ...calculator
   });
   assert.equal(result[0].rate,2477.79);
+});
+
+for (const [sourceName,targetName] of [['15 KG N TIN','15 KG NEW TIN'],['15 KG S TIN','15 KG OLD TIN'],['15 KG NEW TIN','15KG N TIN'],['15 LTR OLD TIN','15 LTR S TIN']]) {
+  test('different city labels keep reference: '+sourceName+' -> '+targetName,()=>{
+    const meta = {[keyB]:{packingRateReference:{city:'Rajkot',productId:C},rows:{[targetName]:{formula:'+3.5%',extra:'+5%'}}}};
+    const result=reference.calculatePackingReferencedRates({meta,product:products[1],rates:[{city:'Udaan',product_id:B,packing:targetName,rate:0}],sourceRates:[{packing:sourceName,rate:2280}],...calculator});
+    assert.equal(result.length,1);assert.equal(result[0].packing,targetName);assert.equal(result[0].rate,2477.79);
+  });
+}
+test('arbitrary source rename survives save and later reload using saved aliases',()=>{
+  const meta = {
+    [keyC]:{rows:{'Cotton premium tin':{packingAliases:['15 KG NEW TIN']}}},
+    [keyA]:{packingRateReference:{city:'Rajkot',productId:C},rows:{'Ahmedabad tin':{sourcePacking:'15 KG NEW TIN',formula:'MASTER+10'}}}
+  };
+  const result=reference.calculatePackingReferencedRates({meta,product:products[0],rates:[{city:'Ahmedabad',product_id:A,packing:'Ahmedabad tin',rate:0}],sourceRates:[{packing:'Cotton premium tin',rate:2000}],...calculator});
+  assert.equal(result[0].packing,'Ahmedabad tin');assert.equal(result[0].rate,2010);
+});
+test('first source rename is resolved before the renamed row is written',()=>{
+  const result=reference.calculatePackingReferencedRates({meta:{[keyA]:{rows:{'15 KG NEW TIN':{formula:'MASTER+10'}}}},product:products[0],
+    rates:[{city:'Ahmedabad',product_id:A,packing:'15 KG NEW TIN'}],
+    sourceRates:[{packing:'Cotton premium tin',originalPacking:'15 KG NEW TIN',rate:2000}],...calculator});
+  assert.equal(result[0].rate,2010);
+});
+test('new and old tin remain distinct; no guessing for different sizes',()=>{
+  const map=reference.createPackingSourceMap([{packing:'15 KG N TIN',rate:2000},{packing:'15 KG S TIN',rate:1900}]);
+  assert.equal(map.get(reference.packingKey('15 KG NEW TIN')).rate,2000);
+  assert.equal(map.get(reference.packingKey('15 KG OLD TIN')).rate,1900);
+  assert.equal(map.has(reference.packingKey('15 LTR NEW TIN')),false);
+});
+test('ambiguous packing aliases cannot silently publish the wrong rate',()=>{
+  assert.throws(()=>reference.createPackingSourceMap([{packing:'15 KG NEW TIN',rate:2000},{packing:'15 KG N TIN',rate:1900}]),/Ambiguous/);
+});
+test('renamed source does not recreate an excluded Udaan tin',()=>{
+  const result=reference.mergeReferencedPackings([], [{packing:'15 KG N TIN',rate:2000}], {}, {}, ['15 KG NEW TIN']);
+  assert.equal(result.length,0);
+});
+test('Udaan preview retains formulas and local labels after source rename',()=>{
+  const code=fs.readFileSync(path.join(root,'udaan-rate-system.js'),'utf8');
+  const evaluateCode=code.slice(code.indexOf('function evaluateRows('),code.indexOf('\nfunction installModeStyle'));
+  const ctx=vm.createContext({...calculator,norm:reference.packingKey,packingSourceName:reference.packingSourceName,AHD:'AHMEDABAD SAME PACKING'});
+  vm.runInContext(evaluateCode+';this.run=evaluateRows;',ctx);
+  const rates=[{packing:'15 KG NEW TIN',formula:'+3.5%',extra:'+5%'}],sourceRates=[{packing:'15 KG N TIN',rate:2280}];
+  const rows=reference.mergeReferencedPackings(rates,sourceRates);
+  const values=ctx.run({rows,source:{city:'Rajkot'},sourceMap:reference.createPackingSourceMap(sourceRates)});
+  assert.equal(rows.length,1);assert.equal(values[0].rate,2477.79);
 });
