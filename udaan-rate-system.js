@@ -1,3 +1,4 @@
+import { packingKey, createPackingSourceMap, packingSourceName, mergeReferencedPackings } from './packing-rate-reference.js?v=20261027-packing-names-v1';
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 import { calcFormula, applyExtraCost, roundPackingValue } from './rate-calculator.js?v=20260916-udaan-core-v1';
 
@@ -9,7 +10,7 @@ const $=id=>document.getElementById(id);
 let editor=null,busy=false,saving=false,locking=false,timer=null,reloadRequested=false;
 
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const norm=v=>String(v??'').trim().toLocaleUpperCase('en-IN');
+const norm=packingKey;
 const clone=v=>JSON.parse(JSON.stringify(v??{}));
 const selectedCity=()=>document.querySelector('#cityArea .city.active')?.dataset.city||'';
 const selectedId=()=>document.querySelector('#productArea .productBtn.active')?.dataset.product||'';
@@ -38,13 +39,13 @@ async function saveCloud(value,session){const{data,error}=await supabase.from('a
 function normalizedSetting(old={}){
   const master=!old.master||old.master==='LOOSE OIL RATE'?AHD:old.master;
   const formula=['0','00'].includes(String(old.formula??'').trim())?'MASTER*1':(old.formula||'MASTER*1');
-  return{master,formula,extra:old.extra??0,round:old.round??0};
+  return{...old,master,formula,extra:old.extra??0,round:old.round??0};
 }
 async function normalizeCloudState(target,source,cloudValue,sourceRates,targetRates){
   const key='Udaan|'+target.id,meta=clone(cloudValue.meta||{});
   if(targetRates?.length&&!meta[key])throw new Error('Saved formulas are missing for '+target.name+'. Restore its formula backup before publishing rates.');
   const existing=clone(meta[key]||{}),rows=clone(existing.rows||{}),excluded=exclusions(existing);
-  for(const rate of sourceRates||[]){if(excluded.has(norm(rate.packing)))continue;rows[rate.packing]=normalizedSetting(rows[rate.packing])}
+  for(const rate of mergeReferencedPackings(targetRates,sourceRates,rows,meta[sourceKey(source)]?.rows,[...excluded])){if(excluded.has(norm(rate.packing)))continue;rows[rate.packing]=normalizedSetting(rows[rate.packing])}
   for(const name of Object.keys(rows)){if(excluded.has(norm(name)))delete rows[name]}
   const state={...existing,packingRateReference:{city:source.city,productId:source.id},packingRateReferenceLocked:existing.packingRateReferenceLocked===true,udaanEditorVersion:3,rows};
   delete state.looseReference;delete state.looseReferenceLocked;
@@ -59,7 +60,7 @@ function evaluateRows(ctx){
   function one(i,seen=new Set()){
     if(cache.has(i))return cache.get(i);if(seen.has(i))return{rate:0,error:'MASTER LINK CYCLE'};
     const row=rows[i];if(!row)return{rate:0,error:'Missing row'};const next=new Set(seen);next.add(i);let master;
-    if(!row.master||row.master===AHD){master=ctx.sourceMap.get(norm(row.packing));if(!Number.isFinite(master))return{rate:0,error:ctx.source.city+' has no matching '+row.packing}}
+    if(!row.master||row.master===AHD){master=Number(ctx.sourceMap.get(norm(packingSourceName(row,row)))?.rate);if(!Number.isFinite(master))return{rate:0,error:ctx.source.city+' has no matching '+row.packing}}
     else{const j=names.get(row.master);if(j===undefined)return{rate:0,error:'Master packing missing: '+row.master};const linked=one(j,next);if(linked.error)return linked;master=linked.rate}
     const subtotal=calcFormula(row.formula||'MASTER*1',master),calculated=applyExtraCost(subtotal,row.extra),rate=roundPackingValue(calculated,row.round??0),out=Number.isFinite(rate)?{rate,master}:{rate:0,error:'Invalid rate'};cache.set(i,out);return out;
   }
@@ -86,8 +87,8 @@ async function loadUdaan(){
     const[{data:products,error:pe},{data:cloud,error:ce},{data:targetRates,error:te}]=await Promise.all([supabase.from('products').select('id,code,name,city,active,sort_order').eq('active',true).order('sort_order'),supabase.from('admin_state').select('value').eq('key',CLOUDKEY).maybeSingle(),supabase.from('rates').select('id,packing,rate,narration,sort_order').eq('city','Udaan').eq('product_id',id).order('sort_order')]);
     if(pe||ce||te||key!==selectedKey())return;const target=(products||[]).find(p=>p.id===id&&p.city==='Udaan');if(!target)return;const existing=clone(cloud?.value?.meta?.[key]||{}),source=findSource(target,products||[],existing);if(!source){editor=null;toast('Ahmedabad/Rajkot source not found for '+target.name);return}
     const{data:sourceRates,error:se}=await supabase.from('rates').select('packing,rate,sort_order').eq('city',source.city).eq('product_id',source.id).order('sort_order');if(se||key!==selectedKey())return;
-    const ensured=await normalizeCloudState(target,source,cloud?.value||{},sourceRates||[],targetRates||[]);if(key!==selectedKey())return;const state=ensured.state,excluded=exclusions(state),sourceMap=new Map((sourceRates||[]).map(r=>[norm(r.packing),Number(r.rate)])),existingByPacking=new Map((targetRates||[]).map(r=>[norm(r.packing),r]));
-    const rowSource=(sourceRates||[]).filter(src=>!excluded.has(norm(src.packing))).map((src,i)=>{const current=existingByPacking.get(norm(src.packing)),setting=normalizedSetting(state.rows?.[src.packing]||{});return{id:current?.id||null,packing:src.packing,oldRate:Number(current?.rate||0),master:setting.master,formula:setting.formula,extra:setting.extra,round:setting.round,sort_order:current?.sort_order??src.sort_order??i+1}});
+    const ensured=await normalizeCloudState(target,source,cloud?.value||{},sourceRates||[],targetRates||[]);if(key!==selectedKey())return;const state=ensured.state,excluded=exclusions(state),sourceMap=createPackingSourceMap(sourceRates||[],ensured.meta[sourceKey(source)]?.rows),existingByPacking=new Map((targetRates||[]).map(r=>[norm(r.packing),r]));
+    const rowSource=mergeReferencedPackings(targetRates,sourceRates,state.rows,ensured.meta[sourceKey(source)]?.rows,[...excluded]).filter(src=>!excluded.has(norm(src.packing))).map((src,i)=>{const current=existingByPacking.get(norm(src.packing)),setting=normalizedSetting(state.rows?.[src.packing]||{});return{id:current?.id||null,packing:src.packing,sourcePacking:setting.sourcePacking||src.packing,packingAliases:setting.packingAliases||[],oldRate:Number(current?.rate||0),master:setting.master,formula:setting.formula,extra:setting.extra,round:setting.round,sort_order:current?.sort_order??src.sort_order??i+1}});
     editor={key,id,target,source,sourceChoices:sourceChoices(target,products||[]),products:products||[],cloudValue:ensured.cloudValue,meta:ensured.meta,state,sourceMap,rows:rowSource,targetRates:targetRates||[],narration:targetRates?.[0]?.narration||''};render();refresh();
   }catch(error){console.error('Udaan editor load failed',error);toast('Udaan setup load failed: '+(error.message||error))}
   finally{busy=false;if(reloadRequested){reloadRequested=false;schedule(0)}}
@@ -108,10 +109,10 @@ async function changeUdaanSource(value){
     const{data:sourceRates,error:se}=await supabase.from('rates').select('packing,rate,sort_order').eq('city',source.city).eq('product_id',source.id).order('sort_order');if(se)throw se;
     const valueCloud=cloud?.value||{},meta=clone(valueCloud.meta||{}),state=clone(meta[editor.key]||editor.state||{}),excluded=exclusions(state),rows=clone(state.rows||{}),existingByPacking=new Map((editor.targetRates||[]).map(r=>[norm(r.packing),r]));
     state.packingRateReference={city:source.city,productId:source.id};state.udaanEditorVersion=3;delete state.looseReference;delete state.looseReferenceLocked;
-    for(const rate of sourceRates||[]){if(!excluded.has(norm(rate.packing)))rows[rate.packing]=normalizedSetting(rows[rate.packing])}
+    for(const rate of mergeReferencedPackings(editor.targetRates,sourceRates,rows,meta[sourceKey(source)]?.rows,[...excluded])){if(!excluded.has(norm(rate.packing)))rows[rate.packing]=normalizedSetting(rows[rate.packing])}
     state.rows=rows;meta[editor.key]=state;const next={...valueCloud,meta,captured_at:new Date().toISOString()};await saveCloud(next,session);
-    editor.source=source;editor.cloudValue=next;editor.meta=meta;editor.state=state;editor.sourceMap=new Map((sourceRates||[]).map(r=>[norm(r.packing),Number(r.rate)]));
-    editor.rows=(sourceRates||[]).filter(src=>!excluded.has(norm(src.packing))).map((src,i)=>{const current=existingByPacking.get(norm(src.packing)),setting=normalizedSetting(state.rows?.[src.packing]||{});return{id:current?.id||null,packing:src.packing,oldRate:Number(current?.rate||0),master:setting.master,formula:setting.formula,extra:setting.extra,round:setting.round,sort_order:current?.sort_order??src.sort_order??i+1}});
+    editor.source=source;editor.cloudValue=next;editor.meta=meta;editor.state=state;editor.sourceMap=createPackingSourceMap(sourceRates||[],meta[sourceKey(source)]?.rows);
+    editor.rows=mergeReferencedPackings(editor.targetRates,sourceRates,state.rows,meta[sourceKey(source)]?.rows,[...excluded]).filter(src=>!excluded.has(norm(src.packing))).map((src,i)=>{const current=existingByPacking.get(norm(src.packing)),setting=normalizedSetting(state.rows?.[src.packing]||{});return{id:current?.id||null,packing:src.packing,sourcePacking:setting.sourcePacking||src.packing,packingAliases:setting.packingAliases||[],oldRate:Number(current?.rate||0),master:setting.master,formula:setting.formula,extra:setting.extra,round:setting.round,sort_order:current?.sort_order??src.sort_order??i+1}});
     render();refresh();toast('✅ UDAAN SOURCE SAVED: '+source.city+' / '+source.name);
   }catch(error){toast('Udaan source not saved: '+(error.message||error));render()}
 }
@@ -141,7 +142,7 @@ async function saveUdaan(){
   if(!editor||editor.key!==selectedKey()||saving)return;saving=true;const btn=$('saveAll');if(btn)btn.disabled=true;
   try{
     const session=await requireAdmin(),{data:cloud,error:ce}=await supabase.from('admin_state').select('value').eq('key',CLOUDKEY).maybeSingle();if(ce)throw ce;const cloudValue=cloud?.value||{},meta=clone(cloudValue.meta||{}),state=clone(meta[editor.key]||editor.state||{}),excluded=exclusions(state),activeRows=editor.rows.filter(r=>!excluded.has(norm(r.packing))),ctx={...editor,rows:activeRows},values=evaluateRows(ctx);for(const v of values)if(v.error)throw new Error(v.error);
-    state.packingRateReference={city:editor.source.city,productId:editor.source.id};state.packingRateReferenceLocked=editor.state.packingRateReferenceLocked===true;state.udaanEditorVersion=3;delete state.looseReference;delete state.looseReferenceLocked;state.rows={};activeRows.forEach(r=>{state.rows[r.packing]={master:r.master||AHD,formula:r.formula||'MASTER*1',extra:r.extra??0,round:r.round??0}});meta[editor.key]=state;const next={...cloudValue,meta,captured_at:new Date().toISOString()};await saveCloud(next,session);
+    state.packingRateReference={city:editor.source.city,productId:editor.source.id};state.packingRateReferenceLocked=editor.state.packingRateReferenceLocked===true;state.udaanEditorVersion=3;delete state.looseReference;delete state.looseReferenceLocked;state.rows={};activeRows.forEach(r=>{state.rows[r.packing]={master:r.master||AHD,formula:r.formula||'MASTER*1',extra:r.extra??0,round:r.round??0,sourcePacking:r.sourcePacking||r.packing,packingAliases:r.packingAliases||[]}});meta[editor.key]=state;const next={...cloudValue,meta,captured_at:new Date().toISOString()};await saveCloud(next,session);
     if(excluded.size){const names=[...excluded];const del=await supabase.from('rates').delete().eq('city','Udaan').eq('product_id',editor.id).in('packing',names);if(del.error)throw del.error}
     const narration=$('narration')?.value??editor.narration??'',payload=activeRows.map((r,i)=>({city:'Udaan',product_id:editor.id,packing:r.packing,rate:values[i].rate,narration,sort_order:i+1}));
     if(payload.length){const{data,error}=await supabase.from('rates').upsert(payload,{onConflict:'city,product_id,packing'}).select('city,product_id,packing');if(error)throw error;if(data?.length!==payload.length)throw new Error('Server did not confirm all Udaan rates.')}
@@ -163,7 +164,7 @@ window.vrclUdaanBackup={captureProduct(){
     const packing=String(r.packing||'').trim(),key=norm(packing),i=editor.rows.indexOf(r),calculated=values[i];
     if(!packing||seen.has(key))throw new Error('Udaan packaging names must be present and unique.');
     if(calculated?.error)throw new Error(calculated.error);
-    seen.add(key);rows[packing]={master:r.master||AHD,formula:r.formula||'MASTER*1',extra:r.extra??0,round:r.round??0};
+    seen.add(key);rows[packing]={master:r.master||AHD,formula:r.formula||'MASTER*1',extra:r.extra??0,round:r.round??0,sourcePacking:r.sourcePacking||r.packing,packingAliases:r.packingAliases||[]};
     return{id:r.id||crypto.randomUUID(),city:'Udaan',product_id:editor.id,packing,rate:r.id?Number(r.oldRate)||0:calculated.rate,narration:$('narration')?.value??editor.narration,sort_order:i+1};
   });
   return{city:'Udaan',product_id:editor.id,rates,formula_state:{...clone(editor.state),rows},excluded_packings:[...excluded]};
