@@ -227,7 +227,7 @@ async function saveFallback(){
     toast('✅ FINAL RATES + HISTORY SAVED');
     await window.vrclAdminHistory?.refresh();
     fallback=null;await activateFallback(true);
-  }catch(error){console.error('Exact admin fallback save failed',error);toast('Rates not saved: '+(error.message||error))}
+  }catch(error){console.error('Exact admin fallback save failed',error);toast('Publish not confirmed. Check history before retrying: '+(error.message||error))}
   finally{fallbackSaving=false;if(save)save.disabled=false}
 }
 

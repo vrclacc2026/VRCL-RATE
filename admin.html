@@ -481,7 +481,7 @@ $('saveAll').onclick=async()=>{
     await publishFinalRates(supabase,publication);
     toast('✅ FINAL RATES + HISTORY SAVED'+(linked.length?' + '+linked.length+' LINKED PRODUCTS':''));
     if(key()===sourceKey){await loadRates();await loadHistory()}
-  }catch(error){toast('Rates not saved ('+sourceProduct.city+' / '+sourceProduct.name+'): '+(error.message||error))}
+  }catch(error){toast('Publish not confirmed ('+sourceProduct.city+' / '+sourceProduct.name+'). Check history before retrying: '+(error.message||error))}
   finally{rateSaving=false;button.disabled=false;renderLooseReference();renderPackingReference()}
 };
 $('saveNote').onclick=async()=>{const narr=$('narration').value;for(const r of rows)if(r.id)await supabase.from('rates').update({narration:narr}).eq('id',r.id);toast('✅ NARRATION SAVED')};

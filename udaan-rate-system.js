@@ -156,7 +156,7 @@ async function saveUdaan(){
     editor.rows=activeRows;editor.state=state;
     toast('✅ UDAAN FINAL RATES + HISTORY SAVED');
     await window.vrclAdminHistory?.refresh();await loadUdaan()
-  }catch(error){toast('Udaan rates not saved: '+(error.message||error))}
+  }catch(error){toast('Udaan publish not confirmed. Check history before retrying: '+(error.message||error))}
   finally{saving=false;if(btn)btn.disabled=false;render()}
 }
 
