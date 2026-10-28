@@ -7,14 +7,14 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://rdmgzkxroydsuantzbwn.supabase.co" crossorigin>
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm" crossorigin>
-<link rel="modulepreload" href="./supabase-config.js?v=20261027-packing-names-v1">
-<link rel="modulepreload" href="./supabase-config.js?v=20260912-rate-tools">
+<link rel="modulepreload" href="./supabase-config.js?v=20261028-final-sheet-v2">
+<link rel="modulepreload" href="./supabase-config.js?v=20261028-final-sheet-v2">
 <link rel="modulepreload" href="./backup-manager.js?v=20260928-backup-safe-v5">
 <link rel="modulepreload" href="./product-delete-control.js?v=20260916-product-delete-v3">
 <link rel="modulepreload" href="./packing-delete-guard.js?v=20260916-master-delete-guard-v2">
-<link rel="modulepreload" href="./udaan-rate-system.js?v=20261027-packing-names-v1">
+<link rel="modulepreload" href="./udaan-rate-system.js?v=20261028-final-sheet-v2">
 <link rel="modulepreload" href="./loose-reference-control.js?v=20260916-loose-ref-control-v3">
-<link rel="modulepreload" href="./admin-products.js?v=20261008-packing-editor-v1">
+<link rel="modulepreload" href="./admin-products.js?v=20261028-final-sheet-v2">
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f3f6f8;color:#101828}.hidden{display:none!important}
 .topbar{position:sticky;top:0;z-index:50;background:#101827;color:#fff;padding:13px 20px;display:flex;justify-content:space-between;align-items:center;gap:14px;box-shadow:0 5px 25px #0002}.brand{font-size:20px;font-weight:950}.sub{font-size:11px;color:#cbd5e1;margin-top:3px}.flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.navIcon{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;text-decoration:none;background:linear-gradient(145deg,#fff,#e8edf3);color:#101827;box-shadow:0 5px 0 #aeb6c1}.navIcon svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.rateCheck{height:38px;display:inline-flex;align-items:center;padding:0 14px;border-radius:10px;text-decoration:none;background:linear-gradient(145deg,#0b927f,#087f70);color:#fff;font-size:10px;font-weight:950;box-shadow:0 5px 0 #045d52}.btn{border:0;border-radius:9px;padding:10px 15px;font-weight:900;cursor:pointer}.green{background:#087f70;color:#fff}.dark{background:#101827;color:#fff}.red{background:#b42318;color:#fff}.light{background:#f5f7f9;border:1px solid #ccd4dc;color:#111827}
@@ -75,8 +75,8 @@
 <script>setTimeout(()=>{const body=document.getElementById('rateBody');if(body&&/Loading (?:products and )?packaging/i.test(body.textContent)&&!body.querySelector('#retryPackaging')){body.innerHTML='<tr><td colspan="8" class="empty">Loading is taking too long. <button type="button" id="retryPackaging">Retry loading</button></td></tr>';document.getElementById('retryPackaging').onclick=()=>location.reload()}},18000)</script>
 <script type="module">
 import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import './rate-publish-confirm.js?v=20261028-final-gate-v1';
-import{SUPABASE_URL,SUPABASE_ANON_KEY}from'./supabase-config.js?v=20261027-packing-names-v1';
+import { confirmFinalPublication, publishFinalRates } from './rate-publish-confirm.js?v=20261028-final-sheet-v2';
+import{SUPABASE_URL,SUPABASE_ANON_KEY}from'./supabase-config.js?v=20261028-final-sheet-v2';
 import{hydrateStateFromCloud,syncStateToCloud}from'./backup-manager.js?v=20260928-backup-safe-v5';
 import{resolveLooseRate,canReferenceLooseRate,looseRateDependants,calculateReferencedRates}from'./loose-rate-reference.js?v=20260912-rate-tools';
 import{packingKey,createPackingSourceMap,packingSourceName,packingReferenceKey,resolvePackingReference,canReferencePackingRates,packingRateDependants,calculatePackingReferencedRates}from'./packing-rate-reference.js?v=20261027-packing-names-v1';
@@ -465,6 +465,12 @@ $('saveAll').onclick=async()=>{
       const preview=rows.filter(row=>row.id&&Number(row.oldRate||0)!==Number(sourceRates.find(rate=>rate.packing===row.packing)?.rate||0)).map(row=>row.packing+': '+Number(row.oldRate||0).toFixed(2)+' → '+Number(sourceRates.find(rate=>rate.packing===row.packing)?.rate||0).toFixed(2)).join('\n')||'No rate difference in this product.';
       if(!confirm(sourceProduct.city+' / '+sourceProduct.name+': the original formulas were missing. Save your manually entered formulas and publish recalculated rates?\n'+preview+'\nThis may also update '+linked.length+' linked products. Cancel to keep all rates unchanged.'))throw new Error('Formula re-entry cancelled. No rates were changed.');
     }
+    const{data:{session}}=await supabase.auth.getSession();
+    if(!session)throw new Error('Admin session expired. Sign in again.');
+    const sourceName=reference=>{const p=allProducts.find(x=>x.city===reference?.city&&x.id===reference?.productId);return p?reference.city+' / '+p.name:null};
+    const historyRows=groups.map(group=>{const groupKey=group.product.city+'|'+group.product.id,state=snapshot[groupKey]||{};return{city:group.product.city,product_id:group.product.id,changed_by:session.user.id,snapshot:{product_name:group.product.name,changed_by_name:adminProfile?.display_name||adminProfile?.login_id||null,loose_rate:resolveLooseRate(snapshot,groupKey,allProducts).value,loose_unit:'10 KG',loose_source:sourceName(state.looseReference),packing_source:sourceName(state.packingRateReference),rates:group.rates.map(r=>({packing:r.packing,rate:r.rate})),narration:group.rates[0]?.narration||''}}});
+    const publication=confirmFinalPublication(payload,historyRows);
+    if(!publication){toast('Publish cancelled. Use TEST PREVIEW for testing.');return}
     meta[sourceKey].rows=sourceState.rows;saveMeta();await syncStateToCloud();
     if(missingSaved.length){
       const {data:verified,error:verifyError}=await supabase.from('admin_state').select('value').eq('key','admin_formula_state_v1').single();
@@ -472,21 +478,8 @@ $('saveAll').onclick=async()=>{
       const cloudRows=verified?.value?.meta?.[sourceKey]?.rows||{};
       if(missingSaved.some(row=>['master','formula','extra','round'].some(field=>JSON.stringify(cloudRows[row.packing]?.[field])!==JSON.stringify(sourceState.rows[row.packing]?.[field]))))throw new Error('Formula settings changed while saving. No rates were published. Reload this product and review its formulas.');
     }
-    for(const row of renamed){const{data,error}=await supabase.from('rates').update({packing:row.packing,rate:row.rate,narration:row.narration,sort_order:row.sort_order}).eq('id',row.id).eq('city',row.city).eq('product_id',row.product_id).select('id,packing,rate').single();if(error||data?.packing!==row.packing||Math.abs(Number(data?.rate)-Number(row.rate))>0.005)throw error||new Error('Packaging rename was not confirmed with the expected rate')}
-    const renamedIds=new Set(renamed.map(row=>row.id)),upsertPayload=payload.filter(row=>!renamedIds.has(row.id)).map(({id,originalPacking,...row})=>row);
-    const{data,error}=upsertPayload.length?await supabase.from('rates').upsert(upsertPayload,{onConflict:'city,product_id,packing'}).select('city,product_id,packing,rate'):{data:[],error:null};
-    if(error)throw error;
-    if((data?.length||0)+renamed.length!==payload.length)throw new Error('The server did not confirm every rate. Please check and save again.');
-    const savedRates=new Map((data||[]).map(row=>[row.city+'|'+row.product_id+'|'+packingKey(row.packing),Number(row.rate)]));
-    if(upsertPayload.some(row=>Math.abs((savedRates.get(row.city+'|'+row.product_id+'|'+packingKey(row.packing))??NaN)-Number(row.rate))>0.005))throw new Error('The server saved a different rate than the preview. History was not written; reload rates and check again.');
-    const{data:{session}}=await supabase.auth.getSession();
-    let historyError=null;
-    if(session){
-      const sourceName=reference=>{const p=allProducts.find(x=>x.city===reference?.city&&x.id===reference?.productId);return p?reference.city+' / '+p.name:null};
-      const result=await supabase.from('rate_history').insert(groups.map(group=>{const groupKey=group.product.city+'|'+group.product.id,state=snapshot[groupKey]||{};return{city:group.product.city,product_id:group.product.id,changed_by:session.user.id,snapshot:{product_name:group.product.name,changed_by_name:adminProfile?.display_name||adminProfile?.login_id||null,loose_rate:resolveLooseRate(snapshot,groupKey,allProducts).value,loose_unit:'10 KG',loose_source:sourceName(state.looseReference),packing_source:sourceName(state.packingRateReference),rates:group.rates.map(r=>({packing:r.packing,rate:r.rate})),narration:group.rates[0]?.narration||''}}}));
-      historyError=result.error;
-    }
-    toast(historyError?'Rates saved. History could not be saved.':'✅ RATE UPDATE SAVED'+(linked.length?' + '+linked.length+' LINKED PRODUCTS':''));
+    await publishFinalRates(supabase,publication);
+    toast('✅ FINAL RATES + HISTORY SAVED'+(linked.length?' + '+linked.length+' LINKED PRODUCTS':''));
     if(key()===sourceKey){await loadRates();await loadHistory()}
   }catch(error){toast('Rates not saved ('+sourceProduct.city+' / '+sourceProduct.name+'): '+(error.message||error))}
   finally{rateSaving=false;button.disabled=false;renderLooseReference();renderPackingReference()}

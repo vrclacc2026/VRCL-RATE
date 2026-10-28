@@ -95,35 +95,6 @@ function showTestPreview() {
   close.focus();
 }
 
-function askToPublish(event) {
-  const button = event.target?.closest?.(SAVE_SELECTOR);
-  if (!button) return;
-  const { city, product, changes } = collectPreview();
-  const summary = changes.length
-    ? changes.slice(0, 12).map(row => `• ${row.packing}: ₹${rateLabel(row.oldValue)} → ₹${rateLabel(row.newValue)}`).join('\n') +
-      (changes.length > 12 ? `\n…plus ${changes.length - 12} more changes` : '')
-    : 'No rate differences detected. Formula, packaging, or narration changes may still be saved.';
-  const message = [
-    'FINAL PUBLISH — this changes live customer rates and adds rate history.',
-    '',
-    `${city} / ${product}`,
-    summary,
-    '',
-    'For a test, cancel here and use TEST PREVIEW.',
-    'Continue and publish these rates to customers?'
-  ].join('\n');
-  if (!window.confirm(message)) {
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation();
-    const notice = document.getElementById('publishNotice');
-    if (notice) notice.textContent = 'Test preview only — live rates, history, and Google Sheet were not changed.';
-    return;
-  }
-  const notice = document.getElementById('publishNotice');
-  if (notice) notice.textContent = 'Publishing final rates… wait for the confirmed save message.';
-}
-
 document.addEventListener('click', event => {
   const testButton = event.target?.closest?.('#testPreview');
   if (!testButton) return;
@@ -132,4 +103,57 @@ document.addEventListener('click', event => {
   event.stopImmediatePropagation();
   showTestPreview();
 }, true);
-document.addEventListener('click', askToPublish, true);
+
+
+const pendingPublications = new WeakSet();
+
+export function confirmFinalPublication(rates, history, deletions = []) {
+  // Copy the computed payload before asking, so later edits cannot change it.
+  const request = JSON.parse(JSON.stringify({ rates, history, deletions }));
+  if (!request.rates.length || !request.history.length) throw new Error('No rates to publish.');
+  const sections = request.history.map(group => {
+    const rows = request.rates.filter(r => r.city === group.city && r.product_id === group.product_id);
+    const loose = group.snapshot?.loose_rate;
+    return [
+      group.city + ' / ' + (group.snapshot?.product_name || 'Product'),
+      loose == null ? '' : 'Loose / 10 KG: ₹' + rateLabel(loose),
+      ...rows.slice(0, 8).map(r => r.packing + ': ₹' + rateLabel(r.rate)),
+      rows.length > 8 ? '...and ' + (rows.length - 8) + ' more packings' : ''
+    ].filter(Boolean).join('\n');
+  });
+  const accepted = window.confirm([
+    'PUBLISH FINAL',
+    'These exact rates will be saved for customers and recorded as FINAL.',
+    '',
+    ...sections,
+    '',
+    request.history.length + ' product(s), ' + request.rates.length + ' packing rate(s).',
+    'For testing, Cancel and use TEST PREVIEW. Publish these final rates?'
+  ].join('\n\n'));
+  if (!accepted) return null;
+  const publication = { ...request, publishId: crypto.randomUUID() };
+  pendingPublications.add(publication);
+  return publication;
+}
+
+export async function publishFinalRates(client, publication) {
+  if (!publication || !pendingPublications.has(publication)) {
+    throw new Error('Confirm PUBLISH FINAL before saving rates.');
+  }
+  pendingPublications.delete(publication);
+  const { data, error } = await client.rpc('publish_final_rates_v1', {
+    p_publish_id: publication.publishId,
+    p_rates: publication.rates,
+    p_history: publication.history,
+    p_deletions: publication.deletions
+  });
+  if (error) throw error;
+  if (data?.publish_id !== publication.publishId ||
+      data?.rates_count !== publication.rates.length ||
+      data?.history_count !== publication.history.length) {
+    throw new Error('Final publish acknowledgement is incomplete. Reload and check history before trying again.');
+  }
+  const notice = document.getElementById('publishNotice');
+  if (notice) notice.textContent = 'FINAL SAVED — rates and history were saved together. Google Sheet updates through its automatic data link.';
+  return data;
+}

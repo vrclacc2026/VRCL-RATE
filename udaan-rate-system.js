@@ -1,6 +1,6 @@
 import { packingKey, createPackingSourceMap, packingSourceName, mergeReferencedPackings } from './packing-rate-reference.js?v=20261027-packing-names-v1';
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import './rate-publish-confirm.js?v=20261028-final-gate-v1';
+import { confirmFinalPublication, publishFinalRates } from './rate-publish-confirm.js?v=20261028-final-sheet-v2';
 import { calcFormula, applyExtraCost, roundPackingValue } from './rate-calculator.js?v=20260916-udaan-core-v1';
 
 const SUPABASE_URL='https://rdmgzkxroydsuantzbwn.supabase.co';
@@ -143,16 +143,18 @@ async function saveUdaan(){
   if(!editor||editor.key!==selectedKey()||saving)return;saving=true;const btn=$('saveAll');if(btn)btn.disabled=true;
   try{
     const session=await requireAdmin(),{data:cloud,error:ce}=await supabase.from('admin_state').select('value').eq('key',CLOUDKEY).maybeSingle();if(ce)throw ce;const cloudValue=cloud?.value||{},meta=clone(cloudValue.meta||{}),state=clone(meta[editor.key]||editor.state||{}),excluded=exclusions(state),activeRows=editor.rows.filter(r=>!excluded.has(norm(r.packing))),ctx={...editor,rows:activeRows},values=evaluateRows(ctx);for(const v of values)if(v.error)throw new Error(v.error);
-    state.packingRateReference={city:editor.source.city,productId:editor.source.id};state.packingRateReferenceLocked=editor.state.packingRateReferenceLocked===true;state.udaanEditorVersion=3;delete state.looseReference;delete state.looseReferenceLocked;state.rows={};activeRows.forEach(r=>{state.rows[r.packing]={master:r.master||AHD,formula:r.formula||'MASTER*1',extra:r.extra??0,round:r.round??0,sourcePacking:r.sourcePacking||r.packing,packingAliases:r.packingAliases||[]}});meta[editor.key]=state;const next={...cloudValue,meta,captured_at:new Date().toISOString()};await saveCloud(next,session);
-    if(excluded.size){const names=[...excluded];const del=await supabase.from('rates').delete().eq('city','Udaan').eq('product_id',editor.id).in('packing',names);if(del.error)throw del.error}
+    state.packingRateReference={city:editor.source.city,productId:editor.source.id};state.packingRateReferenceLocked=editor.state.packingRateReferenceLocked===true;state.udaanEditorVersion=3;delete state.looseReference;delete state.looseReferenceLocked;state.rows={};activeRows.forEach(r=>{state.rows[r.packing]={master:r.master||AHD,formula:r.formula||'MASTER*1',extra:r.extra??0,round:r.round??0,sourcePacking:r.sourcePacking||r.packing,packingAliases:r.packingAliases||[]}});meta[editor.key]=state;const next={...cloudValue,meta,captured_at:new Date().toISOString()};
     const narration=$('narration')?.value??editor.narration??'',payload=activeRows.map((r,i)=>({city:'Udaan',product_id:editor.id,packing:r.packing,rate:values[i].rate,narration,sort_order:i+1}));
-    if(payload.length){const{data,error}=await supabase.from('rates').upsert(payload,{onConflict:'city,product_id,packing'}).select('city,product_id,packing,rate');if(error)throw error;if(data?.length!==payload.length)throw new Error('Server did not confirm all Udaan rates.');const savedRates=new Map(data.map(row=>[norm(row.packing),Number(row.rate)]));if(payload.some(row=>Math.abs((savedRates.get(norm(row.packing))??NaN)-Number(row.rate))>0.005))throw new Error('Saved Udaan rates do not match the preview. History was not written; reload and try again.')}
     const {data:profile,error:profileError}=await supabase.from('profiles').select('display_name,login_id').eq('id',session.user.id).single();
     if(profileError)console.error('Udaan history actor could not be loaded',profileError);
-    const history=await supabase.from('rate_history').insert({city:'Udaan',product_id:editor.id,changed_by:session.user.id,snapshot:{product_name:editor.target.name,changed_by_name:profile?.display_name||profile?.login_id||null,loose_rate:null,rates:payload.map(r=>({packing:r.packing,rate:r.rate})),narration}});
+    const historyRows=[{city:'Udaan',product_id:editor.id,changed_by:session.user.id,snapshot:{product_name:editor.target.name,changed_by_name:profile?.display_name||profile?.login_id||null,loose_rate:null,rates:payload.map(r=>({packing:r.packing,rate:r.rate})),narration}}];
+    const deletions=[...excluded].map(packing=>({city:'Udaan',product_id:editor.id,packing}));
+    const publication=confirmFinalPublication(payload,historyRows,deletions);
+    if(!publication){toast('Publish cancelled. Use TEST PREVIEW for testing.');return}
+    await saveCloud(next,session);
+    await publishFinalRates(supabase,publication);
     editor.rows=activeRows;editor.state=state;
-    toast(history.error?'Udaan rates saved, but history could not be saved.':'✅ UDAAN RATES SAVED');
-    if(history.error)console.error('Udaan rate history save failed',history.error);
+    toast('✅ UDAAN FINAL RATES + HISTORY SAVED');
     await window.vrclAdminHistory?.refresh();await loadUdaan()
   }catch(error){toast('Udaan rates not saved: '+(error.message||error))}
   finally{saving=false;if(btn)btn.disabled=false;render()}
