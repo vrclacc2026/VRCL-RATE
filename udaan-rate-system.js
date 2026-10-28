@@ -1,5 +1,6 @@
 import { packingKey, createPackingSourceMap, packingSourceName, mergeReferencedPackings } from './packing-rate-reference.js?v=20261027-packing-names-v1';
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import './rate-publish-confirm.js?v=20261028-final-gate-v1';
 import { calcFormula, applyExtraCost, roundPackingValue } from './rate-calculator.js?v=20260916-udaan-core-v1';
 
 const SUPABASE_URL='https://rdmgzkxroydsuantzbwn.supabase.co';
