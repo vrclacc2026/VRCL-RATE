@@ -75,6 +75,7 @@
 <script>setTimeout(()=>{const body=document.getElementById('rateBody');if(body&&/Loading (?:products and )?packaging/i.test(body.textContent)&&!body.querySelector('#retryPackaging')){body.innerHTML='<tr><td colspan="8" class="empty">Loading is taking too long. <button type="button" id="retryPackaging">Retry loading</button></td></tr>';document.getElementById('retryPackaging').onclick=()=>location.reload()}},18000)</script>
 <script type="module">
 import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import './rate-publish-confirm.js?v=20261028-final-gate-v1';
 import{SUPABASE_URL,SUPABASE_ANON_KEY}from'./supabase-config.js?v=20261027-packing-names-v1';
 import{hydrateStateFromCloud,syncStateToCloud}from'./backup-manager.js?v=20260928-backup-safe-v5';
 import{resolveLooseRate,canReferenceLooseRate,looseRateDependants,calculateReferencedRates}from'./loose-rate-reference.js?v=20260912-rate-tools';
