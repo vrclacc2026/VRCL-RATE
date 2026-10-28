@@ -18,7 +18,7 @@ try {
 if (isAdminPage) {
   await import('./product-delete-control.js?v=20260916-product-delete-v3');
   await import('./packing-delete-guard.js?v=20260916-master-delete-guard-v2');
-  await import('./udaan-rate-system.js?v=20261027-packing-names-v1');
+  await import('./udaan-rate-system.js?v=20261028-final-sheet-v2');
 
   const udaanPhotoStyle = document.createElement('style');
   udaanPhotoStyle.id = 'vrclUdaanPhotoControls';
@@ -31,7 +31,7 @@ if (isAdminPage) {
   document.head.appendChild(udaanPhotoStyle);
 
   await import('./loose-reference-control.js?v=20260916-loose-ref-control-v3');
-  await import('./admin-products.js?v=20261008-packing-editor-v1');
+  await import('./admin-products.js?v=20261028-final-sheet-v2');
 }
 
 if (isAdminRateCheck) {
