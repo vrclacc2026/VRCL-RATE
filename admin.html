@@ -472,11 +472,13 @@ $('saveAll').onclick=async()=>{
       const cloudRows=verified?.value?.meta?.[sourceKey]?.rows||{};
       if(missingSaved.some(row=>['master','formula','extra','round'].some(field=>JSON.stringify(cloudRows[row.packing]?.[field])!==JSON.stringify(sourceState.rows[row.packing]?.[field]))))throw new Error('Formula settings changed while saving. No rates were published. Reload this product and review its formulas.');
     }
-    for(const row of renamed){const{data,error}=await supabase.from('rates').update({packing:row.packing,rate:row.rate,narration:row.narration,sort_order:row.sort_order}).eq('id',row.id).eq('city',row.city).eq('product_id',row.product_id).select('id,packing').single();if(error||data?.packing!==row.packing)throw error||new Error('Packaging rename was not confirmed')}
+    for(const row of renamed){const{data,error}=await supabase.from('rates').update({packing:row.packing,rate:row.rate,narration:row.narration,sort_order:row.sort_order}).eq('id',row.id).eq('city',row.city).eq('product_id',row.product_id).select('id,packing,rate').single();if(error||data?.packing!==row.packing||Math.abs(Number(data?.rate)-Number(row.rate))>0.005)throw error||new Error('Packaging rename was not confirmed with the expected rate')}
     const renamedIds=new Set(renamed.map(row=>row.id)),upsertPayload=payload.filter(row=>!renamedIds.has(row.id)).map(({id,originalPacking,...row})=>row);
-    const{data,error}=upsertPayload.length?await supabase.from('rates').upsert(upsertPayload,{onConflict:'city,product_id,packing'}).select('city,product_id,packing'):{data:[],error:null};
+    const{data,error}=upsertPayload.length?await supabase.from('rates').upsert(upsertPayload,{onConflict:'city,product_id,packing'}).select('city,product_id,packing,rate'):{data:[],error:null};
     if(error)throw error;
     if((data?.length||0)+renamed.length!==payload.length)throw new Error('The server did not confirm every rate. Please check and save again.');
+    const savedRates=new Map((data||[]).map(row=>[row.city+'|'+row.product_id+'|'+packingKey(row.packing),Number(row.rate)]));
+    if(upsertPayload.some(row=>Math.abs((savedRates.get(row.city+'|'+row.product_id+'|'+packingKey(row.packing))??NaN)-Number(row.rate))>0.005))throw new Error('The server saved a different rate than the preview. History was not written; reload rates and check again.');
     const{data:{session}}=await supabase.auth.getSession();
     let historyError=null;
     if(session){
