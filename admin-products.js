@@ -1,4 +1,5 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import './rate-publish-confirm.js?v=20261028-final-gate-v1';
 import { calcFormula, applyExtraCost, applyOilShortage, roundPackingValue, roundLooseValue } from './rate-calculator.js?v=20260915-admin-exact-fallback';
 import { resolveLooseRate, looseRateDependants, calculateReferencedRates } from './loose-rate-reference.js?v=20260915-admin-exact-fallback';
 import { packingReferenceKey, packingRateDependants, calculatePackingReferencedRates } from './packing-rate-reference.js?v=20260915-admin-exact-fallback';
@@ -219,7 +220,7 @@ async function saveFallback(){
     }
     const groups=[...groupsByKey.values()].filter(g=>g.rates.length),payload=groups.flatMap(g=>g.rates);if(!payload.length)throw new Error('No packing rates to save.');
     await saveFormulaState(meta,cloudValue,session);
-    const {data:saved,error:se}=await supabase.from('rates').upsert(payload,{onConflict:'city,product_id,packing'}).select('city,product_id,packing');if(se)throw se;if(saved?.length!==payload.length)throw new Error('Server did not confirm every saved rate.');
+    const {data:saved,error:se}=await supabase.from('rates').upsert(payload,{onConflict:'city,product_id,packing'}).select('city,product_id,packing,rate');if(se)throw se;if(saved?.length!==payload.length)throw new Error('Server did not confirm every saved rate.');const savedRates=new Map(saved.map(row=>[row.city+'|'+row.product_id+'|'+norm(row.packing),Number(row.rate)]));if(payload.some(row=>Math.abs((savedRates.get(row.city+'|'+row.product_id+'|'+norm(row.packing))??NaN)-Number(row.rate))>0.005))throw new Error('The server saved a different rate than the preview. No history was written. Reload rates and check again.');
     const historyRows=groups.map(group=>{const k=group.product.city+'|'+group.product.id,s=meta[k]||{},loose=resolveLooseRate(meta,k,products||[]);return{city:group.product.city,product_id:group.product.id,changed_by:session.user.id,snapshot:{product_name:group.product.name,changed_by_name:profile.display_name||profile.login_id||null,loose_rate:loose.error?null:loose.value,loose_unit:'10 KG',rates:group.rates.map(r=>({packing:r.packing,rate:r.rate})),narration:group.rates[0]?.narration||''}}});
     const history=await supabase.from('rate_history').insert(historyRows);
     toast(history.error?'✅ RATES SAVED (history warning)':'✅ RATE UPDATE SAVED');
