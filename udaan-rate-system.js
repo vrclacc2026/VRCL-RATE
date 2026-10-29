@@ -1,6 +1,6 @@
-import { packingKey, createPackingSourceMap, packingSourceName, mergeReferencedPackings } from './packing-rate-reference.js?v=20261027-packing-names-v1';
+import { packingKey, createPackingSourceMap, packingSourceName, mergeReferencedPackings } from './packing-rate-reference.js?v=20261029-udaan-percent-v4';
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { prepareRateSave, saveRatesAndVerify } from './rate-publish-confirm.js?v=20261029-rounding-fix-v2';
+import { prepareRateSave, saveRatesAndVerify } from './rate-publish-confirm.js?v=20261029-udaan-percent-v4';
 import { calcFormula, applyExtraCost, roundPackingValue } from './rate-calculator.js?v=20260916-udaan-core-v1';
 
 const SUPABASE_URL='https://rdmgzkxroydsuantzbwn.supabase.co';
@@ -63,7 +63,7 @@ function evaluateRows(ctx){
     const row=rows[i];if(!row)return{rate:0,error:'Missing row'};const next=new Set(seen);next.add(i);let master;
     if(!row.master||row.master===AHD){master=Number(ctx.sourceMap.get(norm(packingSourceName(row,row)))?.rate);if(!Number.isFinite(master))return{rate:0,error:ctx.source.city+' has no matching '+row.packing}}
     else{const j=names.get(row.master);if(j===undefined)return{rate:0,error:'Master packing missing: '+row.master};const linked=one(j,next);if(linked.error)return linked;master=linked.rate}
-    const subtotal=calcFormula(row.formula||'MASTER*1',master),calculated=applyExtraCost(subtotal,row.extra),rate=roundPackingValue(calculated,row.round??0),out=Number.isFinite(rate)?{rate,master}:{rate:0,error:'Invalid rate'};cache.set(i,out);return out;
+    const entered=row.formula||'MASTER*1',formula=/^\\s*\\d+(?:\\.\\d+)?%\\s*$/.test(entered)?'MASTER+'+entered:entered;const subtotal=calcFormula(formula,master),calculated=applyExtraCost(subtotal,row.extra),rate=roundPackingValue(calculated,row.round??0),out=Number.isFinite(rate)&&rate>0&&master>0&&!(master>1&&rate<1)?{rate,master}:{rate:0,error:'Invalid or missing source rate'};cache.set(i,out);return out;
   }
   return rows.map((_,i)=>one(i));
 }

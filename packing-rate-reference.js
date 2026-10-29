@@ -126,10 +126,11 @@ export function calculatePackingReferencedRates({ meta, product, rates, sourceRa
     }
     formula = typeof setting.formula === 'string' ? setting.formula : 'MASTER*1';
     if (!udaan && typeof setting.formula !== 'string') throw new Error(product.name + ': saved formula missing for ' + row.packing);
-    const subtotal = calcFormula(formula || 'MASTER*1', master);
+    const effectiveFormula = udaan && /^\\s*\\d+(?:\\.\\d+)?%\\s*$/.test(formula) ? 'MASTER+' + formula : formula;
+    const subtotal = calcFormula(effectiveFormula || 'MASTER*1', master);
     const calculated = applyExtraCost ? applyExtraCost(subtotal, setting.extra) : subtotal + Number(setting.extra || 0);
     const value = roundPackingValue(calculated, setting.round ?? 0);
-    if (!Number.isFinite(value)) throw new Error(product.name + ': invalid calculated rate');
+    if (!Number.isFinite(value) || value <= 0 || master <= 0 || (master > 1 && value < 1)) throw new Error(product.name + ': invalid calculated rate for ' + row.packing);
     cache.set(index,value); return value;
   }
 
