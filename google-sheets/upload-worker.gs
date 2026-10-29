@@ -81,7 +81,7 @@ function setupWorkbook_() {
   ensureRows_(master,MAX_VIEW_ROWS);
   master.getRange(4,1,1,19).setValues([HEADERS]);
   master.hideColumns(19);
-  styleSheet_(master,'Vishwas Rate History',true);
+  // Workbook formatting is installed separately; keep install table-safe.
 
   CITIES.forEach(city=>{
     const sheet=doc.getSheetByName(city)||doc.insertSheet(city);
@@ -94,7 +94,7 @@ function setupWorkbook_() {
       '=IFERROR(FILTER(\''+MASTER_SHEET+'\'!A5:R'+MAX_VIEW_ROWS+
       ',\''+MASTER_SHEET+'\'!C5:C'+MAX_VIEW_ROWS+'="'+city+'"),"")'
     );
-    styleSheet_(sheet,city+' Rate History',false);
+    // Workbook formatting is installed separately; keep install table-safe.
   });
 
   const receipt=doc.getSheetByName(RECEIPT_SHEET)||doc.insertSheet(RECEIPT_SHEET);
