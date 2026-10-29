@@ -2,6 +2,18 @@
 const WORKER_URL='https://rdmgzkxroydsuantzbwn.supabase.co/functions/v1/sheet-upload-worker';
 const SPREADSHEET_ID='1T8xuvj1mRgx9rWRocYg3uhBWn0P3sTHSvv05-tcalkI';
 const CITIES=['Rajkot','Ahmedabad','Udaan'];
+function prepareWorkerToken() {
+  const properties=PropertiesService.getScriptProperties();
+  let token=properties.getProperty('WORKER_TOKEN');
+  if(!token) {
+    token=(Utilities.getUuid()+Utilities.getUuid()).replace(/-/g,'');
+    properties.setProperty('WORKER_TOKEN',token);
+  }
+  const digest=Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,token);
+  const hash=digest.map(b=>('0'+((b+256)%256).toString(16)).slice(-2)).join('');
+  console.log('WORKER_TOKEN_SHA256: '+hash);
+  return hash;
+}
 function install() {
   if(!PropertiesService.getScriptProperties().getProperty('WORKER_TOKEN')) throw Error('Set WORKER_TOKEN in Script Properties first.');
   ScriptApp.getProjectTriggers().filter(t=>t.getHandlerFunction()==='syncRateUploads').forEach(ScriptApp.deleteTrigger);
