@@ -1,4 +1,4 @@
-const EXPECTED_HASH = "f88cf1927610c3feb2fe506ed2136380ac83310d327dd47f9bf8d14c423d091d";
+const EXPECTED_HASH = "bb789f8f7daae859c39745f72a8ebb4afaf7d577ae08863582c5b90ad137bb5d";
 const SHEET_ID = "1T8xuvj1mRgx9rWRocYg3uhBWn0P3sTHSvv05-tcalkI";
 const URL = Deno.env.get("SUPABASE_URL");
 const KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
