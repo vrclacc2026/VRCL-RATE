@@ -7,14 +7,14 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://rdmgzkxroydsuantzbwn.supabase.co" crossorigin>
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm" crossorigin>
-<link rel="modulepreload" href="./supabase-config.js?v=20261029-rounding-fix-v2">
-<link rel="modulepreload" href="./supabase-config.js?v=20261029-rounding-fix-v2">
+<link rel="modulepreload" href="./supabase-config.js?v=20261029-sheet-queue-v3">
+<link rel="modulepreload" href="./supabase-config.js?v=20261029-sheet-queue-v3">
 <link rel="modulepreload" href="./backup-manager.js?v=20261029-fast-hydrate-v1">
 <link rel="modulepreload" href="./product-delete-control.js?v=20260916-product-delete-v3">
 <link rel="modulepreload" href="./packing-delete-guard.js?v=20260916-master-delete-guard-v2">
-<link rel="modulepreload" href="./udaan-rate-system.js?v=20261029-rounding-fix-v2">
+<link rel="modulepreload" href="./udaan-rate-system.js?v=20261029-sheet-queue-v3">
 <link rel="modulepreload" href="./loose-reference-control.js?v=20260916-loose-ref-control-v3">
-<link rel="modulepreload" href="./admin-products.js?v=20261029-rounding-fix-v2">
+<link rel="modulepreload" href="./admin-products.js?v=20261029-sheet-queue-v3">
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f3f6f8;color:#101828}.hidden{display:none!important}
 .topbar{position:sticky;top:0;z-index:50;background:#101827;color:#fff;padding:13px 20px;display:flex;justify-content:space-between;align-items:center;gap:14px;box-shadow:0 5px 25px #0002}.brand{font-size:20px;font-weight:950}.sub{font-size:11px;color:#cbd5e1;margin-top:3px}.flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.navIcon{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;text-decoration:none;background:linear-gradient(145deg,#fff,#e8edf3);color:#101827;box-shadow:0 5px 0 #aeb6c1}.navIcon svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.rateCheck{height:38px;display:inline-flex;align-items:center;padding:0 14px;border-radius:10px;text-decoration:none;background:linear-gradient(145deg,#0b927f,#087f70);color:#fff;font-size:10px;font-weight:950;box-shadow:0 5px 0 #045d52}.btn{border:0;border-radius:9px;padding:10px 15px;font-weight:900;cursor:pointer}.green{background:#087f70;color:#fff}.dark{background:#101827;color:#fff}.red{background:#b42318;color:#fff}.light{background:#f5f7f9;border:1px solid #ccd4dc;color:#111827}
@@ -69,14 +69,14 @@
 </div>
 <div id="udaanLooseInfo" class="hint" hidden style="margin-top:10px;padding:9px 12px;border:1px solid #a8cbe4;border-radius:10px;background:#f3f9ff;font-size:11px;font-weight:800;color:#245d75"></div>
 </section>
-<section class="card"><div class="title">RATE SETUP</div><div id="formulaRecovery" class="hint" role="status" hidden style="margin-bottom:9px;padding:10px;border:1px solid #d97706;background:#fffaf0;border-radius:8px;color:#92400e"></div><div class="tableWrap"><table><thead><tr><th>PACKING<button class="lockMini" data-lock="packing">🔓</button></th><th>MASTER LINK<button class="lockMini" data-lock="master">🔓</button></th><th>OLD RATE<button class="lockMini" data-lock="old">🔓</button></th><th>FORMULA<button class="lockMini" data-lock="formula">🔓</button></th><th>EXTRA COSTING<button class="lockMini" data-lock="extra">🔓</button></th><th>OIL SHORTAGE<button class="lockMini" data-lock="shortage">🔓</button></th><th>ROUND OFF<button class="lockMini" data-lock="round">🔓</button></th><th>NEW RATE</th><th>ACTION</th></tr></thead><tbody id="rateBody"><tr><td colspan="9" class="empty">Loading packaging…</td></tr></tbody></table></div><div class="calcHelp">Formula: <code>+5%</code> <code>MASTER*1.05</code> &nbsp; Extra costing: <code>+15</code> <code>-10</code> <code>*1.05</code> <code>/2</code> <code>+5%</code></div><div class="actions"><button class="btn green" id="addPacking">＋ ADD PACKING / WEIGHT</button><button class="btn light" id="testPreview" type="button">🧪 TEST PREVIEW</button><button class="btn dark" id="saveAll">💾 SAVE ALL</button></div><div id="publishNotice" role="status" aria-live="polite" style="margin:8px 0;padding:10px 12px;border:1px solid #f3d27a;border-radius:9px;background:#fff8df;color:#684d0a;font-size:12px;font-weight:700">SAVE ALL updates Admin and Rate Check. Google Sheet upload is separate.</div><div class="note"><b>📝 NARRATION / TERMS &amp; CONDITIONS</b><textarea id="narration"></textarea><div class="actions"><button class="btn light" id="saveNote">💾 SAVE NARRATION</button></div></div></section>
+<section class="card"><div class="title">RATE SETUP</div><div id="formulaRecovery" class="hint" role="status" hidden style="margin-bottom:9px;padding:10px;border:1px solid #d97706;background:#fffaf0;border-radius:8px;color:#92400e"></div><div class="tableWrap"><table><thead><tr><th>PACKING<button class="lockMini" data-lock="packing">🔓</button></th><th>MASTER LINK<button class="lockMini" data-lock="master">🔓</button></th><th>OLD RATE<button class="lockMini" data-lock="old">🔓</button></th><th>FORMULA<button class="lockMini" data-lock="formula">🔓</button></th><th>EXTRA COSTING<button class="lockMini" data-lock="extra">🔓</button></th><th>OIL SHORTAGE<button class="lockMini" data-lock="shortage">🔓</button></th><th>ROUND OFF<button class="lockMini" data-lock="round">🔓</button></th><th>NEW RATE</th><th>ACTION</th></tr></thead><tbody id="rateBody"><tr><td colspan="9" class="empty">Loading packaging…</td></tr></tbody></table></div><div class="calcHelp">Formula: <code>+5%</code> <code>MASTER*1.05</code> &nbsp; Extra costing: <code>+15</code> <code>-10</code> <code>*1.05</code> <code>/2</code> <code>+5%</code></div><div class="actions"><button class="btn green" id="addPacking">＋ ADD PACKING / WEIGHT</button><button class="btn light" id="uploadSheet" type="button">📤 UPLOAD TO SHEET</button><button class="btn dark" id="saveAll">💾 SAVE ALL</button></div><div id="publishNotice" role="status" aria-live="polite" style="margin:8px 0;padding:10px 12px;border:1px solid #f3d27a;border-radius:9px;background:#fff8df;color:#684d0a;font-size:12px;font-weight:700">SAVE ALL updates Admin and Rate Check. Google Sheet upload is separate.</div><div class="note"><b>📝 NARRATION / TERMS &amp; CONDITIONS</b><textarea id="narration"></textarea><div class="actions"><button class="btn light" id="saveNote">💾 SAVE NARRATION</button></div></div></section>
 <section class="card"><div class="title">📋 RATE HISTORY — RECENT CHANGES</div><div id="history" class="historyList"><div class="empty">No history yet.</div></div></section>
 </main><div id="toast" class="toast"></div>
 <script>setTimeout(()=>{const body=document.getElementById('rateBody');if(body&&/Loading (?:products and )?packaging/i.test(body.textContent)&&!body.querySelector('#retryPackaging')){body.innerHTML='<tr><td colspan="8" class="empty">Loading is taking too long. <button type="button" id="retryPackaging">Retry loading</button></td></tr>';document.getElementById('retryPackaging').onclick=()=>location.reload()}},18000)</script>
 <script type="module">
 import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { prepareRateSave, saveRatesAndVerify } from './rate-publish-confirm.js?v=20261029-rounding-fix-v2';
-import{SUPABASE_URL,SUPABASE_ANON_KEY}from'./supabase-config.js?v=20261029-rounding-fix-v2';
+import { prepareRateSave, saveRatesAndVerify } from './rate-publish-confirm.js?v=20261029-sheet-queue-v3';
+import{SUPABASE_URL,SUPABASE_ANON_KEY}from'./supabase-config.js?v=20261029-sheet-queue-v3';
 import{hydrateStateFromCloud,syncStateToCloud}from'./backup-manager.js?v=20260928-backup-safe-v5';
 import{resolveLooseRate,canReferenceLooseRate,looseRateDependants,calculateReferencedRates}from'./loose-rate-reference.js?v=20260912-rate-tools';
 import{packingKey,createPackingSourceMap,packingSourceName,packingReferenceKey,resolvePackingReference,canReferencePackingRates,packingRateDependants,calculatePackingReferencedRates}from'./packing-rate-reference.js?v=20261027-packing-names-v1';
@@ -482,6 +482,26 @@ $('saveAll').onclick=async()=>{
     if(key()===sourceKey){await loadRates();await loadHistory()}
   }catch(error){toast('Save status needs checking ('+sourceProduct.city+' / '+sourceProduct.name+'). Check history before retrying: '+(error.message||error))}
   finally{rateSaving=false;button.disabled=false;renderLooseReference();renderPackingReference()}
+};
+$('uploadSheet').onclick=async()=>{
+  const button=$('uploadSheet'),selected=currentProduct();
+  if(rateSaving||referenceSaving||!selected||loadedRateKey!==key()){toast('Selected product is still loading or saving. Try again when Save All finishes.');return}
+  if(!confirm('UPLOAD TO SHEET: '+selected.city+' / '+selected.name+'\nOnly SAVED database rates will be copied to editable Sheet rows. Unsaved screen changes are not included. Continue?'))return;
+  button.disabled=true;
+  try{
+    const{data,error}=await supabase.rpc('request_sheet_upload_v1',{p_city:selected.city,p_product_id:selected.id});
+    if(error)throw error;
+    $('publishNotice').textContent='SHEET UPLOAD QUEUED — '+data.city+' / '+data.product+' ('+data.count+' saved packings). Waiting for Google Sheet sync. Upload ID: '+data.id;
+    toast('📤 Sheet upload queued: '+data.count+' saved packings. Status appears here after sync.');
+    let polls=0;const timer=setInterval(async()=>{
+      if(++polls>15){clearInterval(timer);return}
+      const result=await supabase.from('sheet_upload_jobs').select('status,last_error').eq('id',data.id).maybeSingle();
+      if(result.error||!result.data)return;
+      if(result.data.status==='uploaded'){$('publishNotice').textContent='✅ UPLOADED TO SHEET — '+data.city+' / '+data.product+' ('+data.count+' saved packings).';clearInterval(timer)}
+      else if(result.data.status==='failed'){$('publishNotice').textContent='⚠️ SHEET UPLOAD FAILED — '+(result.data.last_error||'Check connection.');clearInterval(timer)}
+    },8000);
+  }catch(error){toast('Sheet upload request failed: '+(error.message||error))}
+  finally{button.disabled=false}
 };
 $('saveNote').onclick=async()=>{const narr=$('narration').value;for(const r of rows)if(r.id)await supabase.from('rates').update({narration:narr}).eq('id',r.id);toast('✅ NARRATION SAVED')};
 async function loadHistory(){
