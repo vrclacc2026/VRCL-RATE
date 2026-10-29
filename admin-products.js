@@ -1,5 +1,5 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { prepareRateSave, saveRatesAndVerify } from './rate-publish-confirm.js?v=20261029-working-save-v1';
+import { prepareRateSave, saveRatesAndVerify } from './rate-publish-confirm.js?v=20261029-rounding-fix-v2';
 import { calcFormula, applyExtraCost, applyOilShortage, roundPackingValue, roundLooseValue } from './rate-calculator.js?v=20260915-admin-exact-fallback';
 import { resolveLooseRate, looseRateDependants, calculateReferencedRates } from './loose-rate-reference.js?v=20260915-admin-exact-fallback';
 import { packingReferenceKey, packingRateDependants, calculatePackingReferencedRates } from './packing-rate-reference.js?v=20260915-admin-exact-fallback';

@@ -108,6 +108,7 @@ document.addEventListener('click', event => {
 export function prepareRateSave(rates, history, deletions = []) {
   const request = JSON.parse(JSON.stringify({ rates, history, deletions }));
   if (!request.rates.length || !request.history.length) throw new Error('No packing rates to save.');
+  request.rates = request.rates.map(row => ({ ...row, rate: Math.round((Number(row.rate) + Number.EPSILON) * 100) / 100 }));
   return { ...request, publishId: crypto.randomUUID() };
 }
 
@@ -136,7 +137,7 @@ export async function saveRatesAndVerify(client, request) {
     if (readError) throw new Error('Rates saved, but Rate Check verification could not read ' + group.city + ': ' + readError.message);
     const actual = new Map((saved || []).map(r => [r.packing, Number(r.rate)]));
     for (const [packing, expected] of group.expected) {
-      if (!actual.has(packing) || Math.abs(actual.get(packing) - expected) > 0.005)
+      if (!actual.has(packing) || Math.abs(actual.get(packing) - expected) > 0.001)
         throw new Error('Rates saved, but Rate Check mismatch: ' + group.city + ' / ' + packing + '. Reload and inspect before another save.');
     }
   }

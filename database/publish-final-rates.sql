@@ -92,9 +92,9 @@ begin
   for item in select value from jsonb_array_elements(p_rates) loop
     select * into saved from public.rates where city=item->>'city'
       and product_id=(item->>'product_id')::uuid and packing=item->>'packing';
-    if not found or saved.rate is distinct from (item->>'rate')::numeric
+    if not found or saved.rate is distinct from round((item->>'rate')::numeric,2)
       or saved.narration is distinct from coalesce(item->>'narration','') then
-      raise exception 'Saved rates do not match the confirmed publish. No rates or history were committed.';
+      raise exception 'Saved rates do not match the requested two-decimal rate. No rates or history were committed.';
     end if;
   end loop;
   for item in select value from jsonb_array_elements(p_history) loop
