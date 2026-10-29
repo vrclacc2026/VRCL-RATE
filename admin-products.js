@@ -1,5 +1,5 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { confirmFinalPublication, publishFinalRates } from './rate-publish-confirm.js?v=20261028-final-sheet-v2';
+import { prepareRateSave, saveRatesAndVerify } from './rate-publish-confirm.js?v=20261029-working-save-v1';
 import { calcFormula, applyExtraCost, applyOilShortage, roundPackingValue, roundLooseValue } from './rate-calculator.js?v=20260915-admin-exact-fallback';
 import { resolveLooseRate, looseRateDependants, calculateReferencedRates } from './loose-rate-reference.js?v=20260915-admin-exact-fallback';
 import { packingReferenceKey, packingRateDependants, calculatePackingReferencedRates } from './packing-rate-reference.js?v=20260915-admin-exact-fallback';
@@ -220,14 +220,13 @@ async function saveFallback(){
     }
     const groups=[...groupsByKey.values()].filter(g=>g.rates.length),payload=groups.flatMap(g=>g.rates);if(!payload.length)throw new Error('No packing rates to save.');
     const historyRows=groups.map(group=>{const k=group.product.city+'|'+group.product.id,s=meta[k]||{},loose=resolveLooseRate(meta,k,products||[]);return{city:group.product.city,product_id:group.product.id,changed_by:session.user.id,snapshot:{product_name:group.product.name,changed_by_name:profile.display_name||profile.login_id||null,loose_rate:loose.error?null:loose.value,loose_unit:'10 KG',rates:group.rates.map(r=>({packing:r.packing,rate:r.rate})),narration:group.rates[0]?.narration||''}}});
-    const publication=confirmFinalPublication(payload,historyRows);
-    if(!publication){toast('Publish cancelled. Use TEST PREVIEW for testing.');return}
+    const publication=prepareRateSave(payload,historyRows);
     await saveFormulaState(meta,cloudValue,session);
-    await publishFinalRates(supabase,publication);
-    toast('✅ FINAL RATES + HISTORY SAVED');
+    await saveRatesAndVerify(supabase,publication);
+    toast('✅ RATES SAVED & RATE CHECK VERIFIED');
     await window.vrclAdminHistory?.refresh();
     fallback=null;await activateFallback(true);
-  }catch(error){console.error('Exact admin fallback save failed',error);toast('Publish not confirmed. Check history before retrying: '+(error.message||error))}
+  }catch(error){console.error('Exact admin fallback save failed',error);toast('Save status needs checking. Check history before retrying: '+(error.message||error))}
   finally{fallbackSaving=false;if(save)save.disabled=false}
 }
 

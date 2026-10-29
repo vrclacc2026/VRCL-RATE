@@ -105,55 +105,48 @@ document.addEventListener('click', event => {
 }, true);
 
 
-const pendingPublications = new WeakSet();
-
-export function confirmFinalPublication(rates, history, deletions = []) {
-  // Copy the computed payload before asking, so later edits cannot change it.
+export function prepareRateSave(rates, history, deletions = []) {
   const request = JSON.parse(JSON.stringify({ rates, history, deletions }));
-  if (!request.rates.length || !request.history.length) throw new Error('No rates to publish.');
-  const sections = request.history.map(group => {
-    const rows = request.rates.filter(r => r.city === group.city && r.product_id === group.product_id);
-    const loose = group.snapshot?.loose_rate;
-    return [
-      group.city + ' / ' + (group.snapshot?.product_name || 'Product'),
-      loose == null ? '' : 'Loose / 10 KG: ₹' + rateLabel(loose),
-      ...rows.slice(0, 8).map(r => r.packing + ': ₹' + rateLabel(r.rate)),
-      rows.length > 8 ? '...and ' + (rows.length - 8) + ' more packings' : ''
-    ].filter(Boolean).join('\n');
-  });
-  const accepted = window.confirm([
-    'PUBLISH FINAL',
-    'These exact rates will be saved for customers and recorded as FINAL.',
-    '',
-    ...sections,
-    '',
-    request.history.length + ' product(s), ' + request.rates.length + ' packing rate(s).',
-    'For testing, Cancel and use TEST PREVIEW. Publish these final rates?'
-  ].join('\n\n'));
-  if (!accepted) return null;
-  const publication = { ...request, publishId: crypto.randomUUID() };
-  pendingPublications.add(publication);
-  return publication;
+  if (!request.rates.length || !request.history.length) throw new Error('No packing rates to save.');
+  return { ...request, publishId: crypto.randomUUID() };
 }
 
-export async function publishFinalRates(client, publication) {
-  if (!publication || !pendingPublications.has(publication)) {
-    throw new Error('Confirm PUBLISH FINAL before saving rates.');
-  }
-  pendingPublications.delete(publication);
+export async function saveRatesAndVerify(client, request) {
+  if (!request?.publishId) throw new Error('Missing save request.');
   const { data, error } = await client.rpc('publish_final_rates_v1', {
-    p_publish_id: publication.publishId,
-    p_rates: publication.rates,
-    p_history: publication.history,
-    p_deletions: publication.deletions
+    p_publish_id: request.publishId, p_rates: request.rates,
+    p_history: request.history, p_deletions: request.deletions
   });
   if (error) throw error;
-  if (data?.publish_id !== publication.publishId ||
-      data?.rates_count !== publication.rates.length ||
-      data?.history_count !== publication.history.length) {
-    throw new Error('Final publish acknowledgement is incomplete. Reload and check history before trying again.');
+  if (data?.publish_id !== request.publishId ||
+      data?.rates_count !== request.rates.length ||
+      data?.history_count !== request.history.length)
+    throw new Error('Save acknowledgement incomplete. Reload and check history before retrying.');
+  // Rate Check reads this same rates table. Verify every source and linked product
+  // after commit, including deletions, before showing the green success message.
+  const groups = new Map();
+  for (const row of request.rates) {
+    const key = row.city + '|' + row.product_id;
+    if (!groups.has(key)) groups.set(key, { city: row.city, productId: row.product_id, expected: new Map() });
+    groups.get(key).expected.set(row.packing, Number(row.rate));
+  }
+  for (const group of groups.values()) {
+    const { data: saved, error: readError } = await client.from('rates')
+      .select('packing,rate').eq('city', group.city).eq('product_id', group.productId);
+    if (readError) throw new Error('Rates saved, but Rate Check verification could not read ' + group.city + ': ' + readError.message);
+    const actual = new Map((saved || []).map(r => [r.packing, Number(r.rate)]));
+    for (const [packing, expected] of group.expected) {
+      if (!actual.has(packing) || Math.abs(actual.get(packing) - expected) > 0.005)
+        throw new Error('Rates saved, but Rate Check mismatch: ' + group.city + ' / ' + packing + '. Reload and inspect before another save.');
+    }
+  }
+  for (const removed of request.deletions || []) {
+    const { data: saved, error: readError } = await client.from('rates')
+      .select('id').eq('city', removed.city).eq('product_id', removed.product_id)
+      .eq('packing', removed.packing).maybeSingle();
+    if (readError || saved) throw new Error('Rates saved, but deleted packing still appears in Rate Check: ' + removed.city + ' / ' + removed.packing);
   }
   const notice = document.getElementById('publishNotice');
-  if (notice) notice.textContent = 'FINAL SAVED — rates and history were saved together. Google Sheet updates through its automatic data link.';
+  if (notice) notice.textContent = 'SAVED & VERIFIED — Admin and Rate Check use the same saved rates. Google Sheet upload is separate.';
   return data;
 }

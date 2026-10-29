@@ -1,6 +1,6 @@
 import { packingKey, createPackingSourceMap, packingSourceName, mergeReferencedPackings } from './packing-rate-reference.js?v=20261027-packing-names-v1';
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { confirmFinalPublication, publishFinalRates } from './rate-publish-confirm.js?v=20261028-final-sheet-v2';
+import { prepareRateSave, saveRatesAndVerify } from './rate-publish-confirm.js?v=20261029-working-save-v1';
 import { calcFormula, applyExtraCost, roundPackingValue } from './rate-calculator.js?v=20260916-udaan-core-v1';
 
 const SUPABASE_URL='https://rdmgzkxroydsuantzbwn.supabase.co';
@@ -149,14 +149,13 @@ async function saveUdaan(){
     if(profileError)console.error('Udaan history actor could not be loaded',profileError);
     const historyRows=[{city:'Udaan',product_id:editor.id,changed_by:session.user.id,snapshot:{product_name:editor.target.name,changed_by_name:profile?.display_name||profile?.login_id||null,loose_rate:null,rates:payload.map(r=>({packing:r.packing,rate:r.rate})),narration}}];
     const deletions=[...excluded].map(packing=>({city:'Udaan',product_id:editor.id,packing}));
-    const publication=confirmFinalPublication(payload,historyRows,deletions);
-    if(!publication){toast('Publish cancelled. Use TEST PREVIEW for testing.');return}
+    const publication=prepareRateSave(payload,historyRows,deletions);
     await saveCloud(next,session);
-    await publishFinalRates(supabase,publication);
+    await saveRatesAndVerify(supabase,publication);
     editor.rows=activeRows;editor.state=state;
-    toast('✅ UDAAN FINAL RATES + HISTORY SAVED');
+    toast('✅ UDAAN RATES SAVED & RATE CHECK VERIFIED');
     await window.vrclAdminHistory?.refresh();await loadUdaan()
-  }catch(error){toast('Udaan publish not confirmed. Check history before retrying: '+(error.message||error))}
+  }catch(error){toast('Udaan save status needs checking. Check history before retrying: '+(error.message||error))}
   finally{saving=false;if(btn)btn.disabled=false;render()}
 }
 

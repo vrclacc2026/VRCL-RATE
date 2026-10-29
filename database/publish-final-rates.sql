@@ -40,7 +40,7 @@ begin
   request_hash := md5(p_rates::text || p_history::text || p_deletions::text);
   select count(*), min(h.snapshot->>'publication_request_hash')
     into previous_count,previous_hash from public.rate_history h
-    where h.snapshot->>'publication_status'='final'
+    where h.snapshot->>'publication_status'='working'
       and h.snapshot->>'publish_id'=p_publish_id::text;
   if previous_count>0 then
     if previous_count<>count_history or previous_hash is distinct from request_hash then
@@ -107,9 +107,9 @@ begin
       values(item->>'city',(item->>'product_id')::uuid,actor,
         (item->'snapshot') || jsonb_build_object(
           'product_name',product_record.name,'rates',pack_rates,
-          'publication_status','final','publish_id',p_publish_id,
+          'publication_status','working','publish_id',p_publish_id,
           'publication_request_hash',request_hash,'publication_version',1,
-          'published_at',transaction_timestamp()))
+          'saved_at',transaction_timestamp()))
       returning id into new_history_id;
     history_ids:=history_ids || jsonb_build_array(new_history_id);
   end loop;
@@ -121,4 +121,4 @@ $fn$;
 revoke all on function public.publish_final_rates_v1(uuid,jsonb,jsonb,jsonb) from public,anon;
 grant execute on function public.publish_final_rates_v1(uuid,jsonb,jsonb,jsonb) to authenticated;
 comment on function public.publish_final_rates_v1(uuid,jsonb,jsonb,jsonb) is
-  'Admin-confirmed final publish: validates source/linked rate payloads, commits rates and FINAL history atomically under existing RLS.';
+  'Admin working save: validates source and linked rates, commits rates and history atomically under existing RLS.';

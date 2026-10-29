@@ -7,14 +7,14 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://rdmgzkxroydsuantzbwn.supabase.co" crossorigin>
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm" crossorigin>
-<link rel="modulepreload" href="./supabase-config.js?v=20261028-final-sheet-v2">
-<link rel="modulepreload" href="./supabase-config.js?v=20261028-final-sheet-v2">
+<link rel="modulepreload" href="./supabase-config.js?v=20261029-working-save-v1">
+<link rel="modulepreload" href="./supabase-config.js?v=20261029-working-save-v1">
 <link rel="modulepreload" href="./backup-manager.js?v=20260928-backup-safe-v5">
 <link rel="modulepreload" href="./product-delete-control.js?v=20260916-product-delete-v3">
 <link rel="modulepreload" href="./packing-delete-guard.js?v=20260916-master-delete-guard-v2">
-<link rel="modulepreload" href="./udaan-rate-system.js?v=20261028-final-sheet-v2">
+<link rel="modulepreload" href="./udaan-rate-system.js?v=20261029-working-save-v1">
 <link rel="modulepreload" href="./loose-reference-control.js?v=20260916-loose-ref-control-v3">
-<link rel="modulepreload" href="./admin-products.js?v=20261028-final-sheet-v2">
+<link rel="modulepreload" href="./admin-products.js?v=20261029-working-save-v1">
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f3f6f8;color:#101828}.hidden{display:none!important}
 .topbar{position:sticky;top:0;z-index:50;background:#101827;color:#fff;padding:13px 20px;display:flex;justify-content:space-between;align-items:center;gap:14px;box-shadow:0 5px 25px #0002}.brand{font-size:20px;font-weight:950}.sub{font-size:11px;color:#cbd5e1;margin-top:3px}.flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.navIcon{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;text-decoration:none;background:linear-gradient(145deg,#fff,#e8edf3);color:#101827;box-shadow:0 5px 0 #aeb6c1}.navIcon svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.rateCheck{height:38px;display:inline-flex;align-items:center;padding:0 14px;border-radius:10px;text-decoration:none;background:linear-gradient(145deg,#0b927f,#087f70);color:#fff;font-size:10px;font-weight:950;box-shadow:0 5px 0 #045d52}.btn{border:0;border-radius:9px;padding:10px 15px;font-weight:900;cursor:pointer}.green{background:#087f70;color:#fff}.dark{background:#101827;color:#fff}.red{background:#b42318;color:#fff}.light{background:#f5f7f9;border:1px solid #ccd4dc;color:#111827}
@@ -69,14 +69,14 @@
 </div>
 <div id="udaanLooseInfo" class="hint" hidden style="margin-top:10px;padding:9px 12px;border:1px solid #a8cbe4;border-radius:10px;background:#f3f9ff;font-size:11px;font-weight:800;color:#245d75"></div>
 </section>
-<section class="card"><div class="title">RATE SETUP</div><div id="formulaRecovery" class="hint" role="status" hidden style="margin-bottom:9px;padding:10px;border:1px solid #d97706;background:#fffaf0;border-radius:8px;color:#92400e"></div><div class="tableWrap"><table><thead><tr><th>PACKING<button class="lockMini" data-lock="packing">🔓</button></th><th>MASTER LINK<button class="lockMini" data-lock="master">🔓</button></th><th>OLD RATE<button class="lockMini" data-lock="old">🔓</button></th><th>FORMULA<button class="lockMini" data-lock="formula">🔓</button></th><th>EXTRA COSTING<button class="lockMini" data-lock="extra">🔓</button></th><th>OIL SHORTAGE<button class="lockMini" data-lock="shortage">🔓</button></th><th>ROUND OFF<button class="lockMini" data-lock="round">🔓</button></th><th>NEW RATE</th><th>ACTION</th></tr></thead><tbody id="rateBody"><tr><td colspan="9" class="empty">Loading packaging…</td></tr></tbody></table></div><div class="calcHelp">Formula: <code>+5%</code> <code>MASTER*1.05</code> &nbsp; Extra costing: <code>+15</code> <code>-10</code> <code>*1.05</code> <code>/2</code> <code>+5%</code></div><div class="actions"><button class="btn green" id="addPacking">＋ ADD PACKING / WEIGHT</button><button class="btn light" id="testPreview" type="button">🧪 TEST PREVIEW</button><button class="btn dark" id="saveAll">🔒 PUBLISH FINAL</button></div><div id="publishNotice" role="status" aria-live="polite" style="margin:8px 0;padding:10px 12px;border:1px solid #f3d27a;border-radius:9px;background:#fff8df;color:#684d0a;font-size:12px;font-weight:700">Preview only while editing. Live rates change only after you confirm Publish Final.</div><div class="note"><b>📝 NARRATION / TERMS &amp; CONDITIONS</b><textarea id="narration"></textarea><div class="actions"><button class="btn light" id="saveNote">💾 SAVE NARRATION</button></div></div></section>
+<section class="card"><div class="title">RATE SETUP</div><div id="formulaRecovery" class="hint" role="status" hidden style="margin-bottom:9px;padding:10px;border:1px solid #d97706;background:#fffaf0;border-radius:8px;color:#92400e"></div><div class="tableWrap"><table><thead><tr><th>PACKING<button class="lockMini" data-lock="packing">🔓</button></th><th>MASTER LINK<button class="lockMini" data-lock="master">🔓</button></th><th>OLD RATE<button class="lockMini" data-lock="old">🔓</button></th><th>FORMULA<button class="lockMini" data-lock="formula">🔓</button></th><th>EXTRA COSTING<button class="lockMini" data-lock="extra">🔓</button></th><th>OIL SHORTAGE<button class="lockMini" data-lock="shortage">🔓</button></th><th>ROUND OFF<button class="lockMini" data-lock="round">🔓</button></th><th>NEW RATE</th><th>ACTION</th></tr></thead><tbody id="rateBody"><tr><td colspan="9" class="empty">Loading packaging…</td></tr></tbody></table></div><div class="calcHelp">Formula: <code>+5%</code> <code>MASTER*1.05</code> &nbsp; Extra costing: <code>+15</code> <code>-10</code> <code>*1.05</code> <code>/2</code> <code>+5%</code></div><div class="actions"><button class="btn green" id="addPacking">＋ ADD PACKING / WEIGHT</button><button class="btn light" id="testPreview" type="button">🧪 TEST PREVIEW</button><button class="btn dark" id="saveAll">💾 SAVE ALL</button></div><div id="publishNotice" role="status" aria-live="polite" style="margin:8px 0;padding:10px 12px;border:1px solid #f3d27a;border-radius:9px;background:#fff8df;color:#684d0a;font-size:12px;font-weight:700">SAVE ALL updates Admin and Rate Check. Google Sheet upload is separate.</div><div class="note"><b>📝 NARRATION / TERMS &amp; CONDITIONS</b><textarea id="narration"></textarea><div class="actions"><button class="btn light" id="saveNote">💾 SAVE NARRATION</button></div></div></section>
 <section class="card"><div class="title">📋 RATE HISTORY — RECENT CHANGES</div><div id="history" class="historyList"><div class="empty">No history yet.</div></div></section>
 </main><div id="toast" class="toast"></div>
 <script>setTimeout(()=>{const body=document.getElementById('rateBody');if(body&&/Loading (?:products and )?packaging/i.test(body.textContent)&&!body.querySelector('#retryPackaging')){body.innerHTML='<tr><td colspan="8" class="empty">Loading is taking too long. <button type="button" id="retryPackaging">Retry loading</button></td></tr>';document.getElementById('retryPackaging').onclick=()=>location.reload()}},18000)</script>
 <script type="module">
 import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { confirmFinalPublication, publishFinalRates } from './rate-publish-confirm.js?v=20261028-final-sheet-v2';
-import{SUPABASE_URL,SUPABASE_ANON_KEY}from'./supabase-config.js?v=20261028-final-sheet-v2';
+import { prepareRateSave, saveRatesAndVerify } from './rate-publish-confirm.js?v=20261029-working-save-v1';
+import{SUPABASE_URL,SUPABASE_ANON_KEY}from'./supabase-config.js?v=20261029-working-save-v1';
 import{hydrateStateFromCloud,syncStateToCloud}from'./backup-manager.js?v=20260928-backup-safe-v5';
 import{resolveLooseRate,canReferenceLooseRate,looseRateDependants,calculateReferencedRates}from'./loose-rate-reference.js?v=20260912-rate-tools';
 import{packingKey,createPackingSourceMap,packingSourceName,packingReferenceKey,resolvePackingReference,canReferencePackingRates,packingRateDependants,calculatePackingReferencedRates}from'./packing-rate-reference.js?v=20261027-packing-names-v1';
@@ -271,7 +271,7 @@ async function repairInvalidLocalSources(selectedKey){
   }
   meta[selectedKey]=updated;saveMeta();toast('Invalid local rate source restored from saved settings.');
 }
-async function loadProductsInner(){const requestedCity=city,loadSerial=++productLoadSerial;$('rateBody').innerHTML='<tr><td colspan="8" class="empty">Loading products and packaging…</td></tr>';const{data,error}=await readWithin(supabase.from('products').select('id,code,name,sort_order,ingredient_image_url,city,customer_visible').eq('active',true).order('sort_order'));if(requestedCity!==city||loadSerial!==productLoadSerial)return;if(error){packingLoadError('Products could not load: '+error.message);toast('Products load failed');return}allProducts=data||[];products=allProducts.filter(p=>p.city===city);if(!products.some(p=>p.id===productId))productId=products[0]?.id||'';await repairInvalidLocalSources(key());if(requestedCity!==city||loadSerial!==productLoadSerial)return;renderCities();renderProducts();showPhoto();await Promise.all([loadRates(),loadHistory()]);renderLooseReference();renderPackingReference()}
+async function loadProductsInner(){const requestedCity=city,loadSerial=++productLoadSerial;$('rateBody').innerHTML='<tr><td colspan="8" class="empty">Loading products and packaging…</td></tr>';const{data,error}=await readWithin(supabase.from('products').select('id,code,name,sort_order,ingredient_image_url,city,customer_visible').eq('active',true).order('sort_order'));if(requestedCity!==city||loadSerial!==productLoadSerial)return;if(error){packingLoadError('Products could not load: '+error.message);toast('Products load failed');return}allProducts=data||[];products=allProducts.filter(p=>p.city===city);if(!products.some(p=>p.id===productId))productId=products[0]?.id||'';await repairInvalidLocalSources(key());if(requestedCity!==city||loadSerial!==productLoadSerial)return;renderCities();renderProducts();showPhoto();await loadRates();void loadHistory();renderLooseReference();renderPackingReference()}
 async function recoverPublishedFormulas(published,requestedKey,loadSerial){
   const state=meta[requestedKey];if(!state)return;
   const missing=published.filter(r=>!String(state.rows?.[r.packing]?.formula||'').trim());if(!missing.length)return;
@@ -469,8 +469,7 @@ $('saveAll').onclick=async()=>{
     if(!session)throw new Error('Admin session expired. Sign in again.');
     const sourceName=reference=>{const p=allProducts.find(x=>x.city===reference?.city&&x.id===reference?.productId);return p?reference.city+' / '+p.name:null};
     const historyRows=groups.map(group=>{const groupKey=group.product.city+'|'+group.product.id,state=snapshot[groupKey]||{};return{city:group.product.city,product_id:group.product.id,changed_by:session.user.id,snapshot:{product_name:group.product.name,changed_by_name:adminProfile?.display_name||adminProfile?.login_id||null,loose_rate:resolveLooseRate(snapshot,groupKey,allProducts).value,loose_unit:'10 KG',loose_source:sourceName(state.looseReference),packing_source:sourceName(state.packingRateReference),rates:group.rates.map(r=>({packing:r.packing,rate:r.rate})),narration:group.rates[0]?.narration||''}}});
-    const publication=confirmFinalPublication(payload,historyRows);
-    if(!publication){toast('Publish cancelled. Use TEST PREVIEW for testing.');return}
+    const publication=prepareRateSave(payload,historyRows);
     meta[sourceKey].rows=sourceState.rows;saveMeta();await syncStateToCloud();
     if(missingSaved.length){
       const {data:verified,error:verifyError}=await supabase.from('admin_state').select('value').eq('key','admin_formula_state_v1').single();
@@ -478,10 +477,10 @@ $('saveAll').onclick=async()=>{
       const cloudRows=verified?.value?.meta?.[sourceKey]?.rows||{};
       if(missingSaved.some(row=>['master','formula','extra','round'].some(field=>JSON.stringify(cloudRows[row.packing]?.[field])!==JSON.stringify(sourceState.rows[row.packing]?.[field]))))throw new Error('Formula settings changed while saving. No rates were published. Reload this product and review its formulas.');
     }
-    await publishFinalRates(supabase,publication);
-    toast('✅ FINAL RATES + HISTORY SAVED'+(linked.length?' + '+linked.length+' LINKED PRODUCTS':''));
+    await saveRatesAndVerify(supabase,publication);
+    toast('✅ RATES SAVED & RATE CHECK VERIFIED'+(linked.length?' + '+linked.length+' LINKED PRODUCTS':''));
     if(key()===sourceKey){await loadRates();await loadHistory()}
-  }catch(error){toast('Publish not confirmed ('+sourceProduct.city+' / '+sourceProduct.name+'). Check history before retrying: '+(error.message||error))}
+  }catch(error){toast('Save status needs checking ('+sourceProduct.city+' / '+sourceProduct.name+'). Check history before retrying: '+(error.message||error))}
   finally{rateSaving=false;button.disabled=false;renderLooseReference();renderPackingReference()}
 };
 $('saveNote').onclick=async()=>{const narr=$('narration').value;for(const r of rows)if(r.id)await supabase.from('rates').update({narration:narr}).eq('id',r.id);toast('✅ NARRATION SAVED')};
