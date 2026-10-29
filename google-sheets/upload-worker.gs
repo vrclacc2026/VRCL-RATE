@@ -143,7 +143,7 @@ function styleSheet_(sheet,title,isMaster) {
     SpreadsheetApp.newConditionalFormatRule()
       .whenFormulaSatisfied(formula).setBackground(colour).setRanges([dataRange]).build()
   );
-  sheet.setConditionalFormatRules(rules);
+  // Product colour rules are already installed in the workbook.
   // Record ID is already hidden during setup; do not repeat the column action here.
 }
 
