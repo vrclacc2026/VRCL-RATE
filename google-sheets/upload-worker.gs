@@ -144,7 +144,7 @@ function styleSheet_(sheet,title,isMaster) {
       .whenFormulaSatisfied(formula).setBackground(colour).setRanges([dataRange]).build()
   );
   sheet.setConditionalFormatRules(rules);
-  if(isMaster) sheet.hideColumns(19);
+  // Record ID is already hidden during setup; do not repeat the column action here.
 }
 
 function refreshCityFormulas_(doc) {
