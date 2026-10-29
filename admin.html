@@ -9,7 +9,7 @@
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm" crossorigin>
 <link rel="modulepreload" href="./supabase-config.js?v=20261029-rounding-fix-v2">
 <link rel="modulepreload" href="./supabase-config.js?v=20261029-rounding-fix-v2">
-<link rel="modulepreload" href="./backup-manager.js?v=20260928-backup-safe-v5">
+<link rel="modulepreload" href="./backup-manager.js?v=20261029-fast-hydrate-v1">
 <link rel="modulepreload" href="./product-delete-control.js?v=20260916-product-delete-v3">
 <link rel="modulepreload" href="./packing-delete-guard.js?v=20260916-master-delete-guard-v2">
 <link rel="modulepreload" href="./udaan-rate-system.js?v=20261029-rounding-fix-v2">
@@ -248,7 +248,7 @@ $('packingRefLock').onclick=()=>{if(activePackingDraft()){toast('Select the sour
 $('packingRefOpen').onclick=async()=>{const ref=st().packingRateReference;if(!ref)return;city=ref.city;productId=ref.productId;await loadProducts()};
 
 $('eye').onclick=()=>{$('password').type=$('password').type==='password'?'text':'password';$('eye').textContent=$('password').type==='password'?'👁':'🙈'};
-async function check(){const{data:{session}}=await supabase.auth.getSession();if(!session)return false;const{data:p,error}=await supabase.from('profiles').select('id,display_name,login_id,role,active').eq('id',session.user.id).single();if(error||!p||p.role!=='admin'||!p.active)return false;adminProfile=p;try{await hydrateStateFromCloud();meta=JSON.parse(localStorage.getItem(META)||'{}')}catch{$('loginMsg').textContent='Formula settings could not be loaded. Please try again.';return false}$('loginOverlay').classList.add('hidden');$('logout').classList.remove('hidden');await loadProducts();return true}
+async function check(){const{data:{session}}=await supabase.auth.getSession();if(!session)return false;const{data:p,error}=await supabase.from('profiles').select('id,display_name,login_id,role,active').eq('id',session.user.id).single();if(error||!p||p.role!=='admin'||!p.active)return false;adminProfile=p;try{await hydrateStateFromCloud(true);meta=JSON.parse(localStorage.getItem(META)||'{}')}catch{$('loginMsg').textContent='Formula settings could not be loaded. Please try again.';return false}$('loginOverlay').classList.add('hidden');$('logout').classList.remove('hidden');await loadProducts();return true}
 async function loadProducts(){try{await loadProductsInner()}catch(error){console.error('Product packaging load failed',error);packingLoadError('Products could not display: '+(error.message||error))}}
 async function repairInvalidLocalSources(selectedKey){
   const local=meta[selectedKey];if(!local)return;

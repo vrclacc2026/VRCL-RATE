@@ -109,12 +109,12 @@ export function syncStateToCloud(value = currentLocalState()) {
   syncQueue = task;
   return task;
 }
-export function hydrateStateFromCloud() {
-  if (!hydrationTask) hydrationTask = loadStateFromCloud().finally(() => { hydrationTask = null; });
+export function hydrateStateFromCloud(verifiedAdmin = false) {
+  if (!hydrationTask) hydrationTask = loadStateFromCloud(verifiedAdmin).finally(() => { hydrationTask = null; });
   return hydrationTask;
 }
-async function loadStateFromCloud() {
-  if (!await isAdmin()) return;
+async function loadStateFromCloud(verifiedAdmin = false) {
+  if (!verifiedAdmin && !await isAdmin()) return;
   const local = currentLocalState();
   const { data, error } = await supabase.from('admin_state').select('value,updated_at').eq('key', CLOUDKEY).maybeSingle();
   if (error) throw error;
