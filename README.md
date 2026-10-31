@@ -19,6 +19,8 @@ Daily wholesale rate portal for Vishwas Refoils & Consumer Limited.
 
 Rajkot and Ahmedabad have their own rates. Udaan uses its selected city/product source and configured formulas. Review the source and formula fields before saving linked products.
 
+- `poster.html` — admin-only Ahmedabad poster, using the original emerald–gold artwork, saved live rates, N/S Tin columns, and HD PNG download. It refreshes on rate events, every 15 seconds, on returning to the page, and before export. Failed checks disable download. All active Ahmedabad products are always included, including newly added oils. Packing columns and names come only from current saved Ahmedabad rates; deletions, renames and N/S Tin are reflected automatically. Products without saved rates show blank (—) cells.
+
 ## Development checks
 
 Run the repository tests with:
