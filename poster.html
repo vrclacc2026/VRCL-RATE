@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ahmedabad Rate Poster · Vishwas</title><link rel="stylesheet" href="./poster.css?v=20261030-2"></head>
+<body><header><div><strong>VISHWAS</strong><span>Ahmedabad wholesale poster</span></div><nav><a href="./admin.html">RATE ADMIN</a><a href="./customer-check.html">RATE CHECK</a></nav></header>
+<main><section class="toolbar"><div><strong>All Ahmedabad products</strong><br><small>Products, packing names and rates update automatically</small></div><div class="actions"><button id="refresh" disabled>Refresh rates</button><button id="download" class="primary" disabled>Download HD PNG</button></div></section>
+<p id="status" role="status" aria-live="polite">Checking admin login…</p><p class="hint">AHD mein product/packing add, rename ya delete aur rate save karne par poster automatically update hoga. N Tin aur S Tin dono shamil hain.</p>
+<section id="preview" class="preview" hidden><canvas id="poster" aria-label="Ahmedabad wholesale rate poster"></canvas></section>
+<details id="rateDetails" hidden><summary>Check exact poster rates</summary><div id="rateTable" class="table-scroll"></div></details>
+<section id="login" class="login" hidden><form id="loginForm"><h1>Admin login</h1><p>Use your existing Rate Admin account.</p><label>Email<input id="email" type="email" autocomplete="username" required></label><label>Password<input id="password" type="password" autocomplete="current-password" required></label><button id="loginBtn" class="primary">Login</button><p id="loginMsg" role="alert"></p></form></section>
+</main><script type="module" src="./poster.js?v=20261030-2"></script></body></html>
