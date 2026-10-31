@@ -1,6 +1,6 @@
-# Ahmedabad poster checkpoint — 30 October 2026
+# Ahmedabad poster release checks — 31 October 2026
 
-The user requested short work stages. This checkpoint completes the dynamic-data stage, not final live publication.
+The user requested short work stages and has now authorized live publication with existing admin login required.
 
 - Restored the previous poster implementation and its original background image.
 - Always include every active Ahmedabad product, including newly added product families.
@@ -9,6 +9,6 @@ The user requested short work stages. This checkpoint completes the dynamic-data
 - Added products without rates remain visible with blank (—) cells. Deleted/inactive products and orphaned rates cannot leave stale columns. Missing/invalid saved rates or network failures disable export.
 - Verification: all 14 poster data/refresh tests pass; poster JS syntax and git diff whitespace checks pass. Original artwork is preserved outside the table. The public template has its printed product/packing/rate table blanked; rates load only after the existing admin login.
 
-Next small stage: inspect the full all-product/all-packing layout visually against the original artwork; many columns may require table pagination to keep text readable. Verify HD PNG output and actual live data, then publish after that stage. Do not claim the new page is live yet. Do not rebuild the artwork.
+Browser QA completed on 31 October: the saved Ahmedabad snapshot renders 13 products and 13 packing columns with readable labels, original branding and four footer terms. Browser PNG encoding passed (3,329,676 bytes). Without login, the poster is hidden and Download is disabled; existing admin email/password is required. No live rates were modified during QA. Production reads current saved rates at runtime. Synthetic data/refresh tests passed previously (14/14).
 
 Run: `node --test tests/poster-data.test.cjs tests/poster-refresh.test.cjs`
